@@ -1,24 +1,35 @@
 "use client";
 
 import { type HTMLAttributes, useState, useEffect, useCallback, useRef } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-type ToastVariant = "success" | "vault" | "warning";
+const toastVariants = cva(
+  "flex items-start gap-3 max-w-[380px] w-full py-4 px-5 bg-bg-raised rounded-lg border border-border-default border-l-[3px] shadow-lg animate-toast-slide-in",
+  {
+    variants: {
+      variant: {
+        success: "border-l-secondary",
+        vault: "border-l-vault",
+        warning: "border-l-warning",
+      },
+    },
+    defaultVariants: {
+      variant: "success",
+    },
+  },
+);
+
+type ToastVariant = NonNullable<VariantProps<typeof toastVariants>["variant"]>;
 
 interface NotificationToastProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
-  /** Toast variant determines left border color and icon */
   variant?: ToastVariant;
-  /** Toast title */
   title: string;
-  /** Toast message body */
   message: string;
-  /** Timestamp text (e.g. "Just now", "2 min ago") */
   timestamp?: string;
-  /** Auto-dismiss after ms (default 5000, set 0 to disable) */
   autoDismissMs?: number;
-  /** Called when toast is dismissed */
   onDismiss?: () => void;
-  /** Control visibility externally */
   visible?: boolean;
 }
 
@@ -29,7 +40,7 @@ function SuccessIcon() {
       height="20"
       viewBox="0 0 20 20"
       fill="none"
-      stroke="var(--secondary)"
+      stroke="var(--color-secondary)"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -47,7 +58,7 @@ function VaultIcon() {
       height="20"
       viewBox="0 0 20 20"
       fill="none"
-      stroke="var(--vault)"
+      stroke="var(--color-vault)"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -65,14 +76,14 @@ function WarningIcon() {
       height="20"
       viewBox="0 0 20 20"
       fill="none"
-      stroke="var(--warning)"
+      stroke="var(--color-warning)"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
       <path d="M10 3 L18 17 H2 Z" />
       <line x1="10" y1="8" x2="10" y2="12" />
-      <circle cx="10" cy="14.5" r="0.5" fill="var(--warning)" />
+      <circle cx="10" cy="14.5" r="0.5" fill="var(--color-warning)" />
     </svg>
   );
 }
@@ -108,7 +119,7 @@ function NotificationToast({
   autoDismissMs = 5000,
   onDismiss,
   visible: controlledVisible,
-  className = "",
+  className,
   ...props
 }: NotificationToastProps) {
   const [internalVisible, setInternalVisible] = useState(true);
@@ -120,7 +131,6 @@ function NotificationToast({
 
   const dismiss = useCallback(() => {
     setExiting(true);
-    // Wait for exit animation before fully hiding
     setTimeout(() => {
       setExiting(false);
       if (!isControlled) {
@@ -130,7 +140,6 @@ function NotificationToast({
     }, 300);
   }, [isControlled, onDismiss]);
 
-  // Auto-dismiss timer
   useEffect(() => {
     if (!visible || autoDismissMs === 0) return;
 
@@ -146,34 +155,36 @@ function NotificationToast({
 
   return (
     <div
-      className={[
-        "notification-toast",
-        `notification-toast-${variant}`,
-        exiting && "notification-toast-exit",
+      className={cn(
+        toastVariants({ variant }),
+        exiting && "animate-toast-slide-out",
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       role="alert"
       aria-live="polite"
       {...props}
     >
-      {/* Icon */}
-      <div className="notification-toast-icon">
+      <div className="flex items-center justify-center shrink-0 w-6 h-6 mt-px">
         <Icon />
       </div>
 
-      {/* Content */}
-      <div className="notification-toast-content">
-        <p className="notification-toast-title">{title}</p>
-        <p className="notification-toast-message">{message}</p>
-        {timestamp && <span className="notification-toast-timestamp">{timestamp}</span>}
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <p className="font-body text-sm font-semibold leading-snug text-text-primary m-0">
+          {title}
+        </p>
+        <p className="font-body text-xs leading-normal text-text-secondary m-0">
+          {message}
+        </p>
+        {timestamp && (
+          <span className="font-body text-xs text-text-muted mt-1">
+            {timestamp}
+          </span>
+        )}
       </div>
 
-      {/* Close button */}
       <button
         type="button"
-        className="notification-toast-close"
+        className="flex items-center justify-center shrink-0 w-7 h-7 border-none rounded-sm bg-transparent text-text-muted cursor-pointer transition-[background-color,color] duration-150 ease-out hover:bg-bg-sunken hover:text-text-primary"
         onClick={dismiss}
         aria-label="Dismiss notification"
       >

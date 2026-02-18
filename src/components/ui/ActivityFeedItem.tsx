@@ -1,4 +1,6 @@
 import { type HTMLAttributes } from "react";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 type ActivityType = "view" | "task" | "vault" | "proof";
 
@@ -15,35 +17,49 @@ interface ActivityFeedItemProps extends HTMLAttributes<HTMLDivElement> {
   hideBorder?: boolean;
 }
 
+const dotVariants = cva(
+  "w-2 h-2 min-w-2 rounded-round mt-[6px] shrink-0",
+  {
+    variants: {
+      type: {
+        view: "bg-primary",
+        task: "bg-secondary",
+        vault: "bg-vault",
+        proof: "bg-accent",
+      },
+    },
+  },
+);
+
 function ActivityFeedItem({
   type,
   name,
   action,
   timestamp,
   hideBorder = false,
-  className = "",
+  className,
   ...props
 }: ActivityFeedItemProps) {
   return (
     <div
-      className={[
-        "activity-feed-item",
-        !hideBorder && "activity-feed-item-bordered",
+      className={cn(
+        "flex items-start gap-3 py-3",
+        !hideBorder && "border-b border-border-default",
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       {...props}
     >
       <span
-        className={`activity-feed-dot activity-feed-dot-${type}`}
+        className={dotVariants({ type })}
         aria-hidden="true"
       />
-      <div className="activity-feed-content">
-        <p className="activity-feed-text">
-          <span className="activity-feed-name">{name}</span> {action}
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <p className="font-body text-sm leading-normal text-text-secondary m-0">
+          <span className="font-semibold text-text-primary">{name}</span> {action}
         </p>
-        <span className="activity-feed-timestamp">{timestamp}</span>
+        <span className="font-body text-xs leading-normal text-text-muted">
+          {timestamp}
+        </span>
       </div>
     </div>
   );

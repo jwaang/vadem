@@ -1,6 +1,8 @@
 "use client";
 
 import { type HTMLAttributes } from "react";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 type StepStatus = "completed" | "active" | "upcoming";
 
@@ -9,9 +11,7 @@ interface WizardStep {
 }
 
 interface WizardProgressProps extends HTMLAttributes<HTMLElement> {
-  /** Zero-based index of the currently active step */
   currentStep: number;
-  /** Optional override: which steps are completed (defaults to all steps before currentStep) */
   completedSteps?: number[];
 }
 
@@ -44,6 +44,34 @@ function CheckIcon() {
   );
 }
 
+const dotVariants = cva(
+  "flex items-center justify-center w-8 h-8 rounded-round font-body text-sm font-semibold leading-none transition-[background-color,border-color,box-shadow,color] duration-150 ease-out",
+  {
+    variants: {
+      status: {
+        completed: "bg-secondary text-text-on-primary",
+        active:
+          "bg-primary text-text-on-primary shadow-[0_4px_14px_rgba(194,112,74,0.35)]",
+        upcoming:
+          "bg-transparent border-[1.5px] border-border-strong text-text-muted",
+      },
+    },
+  },
+);
+
+const labelVariants = cva(
+  "font-body text-xs leading-tight whitespace-nowrap transition-colors duration-150 ease-out",
+  {
+    variants: {
+      status: {
+        completed: "text-secondary font-medium",
+        active: "text-primary font-semibold",
+        upcoming: "text-text-muted font-medium",
+      },
+    },
+  },
+);
+
 function getStepStatus(
   index: number,
   currentStep: number,
@@ -62,50 +90,46 @@ function getStepStatus(
 function WizardProgress({
   currentStep,
   completedSteps,
-  className = "",
+  className,
   ...props
 }: WizardProgressProps) {
   return (
     <nav
-      className={["wizard-progress", className].filter(Boolean).join(" ")}
+      className={cn(
+        "w-full overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] pb-2",
+        className,
+      )}
       aria-label="Setup progress"
       {...props}
     >
-      <ol className="wizard-progress-track">
+      <ol className="flex items-start list-none m-0 p-0 min-w-max">
         {STEPS.map((step, index) => {
           const status = getStepStatus(index, currentStep, completedSteps);
           const isLast = index === STEPS.length - 1;
 
           return (
-            <li key={step.label} className="wizard-step-group">
+            <li key={step.label} className="flex items-start">
               <div
-                className={[
-                  "wizard-step",
-                  `wizard-step-${status}`,
-                ].join(" ")}
+                className="flex flex-col items-center gap-2 min-w-[72px]"
                 aria-current={status === "active" ? "step" : undefined}
               >
-                <span className="wizard-step-dot">
+                <span className={dotVariants({ status })}>
                   {status === "completed" ? (
                     <CheckIcon />
                   ) : (
-                    <span className="wizard-step-number">{index + 1}</span>
+                    <span className="tabular-nums">{index + 1}</span>
                   )}
                 </span>
-                <span className="wizard-step-label">{step.label}</span>
+                <span className={labelVariants({ status })}>{step.label}</span>
               </div>
 
               {!isLast && (
                 <span
-                  className={[
-                    "wizard-connector",
+                  className={cn(
+                    "block w-10 h-0.5 bg-border-default rounded-[1px] mt-[15px] shrink-0 transition-colors duration-150 ease-out",
                     getStepStatus(index, currentStep, completedSteps) ===
-                    "completed"
-                      ? "wizard-connector-completed"
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                      "completed" && "bg-secondary",
+                  )}
                   aria-hidden="true"
                 />
               )}

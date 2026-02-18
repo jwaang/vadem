@@ -63,121 +63,38 @@ const sampleContacts: EmergencyContact[] = [
 
 export default function Home() {
   return (
-    <div
-      style={{
-        maxWidth: 768,
-        margin: "0 auto",
-        padding: "var(--space-8) var(--space-4)",
-        paddingBottom: "calc(var(--space-8) + 80px)",
-      }}
-    >
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "var(--text-5xl)",
-          lineHeight: "var(--leading-tight)",
-          letterSpacing: "var(--tracking-tight)",
-          color: "var(--text)",
-          marginBottom: "var(--space-2)",
-        }}
-      >
+    <div className="max-w-3xl mx-auto py-8 px-4 pb-[calc(var(--spacing-8)+80px)]">
+      <h1 className="font-display text-5xl leading-tight tracking-tight text-text-primary mb-2">
         Handoff
       </h1>
-      <p
-        style={{
-          fontFamily: "var(--font-body)",
-          fontSize: "var(--text-lg)",
-          lineHeight: "var(--leading-normal)",
-          color: "var(--text-secondary)",
-          marginBottom: "var(--space-8)",
-        }}
-      >
+      <p className="font-body text-lg leading-normal text-text-secondary mb-8">
         Component showcase
       </p>
 
       {/* ── Layout Shells ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Layout Shells
-        </h2>
-        <p
-          style={{
-            fontSize: "var(--text-sm)",
-            color: "var(--text-muted)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Layout Shells</h2>
+        <p className="text-sm text-text-muted mb-4">
           Responsive layout containers. Creator: sidebar nav (desktop) + bottom
           nav (mobile). Sitter: full-width mobile-first + bottom nav. Resize
           browser to see breakpoint changes.
         </p>
 
         {/* Creator Layout Demo */}
-        <div style={{ marginBottom: "var(--space-6)" }}>
-          <p
-            style={{
-              fontSize: "var(--text-sm)",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              marginBottom: "var(--space-2)",
-            }}
-          >
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-text-secondary mb-2">
             Creator Dashboard Layout
           </p>
-          <div
-            style={{
-              border: "1.5px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
-              overflow: "hidden",
-              height: 320,
-              position: "relative",
-            }}
-          >
-            <CreatorLayout
-              style={{
-                minHeight: 320,
-                height: 320,
-              }}
-            >
-              <div
-                style={{
-                  padding: "var(--space-6)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "var(--space-4)",
-                }}
-              >
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "var(--text-xl)",
-                  }}
-                >
-                  My Property
-                </h3>
-                <p
-                  style={{
-                    fontSize: "var(--text-sm)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
+          <div className="border-[1.5px] border-border-default rounded-lg overflow-hidden h-[320px] relative">
+            <CreatorLayout className="min-h-[320px] h-[320px]">
+              <div className="p-6 flex flex-col gap-4">
+                <h3 className="font-display text-xl">My Property</h3>
+                <p className="text-sm text-text-secondary">
                   Sidebar visible at 1024px+. Bottom nav visible below 1024px.
                   Content max-width: 960px (desktop), 720px (tablet), 768px
                   (mobile).
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "var(--space-3)",
-                    flexWrap: "wrap",
-                  }}
-                >
+                <div className="flex gap-3 flex-wrap">
                   <Badge variant="room">Kitchen</Badge>
                   <Badge variant="room">Garage</Badge>
                   <Badge variant="success">Active</Badge>
@@ -189,63 +106,19 @@ export default function Home() {
 
         {/* Sitter Layout Demo */}
         <div>
-          <p
-            style={{
-              fontSize: "var(--text-sm)",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              marginBottom: "var(--space-2)",
-            }}
-          >
+          <p className="text-sm font-semibold text-text-secondary mb-2">
             Sitter View Layout
           </p>
-          <div
-            style={{
-              border: "1.5px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
-              overflow: "hidden",
-              height: 320,
-              position: "relative",
-            }}
-          >
-            <SitterLayout
-              style={{
-                minHeight: 320,
-                height: 320,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "var(--space-4)",
-                }}
-              >
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "var(--text-xl)",
-                  }}
-                >
-                  Today View
-                </h3>
-                <p
-                  style={{
-                    fontSize: "var(--text-sm)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
+          <div className="border-[1.5px] border-border-default rounded-lg overflow-hidden h-[320px] relative">
+            <SitterLayout className="min-h-[320px] h-[320px]">
+              <div className="flex flex-col gap-4">
+                <h3 className="font-display text-xl">Today View</h3>
+                <p className="text-sm text-text-secondary">
                   Full-width mobile-first layout. Bottom nav always visible.
                   Content max-width: 640px centered. Today view is the default
                   landing.
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "var(--space-3)",
-                    flexWrap: "wrap",
-                  }}
-                >
+                <div className="flex gap-3 flex-wrap">
                   <Badge variant="time">7:00 AM</Badge>
                   <Badge variant="overlay">This Trip Only</Badge>
                   <Badge variant="success">Active</Badge>
@@ -257,7 +130,7 @@ export default function Home() {
       </section>
 
       {/* ── Today View Header ── */}
-      <section style={{ marginBottom: "var(--space-8)", marginLeft: "calc(-1 * var(--space-4))", marginRight: "calc(-1 * var(--space-4))", marginTop: "calc(-1 * var(--space-8))" }}>
+      <section className="mb-8 -mx-4 -mt-8">
         <TodayViewHeader
           sitterName="Jamie"
           currentDay={2}
@@ -269,23 +142,9 @@ export default function Home() {
       </section>
 
       {/* ── Time Slot Dividers ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Time Slot Dividers
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Time Slot Dividers</h2>
+        <div className="flex flex-col gap-4">
           <TimeSlotDivider slot="morning" />
           <TimeSlotDivider slot="afternoon" />
           <TimeSlotDivider slot="evening" />
@@ -293,24 +152,9 @@ export default function Home() {
       </section>
 
       {/* ── Activity Feed Items ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Activity Feed
-        </h2>
-        <div
-          style={{
-            backgroundColor: "var(--bg-raised)",
-            borderRadius: "var(--radius-md)",
-            border: "1.5px solid var(--border)",
-            padding: "0 var(--space-4)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Activity Feed</h2>
+        <div className="bg-bg-raised rounded-md border-[1.5px] border-border-default px-4">
           <ActivityFeedItem
             type="view"
             name="Jamie"
@@ -346,79 +190,43 @@ export default function Home() {
       </section>
 
       {/* ── Bottom Navigation (inline demo) ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Bottom Navigation
-        </h2>
-        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Inline demo (non-fixed)</p>
-        <div style={{ position: "relative", borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1.5px solid var(--border)" }}>
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Bottom Navigation</h2>
+        <p className="text-sm text-text-muted mb-2">Inline demo (non-fixed)</p>
+        <div className="relative rounded-xl overflow-hidden border-[1.5px] border-border-default">
           <BottomNav style={{ position: "relative" }} />
         </div>
-        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>Active tab: &quot;Manual&quot;</p>
-        <div style={{ position: "relative", borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1.5px solid var(--border)", marginTop: "var(--space-2)" }}>
+        <p className="text-sm text-text-muted mt-2">Active tab: &quot;Manual&quot;</p>
+        <div className="relative rounded-xl overflow-hidden border-[1.5px] border-border-default mt-2">
           <BottomNav activeTab="manual" style={{ position: "relative" }} />
         </div>
       </section>
 
       {/* ── Wizard Progress ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Wizard Progress
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-6)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Wizard Progress</h2>
+        <div className="flex flex-col gap-6">
           <div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Step 1 of 6 (Home)</p>
+            <p className="text-sm text-text-muted mb-2">Step 1 of 6 (Home)</p>
             <WizardProgress currentStep={0} />
           </div>
           <div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Step 3 of 6 (Access)</p>
+            <p className="text-sm text-text-muted mb-2">Step 3 of 6 (Access)</p>
             <WizardProgress currentStep={2} />
           </div>
           <div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Step 6 of 6 (Review)</p>
+            <p className="text-sm text-text-muted mb-2">Step 6 of 6 (Review)</p>
             <WizardProgress currentStep={5} />
           </div>
         </div>
       </section>
 
       {/* ── Section Navigation ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Section Navigation
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-6)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Section Navigation</h2>
+        <div className="flex flex-col gap-6">
           <div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Sitter manual sections</p>
+            <p className="text-sm text-text-muted mb-2">Sitter manual sections</p>
             <SectionNav
               sections={[
                 { id: "overview", emoji: "🏠", label: "Overview" },
@@ -433,7 +241,7 @@ export default function Home() {
             />
           </div>
           <div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>First section active (default)</p>
+            <p className="text-sm text-text-muted mb-2">First section active (default)</p>
             <SectionNav
               sections={[
                 { id: "overview", emoji: "🏠", label: "Overview" },
@@ -448,24 +256,9 @@ export default function Home() {
       </section>
 
       {/* ── Notification Toasts ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Notification Toasts
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-            alignItems: "flex-end",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Notification Toasts</h2>
+        <div className="flex flex-col gap-4 items-end">
           <NotificationToast
             variant="success"
             title="Task completed"
@@ -491,24 +284,9 @@ export default function Home() {
       </section>
 
       {/* ── Badges ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Badges &amp; Pills
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Badges &amp; Pills</h2>
+        <div className="flex flex-wrap gap-3 items-center">
           <Badge variant="overlay">This Trip Only</Badge>
           <Badge variant="room">Kitchen</Badge>
           <Badge variant="room">Garage</Badge>
@@ -523,38 +301,15 @@ export default function Home() {
       </section>
 
       {/* ── Emergency Contact Bar ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Emergency Contact Bar
-        </h2>
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Emergency Contact Bar</h2>
         <EmergencyContactBar contacts={sampleContacts} />
       </section>
 
       {/* ── Pet Profile Cards ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Pet Profile Cards
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-6)",
-            alignItems: "start",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Pet Profile Cards</h2>
+        <div className="flex flex-wrap gap-6 items-start">
           <PetProfileCard
             src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=600&fit=crop"
             alt="Golden Retriever sitting in a field"
@@ -578,24 +333,9 @@ export default function Home() {
       </section>
 
       {/* ── Location Cards ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Location Cards
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-6)",
-            alignItems: "start",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Location Cards</h2>
+        <div className="flex flex-wrap gap-6 items-start">
           <LocationCard
             src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=450&fit=crop"
             alt="Modern house with pool"
@@ -626,23 +366,9 @@ export default function Home() {
       </section>
 
       {/* ── Inputs ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Text Input
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Text Input</h2>
+        <div className="flex flex-col gap-4">
           <Input
             label="Location Name"
             placeholder="e.g. Grandma's House"
@@ -663,23 +389,9 @@ export default function Home() {
       </section>
 
       {/* ── Textarea ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Textarea
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Textarea</h2>
+        <div className="flex flex-col gap-4">
           <Textarea
             label="Special Instructions"
             placeholder="Any special care instructions for your pet..."
@@ -694,37 +406,15 @@ export default function Home() {
       </section>
 
       {/* ── Search Bar ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Search Bar
-        </h2>
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Search Bar</h2>
         <SearchBar placeholder="Search locations, contacts..." />
       </section>
 
       {/* ── Vault Items ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Vault Items
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-3)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Vault Items</h2>
+        <div className="flex flex-col gap-3">
           <VaultItem
             state="revealed"
             icon={<LockIcon />}
@@ -754,23 +444,9 @@ export default function Home() {
       </section>
 
       {/* ── Task Items ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Task Items
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-3)",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Task Items</h2>
+        <div className="flex flex-col gap-3">
           <TaskItem
             text="Feed Luna breakfast — 1 cup dry food"
             time="7:00 AM"
@@ -802,24 +478,9 @@ export default function Home() {
       </section>
 
       {/* ── Buttons ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Variants
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Variants</h2>
+        <div className="flex flex-wrap gap-3 items-center">
           <Button variant="primary">Primary</Button>
           <Button variant="secondary">Secondary</Button>
           <Button variant="vault">Vault</Button>
@@ -830,24 +491,9 @@ export default function Home() {
       </section>
 
       {/* ── Sizes ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Sizes
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Sizes</h2>
+        <div className="flex flex-wrap gap-3 items-center">
           <Button size="lg">Large</Button>
           <Button size="default">Default</Button>
           <Button size="sm">Small</Button>
@@ -855,24 +501,9 @@ export default function Home() {
       </section>
 
       {/* ── With Icons ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          With Icons
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">With Icons</h2>
+        <div className="flex flex-wrap gap-3 items-center">
           <Button icon={<PlusIcon />}>Add Location</Button>
           <Button variant="secondary" icon={<PlusIcon />}>
             Confirm
@@ -884,24 +515,9 @@ export default function Home() {
       </section>
 
       {/* ── Disabled ── */}
-      <section style={{ marginBottom: "var(--space-8)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
-          Disabled
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
+      <section className="mb-8">
+        <h2 className="font-display text-2xl mb-4">Disabled</h2>
+        <div className="flex flex-wrap gap-3 items-center">
           <Button disabled>Primary</Button>
           <Button variant="secondary" disabled>
             Secondary
@@ -917,39 +533,16 @@ export default function Home() {
 
       {/* ── All Sizes × All Variants ── */}
       <section>
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "var(--text-2xl)",
-            marginBottom: "var(--space-4)",
-          }}
-        >
+        <h2 className="font-display text-2xl mb-4">
           Size &times; Variant Matrix
         </h2>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-          }}
-        >
+        <div className="flex flex-col gap-4">
           {(["lg", "default", "sm"] as const).map((size) => (
             <div
               key={size}
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "var(--space-2)",
-                alignItems: "center",
-              }}
+              className="flex flex-wrap gap-2 items-center"
             >
-              <span
-                style={{
-                  fontSize: "var(--text-xs)",
-                  color: "var(--text-muted)",
-                  minWidth: 60,
-                }}
-              >
+              <span className="text-xs text-text-muted min-w-[60px]">
                 {size}
               </span>
               <Button variant="primary" size={size}>

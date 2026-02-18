@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, type HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 
 type TabId = "today" | "manual" | "vault" | "contacts";
 
+type BottomNavVariant = "fixed" | "sticky";
+
 interface BottomNavProps extends HTMLAttributes<HTMLElement> {
-  /** Currently active tab */
   activeTab?: TabId;
-  /** Called when a tab is tapped */
   onTabChange?: (tab: TabId) => void;
+  /** Position behavior: "fixed" (viewport) or "sticky" (layout flow) */
+  variant?: BottomNavVariant;
 }
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -95,7 +98,8 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
 function BottomNav({
   activeTab,
   onTabChange,
-  className = "",
+  variant = "fixed",
+  className,
   ...props
 }: BottomNavProps) {
   const [internalActive, setInternalActive] = useState<TabId>(
@@ -111,7 +115,11 @@ function BottomNav({
 
   return (
     <nav
-      className={["bottom-nav", className].filter(Boolean).join(" ")}
+      className={cn(
+        "flex items-center justify-around bg-bg-raised rounded-t-xl border-t border-border-default shadow-[0_-4px_16px_rgba(42,31,26,0.08),0_-1px_4px_rgba(42,31,26,0.04)] py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-[100]",
+        variant === "fixed" ? "fixed bottom-0 left-0 right-0" : "sticky bottom-0 shrink-0",
+        className,
+      )}
       aria-label="Main navigation"
       {...props}
     >
@@ -122,17 +130,19 @@ function BottomNav({
           <button
             key={tab.id}
             type="button"
-            className={[
-              "bottom-nav-tab",
+            className={cn(
+              "flex flex-col items-center gap-0.5 flex-1 py-1 border-none bg-transparent cursor-pointer [-webkit-tap-highlight-color:transparent] transition-colors duration-150 ease-out",
               isActive ? "text-primary" : "text-text-muted",
-            ].join(" ")}
+            )}
             aria-current={isActive ? "page" : undefined}
             onClick={() => handleTap(tab.id)}
           >
-            <span className="bottom-nav-icon" aria-hidden="true">
+            <span className="flex items-center justify-center w-6 h-6" aria-hidden="true">
               {tab.icon}
             </span>
-            <span className="bottom-nav-label">{tab.label}</span>
+            <span className="font-body text-xs font-medium leading-none">
+              {tab.label}
+            </span>
           </button>
         );
       })}
@@ -140,4 +150,4 @@ function BottomNav({
   );
 }
 
-export { BottomNav, type BottomNavProps, type TabId };
+export { BottomNav, type BottomNavProps, type BottomNavVariant, type TabId };

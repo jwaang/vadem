@@ -1,6 +1,7 @@
 "use client";
 
 import { type HTMLAttributes, type ReactNode, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { Badge } from "./Badge";
 
 interface TaskItemProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick" | "onToggle"> {
@@ -44,10 +45,13 @@ function CameraIcon() {
   );
 }
 
-function CheckmarkIcon() {
+function CheckmarkIcon({ visible }: { visible: boolean }) {
   return (
     <svg
-      className="task-item-checkmark"
+      className={cn(
+        "transition-[opacity,scale] duration-150 ease-spring",
+        visible ? "opacity-100 scale-100" : "opacity-0 scale-0",
+      )}
       width="16"
       height="16"
       viewBox="0 0 16 16"
@@ -73,7 +77,7 @@ function TaskItem({
   showProof = false,
   onProof,
   meta,
-  className = "",
+  className,
   ...props
 }: TaskItemProps) {
   const [internalCompleted, setInternalCompleted] = useState(defaultCompleted);
@@ -100,14 +104,12 @@ function TaskItem({
 
   return (
     <div
-      className={[
-        "task-item",
-        completed && "task-item-completed",
-        overlay && "task-item-overlay",
+      className={cn(
+        "flex items-start gap-4 py-4 px-5 rounded-lg border border-border-default bg-bg-raised cursor-pointer select-none transition-[border-color,box-shadow,background-color] duration-150 ease-out hover:border-border-strong hover:shadow-sm",
+        completed && "bg-secondary-subtle",
+        overlay && "border-l-[3px] border-l-accent",
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       onClick={handleToggle}
       role="checkbox"
       aria-checked={completed}
@@ -122,22 +124,27 @@ function TaskItem({
     >
       {/* Checkbox */}
       <div
-        className={[
-          "task-item-checkbox",
-          completed && "task-item-checkbox-checked",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={cn(
+          "relative w-[26px] h-[26px] min-w-[26px] rounded-sm border-[1.5px] border-border-strong bg-bg-raised cursor-pointer transition-[background-color,border-color] duration-150 ease-spring flex items-center justify-center shrink-0 mt-px",
+          completed && "bg-secondary border-secondary animate-check-pop",
+        )}
       >
-        <CheckmarkIcon />
+        <CheckmarkIcon visible={completed} />
       </div>
 
       {/* Body */}
-      <div className="task-item-body">
-        <span className="task-item-text">{text}</span>
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <span
+          className={cn(
+            "font-body text-sm font-medium leading-snug text-text-primary transition-[color,text-decoration-color] duration-150 ease-out",
+            completed && "line-through text-text-muted",
+          )}
+        >
+          {text}
+        </span>
 
         {hasMeta && (
-          <div className="task-item-meta">
+          <div className="flex flex-wrap gap-2 items-center">
             {time && <Badge variant="time">{time}</Badge>}
             {room && <Badge variant="room">{room}</Badge>}
             {overlay && <Badge variant="overlay">This Trip Only</Badge>}
@@ -150,7 +157,7 @@ function TaskItem({
       {showProof && (
         <button
           type="button"
-          className="task-item-proof"
+          className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted py-1 px-2 border-[1.5px] border-dashed border-border-strong rounded-sm bg-transparent cursor-pointer whitespace-nowrap transition-[color,border-color] duration-150 ease-out hover:text-primary hover:border-primary"
           onClick={handleProofClick}
           aria-label="Add proof photo"
         >

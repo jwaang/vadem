@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode, type HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 import { BottomNav, type TabId } from "@/components/ui/BottomNav";
 
 type CreatorNavId = "property" | "trips" | "settings";
@@ -86,7 +87,7 @@ function CreatorLayout({
   onNavChange,
   activeTab,
   onTabChange,
-  className = "",
+  className,
   ...props
 }: CreatorLayoutProps) {
   const [internalNav, setInternalNav] = useState<CreatorNavId>(
@@ -102,32 +103,38 @@ function CreatorLayout({
 
   return (
     <div
-      className={["creator-layout", className].filter(Boolean).join(" ")}
+      className={cn(
+        "flex flex-col min-h-dvh lg:flex-row",
+        className,
+      )}
       {...props}
     >
       {/* Desktop sidebar */}
-      <aside className="creator-sidebar" aria-label="Creator navigation">
-        <div className="creator-sidebar-header">
-          <span className="creator-sidebar-logo">Handoff</span>
+      <aside
+        className="hidden lg:flex lg:flex-col lg:w-[240px] lg:shrink-0 lg:bg-bg-raised lg:border-r lg:border-border-default lg:py-6 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto"
+        aria-label="Creator navigation"
+      >
+        <div className="px-6 pb-6 border-b border-border-default mb-4">
+          <span className="font-display text-2xl text-primary italic">Handoff</span>
         </div>
-        <nav className="creator-sidebar-nav">
+        <nav className="flex flex-col gap-1 px-3">
           {sidebarItems.map((item) => {
             const isActive = item.id === currentNav;
             return (
               <button
                 key={item.id}
                 type="button"
-                className={[
-                  "creator-sidebar-item",
-                  isActive ? "creator-sidebar-item-active" : "",
-                ].join(" ")}
+                className={cn(
+                  "flex items-center gap-3 p-3 border-none bg-transparent rounded-md cursor-pointer font-body text-sm font-medium text-text-secondary transition-[background-color,color] duration-150 ease-out w-full text-left [-webkit-tap-highlight-color:transparent] hover:bg-bg-sunken hover:text-text-primary",
+                  isActive && "bg-primary-subtle text-primary font-semibold hover:bg-primary-light",
+                )}
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => handleNavChange(item.id)}
               >
-                <span className="creator-sidebar-icon" aria-hidden="true">
+                <span className="flex items-center justify-center w-5 h-5 shrink-0" aria-hidden="true">
                   {item.icon}
                 </span>
-                <span className="creator-sidebar-label">{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
               </button>
             );
           })}
@@ -135,13 +142,15 @@ function CreatorLayout({
       </aside>
 
       {/* Main content area */}
-      <main className="creator-main">
-        <div className="creator-content">{children}</div>
+      <main className="flex-1 pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:min-w-0">
+        <div className="max-w-[768px] mx-auto p-4 md:max-w-[720px] md:p-6 lg:max-w-[960px] lg:p-8">
+          {children}
+        </div>
       </main>
 
       {/* Mobile bottom nav */}
-      <div className="creator-bottom-nav">
-        <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <div className="block lg:hidden">
+        <BottomNav activeTab={activeTab} onTabChange={onTabChange} variant="sticky" />
       </div>
     </div>
   );

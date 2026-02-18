@@ -1,20 +1,15 @@
 import { type HTMLAttributes, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
 type VaultItemState = "revealed" | "locked" | "hidden";
 
 interface VaultItemProps extends HTMLAttributes<HTMLDivElement> {
-  /** The state of the vault item */
   state?: VaultItemState;
-  /** Icon rendered inside the 44px icon box */
   icon: ReactNode;
-  /** Label text (e.g. "Front Door Code") */
   label: string;
-  /** Hint/instruction text below the label */
   hint?: string;
-  /** The secret value displayed in revealed state */
   value?: string;
-  /** Callback when verify button is clicked */
   onVerify?: () => void;
 }
 
@@ -43,27 +38,30 @@ function VaultItem({
   hint,
   value,
   onVerify,
-  className = "",
+  className,
   ...props
 }: VaultItemProps) {
-  const stateClass =
-    state === "revealed" ? "vault-item-revealed" : "vault-item-locked";
-
   return (
     <div
-      className={["vault-item", stateClass, className].filter(Boolean).join(" ")}
+      className={cn(
+        "flex items-center gap-4 py-4 px-5 rounded-lg border border-vault-light bg-vault-subtle",
+        state === "revealed" && "bg-secondary-subtle border-secondary-light",
+        className,
+      )}
       {...props}
     >
-      <div className="vault-item-icon">{icon}</div>
+      <div className="flex items-center justify-center w-11 h-11 min-w-[44px] rounded-md bg-vault text-text-on-vault">
+        {icon}
+      </div>
 
       {state === "hidden" ? (
         <>
-          <div className="vault-item-content">
-            <p className="vault-item-message">
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <p className="font-body text-sm leading-normal text-text-secondary m-0">
               Verify your phone number to view secure info
             </p>
           </div>
-          <div className="vault-item-action">
+          <div className="shrink-0">
             <Button variant="vault" size="sm" onClick={onVerify}>
               Verify
             </Button>
@@ -71,11 +69,17 @@ function VaultItem({
         </>
       ) : state === "locked" ? (
         <>
-          <div className="vault-item-content">
-            <span className="vault-item-label">{label}</span>
-            {hint && <span className="vault-item-hint">{hint}</span>}
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="font-body text-sm font-semibold leading-snug text-text-primary">
+              {label}
+            </span>
+            {hint && (
+              <span className="font-body text-xs leading-normal text-text-muted">
+                {hint}
+              </span>
+            )}
           </div>
-          <div className="vault-item-action">
+          <div className="shrink-0">
             <Button variant="vault" size="sm" onClick={onVerify}>
               Verify
             </Button>
@@ -83,11 +87,19 @@ function VaultItem({
         </>
       ) : (
         <>
-          <div className="vault-item-content">
-            <span className="vault-item-label">{label}</span>
-            {hint && <span className="vault-item-hint">{hint}</span>}
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="font-body text-sm font-semibold leading-snug text-text-primary">
+              {label}
+            </span>
+            {hint && (
+              <span className="font-body text-xs leading-normal text-text-muted">
+                {hint}
+              </span>
+            )}
           </div>
-          <div className="vault-item-value">{value}</div>
+          <div className="font-mono text-lg font-semibold tracking-[0.15em] text-vault whitespace-nowrap bg-vault-light py-2 px-3 rounded-sm">
+            {value}
+          </div>
         </>
       )}
     </div>

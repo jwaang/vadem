@@ -1,6 +1,7 @@
 "use client";
 
 import { type HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 
 interface PetDetail {
   emoji: string;
@@ -35,52 +36,67 @@ function PetProfileCard({
   age,
   details = [],
   personalityNote,
-  className = "",
+  className,
   ...props
 }: PetProfileCardProps) {
   return (
     <div
-      className={["pet-card", className].filter(Boolean).join(" ")}
+      className={cn(
+        "max-w-[360px] bg-bg-raised rounded-xl shadow-md overflow-hidden border border-border-default transition-[box-shadow,translate] duration-250 ease-out hover:shadow-lg hover:-translate-y-0.5",
+        className,
+      )}
       {...props}
     >
       {/* Hero photo — 1:1 aspect ratio, full bleed */}
-      <div className="pet-card-hero">
+      <div className="relative w-full aspect-square overflow-hidden">
         {src ? (
           <img
             src={src}
             alt={alt || name}
-            className="pet-card-img"
+            className="w-full h-full object-cover block"
             draggable={false}
           />
         ) : (
-          <div className="pet-card-placeholder" />
+          <div className="w-full h-full bg-[linear-gradient(135deg,var(--color-primary-light)_0%,var(--color-accent-light)_50%,var(--color-secondary-light)_100%)]" />
         )}
       </div>
 
       {/* Content below photo */}
-      <div className="pet-card-body">
-        <h2 className="pet-card-name">{name}</h2>
-        <p className="pet-card-meta">
+      <div className="flex flex-col gap-3 pt-5 px-5 pb-6">
+        <h2 className="font-display text-3xl leading-tight tracking-tight text-text-primary m-0">
+          {name}
+        </h2>
+        <p className="font-body text-sm leading-normal text-text-muted m-0">
           {breed} · {age}
         </p>
 
         {details.length > 0 && (
-          <div className="pet-card-details">
+          <div className="flex flex-col mt-1 divide-y divide-border-default">
             {details.map((detail) => (
-              <div key={detail.label} className="pet-card-detail-row">
-                <span className="pet-card-detail-emoji" aria-hidden="true">
+              <div
+                key={detail.label}
+                className="flex items-center gap-2 font-body text-sm leading-normal py-3"
+              >
+                <span
+                  className="shrink-0 w-6 text-center text-base"
+                  aria-hidden="true"
+                >
                   {detail.emoji}
                 </span>
-                <span className="pet-card-detail-label">{detail.label}</span>
+                <span className="text-text-primary font-semibold shrink-0">
+                  {detail.label}
+                </span>
                 {detail.phone ? (
                   <a
                     href={`tel:${detail.phone}`}
-                    className="pet-card-detail-phone"
+                    className="text-secondary font-semibold no-underline ml-auto text-right transition-colors duration-150 ease-out hover:text-secondary-hover"
                   >
                     {detail.value}
                   </a>
                 ) : (
-                  <span className="pet-card-detail-value">{detail.value}</span>
+                  <span className="text-text-secondary ml-auto text-right">
+                    {detail.value}
+                  </span>
                 )}
               </div>
             ))}
@@ -88,7 +104,9 @@ function PetProfileCard({
         )}
 
         {personalityNote && (
-          <p className="pet-card-personality">{personalityNote}</p>
+          <p className="font-handwritten text-lg leading-relaxed text-text-secondary bg-accent-subtle rounded-md py-3 px-4 mt-1 m-0">
+            {personalityNote}
+          </p>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { type HTMLAttributes, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 type ContactRole = "owner" | "vet" | "neighbor" | "emergency";
 
@@ -22,18 +23,18 @@ const roleLabels: Record<ContactRole, string> = {
   emergency: "Emergency",
 };
 
-const roleIconColors: Record<ContactRole, string> = {
-  owner: "var(--primary-light)",
-  vet: "var(--secondary-light)",
-  neighbor: "var(--accent-light)",
-  emergency: "var(--danger-light)",
+const roleIconBg: Record<ContactRole, string> = {
+  owner: "bg-primary-light",
+  vet: "bg-secondary-light",
+  neighbor: "bg-accent-light",
+  emergency: "bg-danger-light",
 };
 
-const roleTextColors: Record<ContactRole, string> = {
-  owner: "var(--primary)",
-  vet: "var(--secondary)",
-  neighbor: "var(--accent)",
-  emergency: "var(--danger)",
+const roleTextColor: Record<ContactRole, string> = {
+  owner: "text-primary",
+  vet: "text-secondary",
+  neighbor: "text-accent",
+  emergency: "text-danger",
 };
 
 function DefaultIcon({ role }: { role: ContactRole }) {
@@ -44,10 +45,7 @@ function DefaultIcon({ role }: { role: ContactRole }) {
     emergency: "E",
   };
   return (
-    <span
-      className="contact-chip-icon-text"
-      style={{ color: roleTextColors[role] }}
-    >
+    <span className={cn("font-body text-sm font-bold", roleTextColor[role])}>
       {initials[role]}
     </span>
   );
@@ -55,32 +53,36 @@ function DefaultIcon({ role }: { role: ContactRole }) {
 
 function EmergencyContactBar({
   contacts,
-  className = "",
+  className,
   ...props
 }: EmergencyContactBarProps) {
   return (
-    <div
-      className={["contact-bar", className].filter(Boolean).join(" ")}
-      {...props}
-    >
-      <div className="contact-bar-scroll">
+    <div className={cn("w-full", className)} {...props}>
+      <div className="flex gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-2 [scrollbar-width:thin]">
         {contacts.map((contact) => (
-          <div key={`${contact.name}-${contact.phone}`} className="contact-chip">
+          <div
+            key={`${contact.name}-${contact.phone}`}
+            className="flex items-center gap-3 min-w-max py-3 px-4 bg-bg-raised border border-border-default rounded-lg shadow-xs transition-[border-color,background-color,box-shadow] duration-150 ease-out hover:border-secondary hover:bg-secondary-subtle hover:shadow-sm"
+          >
             <span
-              className="contact-chip-icon"
-              style={{ backgroundColor: roleIconColors[contact.role] }}
+              className={cn(
+                "flex items-center justify-center w-9 h-9 rounded-round shrink-0",
+                roleIconBg[contact.role],
+              )}
             >
               {contact.icon ?? <DefaultIcon role={contact.role} />}
             </span>
-            <span className="contact-chip-info">
-              <span className="contact-chip-name">{contact.name}</span>
-              <span className="contact-chip-role">
+            <span className="flex flex-col gap-px">
+              <span className="font-body text-sm font-semibold text-text-primary leading-tight whitespace-nowrap">
+                {contact.name}
+              </span>
+              <span className="font-body text-xs text-text-muted leading-tight whitespace-nowrap">
                 {roleLabels[contact.role]}
               </span>
             </span>
             <a
               href={`tel:${contact.phone}`}
-              className="contact-chip-call"
+              className="font-body text-sm font-semibold text-secondary no-underline py-1 px-3 rounded-sm ml-2 whitespace-nowrap transition-[background-color,color] duration-150 ease-out hover:bg-secondary-subtle hover:text-secondary-hover"
               onClick={(e) => e.stopPropagation()}
             >
               Call

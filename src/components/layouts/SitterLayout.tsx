@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, type HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 import { BottomNav, type TabId } from "@/components/ui/BottomNav";
 
 interface SitterLayoutProps extends HTMLAttributes<HTMLDivElement> {
@@ -16,19 +17,21 @@ function SitterLayout({
   children,
   activeTab,
   onTabChange,
-  className = "",
+  className,
   ...props
 }: SitterLayoutProps) {
   return (
     <div
-      className={["sitter-layout", className].filter(Boolean).join(" ")}
+      className={cn("flex flex-col min-h-dvh", className)}
       {...props}
     >
-      <main className="sitter-main">
-        <div className="sitter-content">{children}</div>
+      <main className="flex-1 pb-[calc(72px+env(safe-area-inset-bottom))]">
+        <div className="max-w-[600px] mx-auto p-4 md:max-w-[640px] md:p-6 lg:p-8 lg:px-6">
+          {children}
+        </div>
       </main>
 
-      <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <BottomNav activeTab={activeTab} onTabChange={onTabChange} variant="sticky" />
     </div>
   );
 }

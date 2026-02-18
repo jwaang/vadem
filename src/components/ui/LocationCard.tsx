@@ -1,6 +1,7 @@
 "use client";
 
 import { type HTMLAttributes, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { Badge } from "./Badge";
 
 type TiltVariant = "tilted-left" | "neutral" | "tilted-right";
@@ -31,7 +32,7 @@ function PlaceholderIcon() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ color: "var(--text-muted)" }}
+      className="text-text-muted"
     >
       <rect x="6" y="10" width="36" height="28" rx="3" />
       <circle cx="18" cy="22" r="4" />
@@ -59,10 +60,16 @@ function CloseIcon() {
   );
 }
 
-const tiltClasses: Record<TiltVariant, string> = {
-  "tilted-left": "location-card-tilt-left",
-  neutral: "location-card-tilt-neutral",
-  "tilted-right": "location-card-tilt-right",
+const tiltBase: Record<TiltVariant, string> = {
+  "tilted-left": "rotate-[-1.5deg]",
+  neutral: "rotate-0",
+  "tilted-right": "rotate-[1.2deg]",
+};
+
+const tiltHover: Record<TiltVariant, string> = {
+  "tilted-left": "hover:-translate-y-1 hover:rotate-[-2deg] hover:shadow-xl",
+  neutral: "hover:-translate-y-1 hover:rotate-[-0.5deg] hover:shadow-xl",
+  "tilted-right": "hover:-translate-y-1 hover:rotate-[0.7deg] hover:shadow-xl",
 };
 
 function LocationCard({
@@ -72,7 +79,7 @@ function LocationCard({
   room,
   tilt = "neutral",
   onExpand,
-  className = "",
+  className,
   ...props
 }: LocationCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -111,47 +118,50 @@ function LocationCard({
   return (
     <>
       <div
-        className={[
-          "location-card",
-          tiltClasses[tilt],
-          src ? "location-card-tappable" : "",
+        className={cn(
+          "w-[280px] bg-bg-raised rounded-lg shadow-polaroid ring-1 ring-inset ring-[rgba(42,31,26,0.06)] transition-[translate,rotate,box-shadow] duration-250 ease-spring",
+          tiltBase[tilt],
+          src && "cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2",
+          src && tiltHover[tilt],
           className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        )}
         role={src ? "button" : undefined}
         tabIndex={src ? 0 : undefined}
         onClick={handleClick}
         onKeyDown={src ? handleKeyDown : undefined}
         {...props}
       >
-        <div className="location-card-photo">
-          {src ? (
-            <img
-              src={src}
-              alt={alt}
-              className="location-card-img"
-              draggable={false}
-            />
-          ) : (
-            <div className="location-card-placeholder">
-              <PlaceholderIcon />
-              <span className="location-card-placeholder-text">
-                No photo yet
-              </span>
-            </div>
-          )}
+        <div className="p-2">
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-sunken rounded-md">
+            {src ? (
+              <img
+                src={src}
+                alt={alt}
+                className="w-full h-full object-cover block"
+                draggable={false}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 w-full h-full">
+                <PlaceholderIcon />
+                <span className="font-body text-sm text-text-muted">
+                  No photo yet
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="location-card-body">
-          <p className="location-card-caption">{caption}</p>
+        <div className="flex flex-col gap-2 px-2 pb-2">
+          <p className="font-handwritten text-xl leading-snug text-text-primary m-0">
+            {caption}
+          </p>
           {room && <Badge variant="room">{room}</Badge>}
         </div>
       </div>
 
       {expanded && src && (
         <div
-          className="location-card-overlay"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(42,31,26,0.85)] animate-location-fade-in"
           onClick={handleClose}
           onKeyDown={handleOverlayKeyDown}
           role="dialog"
@@ -159,7 +169,7 @@ function LocationCard({
           tabIndex={0}
         >
           <button
-            className="location-card-overlay-close"
+            className="absolute top-4 right-4 flex items-center justify-center w-11 h-11 rounded-round border-none bg-[rgba(255,255,255,0.15)] text-white cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-[rgba(255,255,255,0.3)]"
             onClick={handleClose}
             aria-label="Close"
           >
@@ -168,7 +178,7 @@ function LocationCard({
           <img
             src={src}
             alt={alt}
-            className="location-card-overlay-img"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-md"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

@@ -22,7 +22,11 @@
       "priority": 1,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-002", "US-004", "US-005"]
+      "dependsOn": [
+        "US-002",
+        "US-004",
+        "US-005"
+      ]
     },
     {
       "id": "US-022",
@@ -42,7 +46,9 @@
       "priority": 2,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-021"]
+      "dependsOn": [
+        "US-021"
+      ]
     },
     {
       "id": "US-023",
@@ -62,7 +68,9 @@
       "priority": 3,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-021"]
+      "dependsOn": [
+        "US-021"
+      ]
     },
     {
       "id": "US-024",
@@ -82,7 +90,10 @@
       "priority": 4,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-020", "US-021"]
+      "dependsOn": [
+        "US-020",
+        "US-021"
+      ]
     }
   ]
 }

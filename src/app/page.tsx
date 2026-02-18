@@ -1,3 +1,22 @@
+import { Button } from "@/components/ui/Button";
+
+function PlusIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <line x1="8" y1="3" x2="8" y2="13" />
+      <line x1="3" y1="8" x2="13" y2="8" />
+    </svg>
+  );
+}
+
 export default function Home() {
   return (
     <div
@@ -7,7 +26,6 @@ export default function Home() {
         padding: "var(--space-8) var(--space-4)",
       }}
     >
-      {/* Hero heading — Instrument Serif */}
       <h1
         style={{
           fontFamily: "var(--font-display)",
@@ -29,112 +47,182 @@ export default function Home() {
           marginBottom: "var(--space-8)",
         }}
       >
-        Design system tokens loaded successfully.
+        Button component showcase
       </p>
 
-      {/* Handwritten accent — Caveat */}
-      <p
-        style={{
-          fontFamily: "var(--font-handwritten)",
-          fontSize: "var(--text-xl)",
-          lineHeight: "var(--leading-snug)",
-          color: "var(--text)",
-          marginBottom: "var(--space-8)",
-        }}
-      >
-        &ldquo;The warmth of a handwritten care note.&rdquo;
-      </p>
-
-      {/* Color swatches */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-          gap: "var(--space-3)",
-          marginBottom: "var(--space-8)",
-        }}
-      >
-        {[
-          { name: "Primary", bg: "var(--primary)", text: "var(--text-on-primary)" },
-          { name: "Secondary", bg: "var(--secondary)", text: "var(--text-on-primary)" },
-          { name: "Accent", bg: "var(--accent)", text: "var(--text-on-primary)" },
-          { name: "Vault", bg: "var(--vault)", text: "var(--text-on-vault)" },
-          { name: "Danger", bg: "var(--danger)", text: "var(--text-on-primary)" },
-        ].map((c) => (
-          <div
-            key={c.name}
-            style={{
-              background: c.bg,
-              color: c.text,
-              padding: "var(--space-4)",
-              borderRadius: "var(--radius-md)",
-              fontSize: "var(--text-sm)",
-              fontWeight: 600,
-              boxShadow: "var(--shadow-sm)",
-            }}
-          >
-            {c.name}
-          </div>
-        ))}
-      </div>
-
-      {/* Card demo with shadow + radius */}
-      <div
-        style={{
-          background: "var(--bg-raised)",
-          borderRadius: "var(--radius-lg)",
-          boxShadow: "var(--shadow-polaroid)",
-          padding: "var(--space-5)",
-          border: "1px solid var(--border)",
-          marginBottom: "var(--space-8)",
-        }}
-      >
+      {/* ── Variants ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
         <h2
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "var(--text-2xl)",
-            lineHeight: "var(--leading-snug)",
-            color: "var(--text)",
-            marginBottom: "var(--space-2)",
+            marginBottom: "var(--space-4)",
           }}
         >
-          Location Card Preview
+          Variants
         </h2>
-        <p
+        <div
           style={{
-            fontFamily: "var(--font-handwritten)",
-            fontSize: "var(--text-xl)",
-            color: "var(--text-secondary)",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--space-3)",
+            alignItems: "center",
           }}
         >
-          Kitchen — main food prep area
-        </p>
-      </div>
+          <Button variant="primary">Primary</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="vault">Vault</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="soft">Soft</Button>
+          <Button variant="danger">Danger</Button>
+        </div>
+      </section>
 
-      {/* Badge row */}
-      <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-        {[
-          { label: "Completed", bg: "var(--success-light)", color: "var(--success)" },
-          { label: "Due Today", bg: "var(--warning-light)", color: "#8B6420" },
-          { label: "Urgent", bg: "var(--danger-light)", color: "var(--danger)" },
-          { label: "7:00 AM", bg: "var(--primary-light)", color: "var(--primary)" },
-          { label: "Secure", bg: "var(--vault-light)", color: "var(--vault)" },
-        ].map((b) => (
-          <span
-            key={b.label}
-            style={{
-              background: b.bg,
-              color: b.color,
-              fontSize: "var(--text-xs)",
-              fontWeight: 600,
-              padding: "3px 10px",
-              borderRadius: "var(--radius-pill)",
-            }}
-          >
-            {b.label}
-          </span>
-        ))}
-      </div>
+      {/* ── Sizes ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Sizes
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--space-3)",
+            alignItems: "center",
+          }}
+        >
+          <Button size="lg">Large</Button>
+          <Button size="default">Default</Button>
+          <Button size="sm">Small</Button>
+        </div>
+      </section>
+
+      {/* ── With Icons ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          With Icons
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--space-3)",
+            alignItems: "center",
+          }}
+        >
+          <Button icon={<PlusIcon />}>Add Location</Button>
+          <Button variant="secondary" icon={<PlusIcon />}>
+            Confirm
+          </Button>
+          <Button variant="soft" icon={<PlusIcon />} size="sm">
+            Edit
+          </Button>
+        </div>
+      </section>
+
+      {/* ── Disabled ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Disabled
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--space-3)",
+            alignItems: "center",
+          }}
+        >
+          <Button disabled>Primary</Button>
+          <Button variant="secondary" disabled>
+            Secondary
+          </Button>
+          <Button variant="ghost" disabled>
+            Ghost
+          </Button>
+          <Button variant="danger" disabled>
+            Danger
+          </Button>
+        </div>
+      </section>
+
+      {/* ── All Sizes × All Variants ── */}
+      <section>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Size &times; Variant Matrix
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-4)",
+          }}
+        >
+          {(["lg", "default", "sm"] as const).map((size) => (
+            <div
+              key={size}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "var(--space-2)",
+                alignItems: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "var(--text-xs)",
+                  color: "var(--text-muted)",
+                  minWidth: 60,
+                }}
+              >
+                {size}
+              </span>
+              <Button variant="primary" size={size}>
+                Primary
+              </Button>
+              <Button variant="secondary" size={size}>
+                Secondary
+              </Button>
+              <Button variant="vault" size={size}>
+                Vault
+              </Button>
+              <Button variant="ghost" size={size}>
+                Ghost
+              </Button>
+              <Button variant="soft" size={size}>
+                Soft
+              </Button>
+              <Button variant="danger" size={size}>
+                Danger
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

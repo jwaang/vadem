@@ -14,6 +14,7 @@ after each iteration and it's included in prompts for context.
 - **Design tokens via CSS custom properties + Tailwind v4 `@theme inline`**: All design tokens live in `:root` as CSS custom properties, then mapped into Tailwind via `@theme inline` block in `globals.css`. Use `var(--token-name)` in inline styles and Tailwind utility classes (e.g., `bg-primary`, `shadow-polaroid`, `rounded-lg`) in className.
 - **Google Fonts via `next/font/google`**: Use `next/font/google` imports (not `<link>` tags) to avoid `@next/next/no-page-custom-font` lint warning. Each font exports a `variable` CSS property that feeds into the `--font-display`/`--font-body`/`--font-handwritten` tokens.
 - **PWA manifest in Next.js 16**: Use `metadata.manifest` for the manifest link, `metadata.appleWebApp` for iOS PWA meta tags, and export a separate `viewport` const for `themeColor` (Next.js 16 splits viewport from metadata).
+- **UI components in `src/components/ui/`**: Reusable components live in `src/components/ui/`. Use CSS classes in `globals.css` for complex interactive states (hover shadows, active overlays) and Tailwind utilities for static styles (colors, text, border-radius). Export types alongside components.
 
 ---
 
@@ -80,4 +81,25 @@ after each iteration and it's included in prompts for context.
   - Service workers in `public/` are served at root path by Next.js, so `public/sw.js` → `/sw.js`
   - Pure Node.js PNG generation works via `zlib.deflateSync` on raw RGBA pixel data — no external image libraries needed for placeholder icons
   - macOS has `sips` for image conversion but it can't create PNGs from scratch; programmatic generation is more reliable
+---
+
+## 2026-02-17 - US-004
+- Created `Button` component at `src/components/ui/Button.tsx` with `forwardRef` support
+- Implemented 6 variants: primary (terracotta), secondary (sage), vault (slate), ghost (transparent+border), soft (primary-light), danger
+- Implemented 3 sizes: lg (`16px 32px`, radius-lg), default (`12px 20px`, radius-md), sm (`8px 12px`, radius-sm)
+- Leading icon slot via `icon` prop (renders in `<span className="btn-icon">`)
+- Hover: `translateY(-1px)` + shadow elevation + darker background (all variants)
+- Active: `inset 0 0 0 100px rgba(0,0,0,0.06)` overlay on all variants
+- Primary casts colored shadow `0 4px 14px rgba(194,112,74,0.25)` at rest, intensifies on hover
+- Disabled: `opacity: 0.4` + `cursor: not-allowed` + `pointer-events: none`
+- Button CSS classes added to `globals.css` for interactive states; Tailwind utilities for static styles
+- Updated `page.tsx` with full button showcase (variants, sizes, icons, disabled, size×variant matrix)
+- Verified at 375px viewport — all buttons render correctly and wrap properly
+- Files added: `src/components/ui/Button.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - For complex interactive states (hover shadow transitions, active overlays, colored shadows), CSS classes in `globals.css` are cleaner than inline styles or Tailwind utilities — especially when needing `:active:not(:disabled)` selectors
+  - Tailwind v4's `bg-transparent` class can be used as a CSS selector (`.btn.bg-transparent`) to target ghost variant without extra classes
+  - `inset 0 0 0 100px rgba(0,0,0,0.06)` creates a uniform inner overlay effect — the large spread covers the entire button regardless of size
+  - Using `border: none` in base `.btn` then adding `border` via Tailwind on ghost variant works well — the ghost variant's `border border-border-default` overrides correctly
 ---

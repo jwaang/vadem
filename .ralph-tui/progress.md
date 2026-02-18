@@ -274,3 +274,23 @@ after each iteration and it's included in prompts for context.
   - Component prefix naming convention: used `notification-toast-*` prefix for all CSS classes, consistent with `task-item-*`, `vault-item-*`, `section-nav-*` pattern in the codebase.
   - Entrance animation uses `var(--ease-spring)` (cubic-bezier 0.34, 1.56, 0.64, 1) for the bouncy slide-in, exit uses `var(--ease-out)` for smooth departure.
 ---
+
+## 2026-02-17 - US-016
+- Created `BottomNav` component at `src/components/ui/BottomNav.tsx` with 4-tab mobile bottom navigation
+- 4 tabs: Today (clock icon), Manual (book icon), Vault (lock icon), Contacts (people icon) — all SVG icons inline
+- Active tab: `--primary` (terracotta) color via Tailwind `text-primary`; inactive: `--text-muted` via Tailwind `text-text-muted`
+- Tab labels: `text-xs` (12px), 500 weight per acceptance criteria
+- Top border radius `--radius-xl` on both corners, upward shadow (`0 -4px 16px rgba(42,31,26,0.08)`)
+- Fixed to bottom of viewport with `position: fixed; bottom: 0; left: 0; right: 0; z-index: 100`
+- Safe area inset padding for notched devices: `padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom))`
+- Controlled/uncontrolled state via `activeTab` + `onTabChange` props (same pattern as SectionNav)
+- Added inline demo (non-fixed) and fixed nav to `page.tsx` showcase; added 80px bottom padding to container
+- CSS classes in `globals.css`: `.bottom-nav`, `.bottom-nav-tab`, `.bottom-nav-icon`, `.bottom-nav-label`
+- Files added: `src/components/ui/BottomNav.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - Tailwind v4 button reset pattern applies here too — use Tailwind utility classes (`text-primary`, `text-text-muted`) for color on `<button>` elements, CSS only for structural/transition properties
+  - `env(safe-area-inset-bottom)` in `calc()` for bottom padding handles iPhone notch/home indicator without affecting non-notched devices
+  - `-webkit-tap-highlight-color: transparent` removes the blue flash on mobile tap for button elements
+  - Upward shadow uses negative Y offset (`0 -4px 16px`) — same warm-tinted rgba as the design system shadows
+---

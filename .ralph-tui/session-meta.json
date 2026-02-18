@@ -1,8 +1,8 @@
 {
   "id": "400b5be9-6926-42ca-9a0b-bd470802aa5f",
-  "status": "running",
+  "status": "interrupted",
   "startedAt": "2026-02-18T04:21:00.911Z",
-  "updatedAt": "2026-02-18T04:40:51.836Z",
+  "updatedAt": "2026-02-18T04:47:00.007Z",
   "agentPlugin": "claude",
   "trackerPlugin": "json",
   "prdPath": "./docs/handoff-tasks/epic-01-foundation.json",
@@ -10,5 +10,6 @@
   "maxIterations": 10,
   "totalTasks": 0,
   "tasksCompleted": 3,
-  "cwd": "/Users/john/Coding/handoff"
+  "cwd": "/Users/john/Coding/handoff",
+  "endedAt": "2026-02-18T04:47:00.007Z"
 }

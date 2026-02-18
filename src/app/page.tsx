@@ -18,6 +18,7 @@ import { VaultItem, LockIcon } from "@/components/ui/VaultItem";
 import { SectionNav } from "@/components/ui/SectionNav";
 import { WizardProgress } from "@/components/ui/WizardProgress";
 import { NotificationToast } from "@/components/ui/NotificationToast";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 function PlusIcon() {
   return (
@@ -63,6 +64,7 @@ export default function Home() {
         maxWidth: 768,
         margin: "0 auto",
         padding: "var(--space-8) var(--space-4)",
+        paddingBottom: "calc(var(--space-8) + 80px)",
       }}
     >
       <h1
@@ -99,6 +101,27 @@ export default function Home() {
           completedTasks={2}
           proofNeeded={3}
         />
+      </section>
+
+      {/* ── Bottom Navigation (inline demo) ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Bottom Navigation
+        </h2>
+        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-2)" }}>Inline demo (non-fixed)</p>
+        <div style={{ position: "relative", borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1.5px solid var(--border)" }}>
+          <BottomNav style={{ position: "relative" }} />
+        </div>
+        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>Active tab: &quot;Manual&quot;</p>
+        <div style={{ position: "relative", borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1.5px solid var(--border)", marginTop: "var(--space-2)" }}>
+          <BottomNav activeTab="manual" style={{ position: "relative" }} />
+        </div>
       </section>
 
       {/* ── Wizard Progress ── */}
@@ -709,6 +732,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* ── Fixed Bottom Navigation ── */}
+      <BottomNav />
     </div>
   );
 }

@@ -294,3 +294,21 @@ after each iteration and it's included in prompts for context.
   - `-webkit-tap-highlight-color: transparent` removes the blue flash on mobile tap for button elements
   - Upward shadow uses negative Y offset (`0 -4px 16px`) — same warm-tinted rgba as the design system shadows
 ---
+
+## 2026-02-18 - US-017
+- Created `TimeSlotDivider` component at `src/components/ui/TimeSlotDivider.tsx` with 3 variants: morning, afternoon, evening
+- Structure: 32px round icon (emoji on colored bg) + uppercase label + horizontal line filling remaining width
+- Variant backgrounds: morning (`--accent-light`), afternoon (`--primary-light`), evening (`--vault-light`)
+- Label: `--text-xs`, 600 weight, `--tracking-wide` letter-spacing, `--text-muted` color, uppercase
+- Horizontal line: 1px height, `--border` color, `flex: 1` to fill remaining width
+- Pure presentational component — no `"use client"` needed, no state, no event handlers
+- `role="separator"` with `aria-label` for accessibility
+- Added CSS classes in `globals.css`: `.time-slot-divider`, `.time-slot-divider-morning`, `.time-slot-divider-afternoon`, `.time-slot-divider-evening`, `.time-slot-divider-icon`, `.time-slot-divider-label`, `.time-slot-divider-line`
+- Updated `page.tsx` with Time Slot Divider showcase section
+- Files added: `src/components/ui/TimeSlotDivider.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - Simple divider components don't need `"use client"` — they're pure layout with no interactivity
+  - `flex: 1` on the line element with `min-width: 20px` ensures the line always fills remaining space but never collapses to zero
+  - Using variant-specific CSS classes (`.time-slot-divider-morning .time-slot-divider-icon`) for background colors keeps the component logic simple — just a slot config record mapping variant → emoji + label
+---

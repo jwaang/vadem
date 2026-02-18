@@ -19,6 +19,7 @@ import { SectionNav } from "@/components/ui/SectionNav";
 import { WizardProgress } from "@/components/ui/WizardProgress";
 import { NotificationToast } from "@/components/ui/NotificationToast";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { TimeSlotDivider } from "@/components/ui/TimeSlotDivider";
 
 function PlusIcon() {
   return (
@@ -101,6 +102,30 @@ export default function Home() {
           completedTasks={2}
           proofNeeded={3}
         />
+      </section>
+
+      {/* ── Time Slot Dividers ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Time Slot Dividers
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-4)",
+          }}
+        >
+          <TimeSlotDivider slot="morning" />
+          <TimeSlotDivider slot="afternoon" />
+          <TimeSlotDivider slot="evening" />
+        </div>
       </section>
 
       {/* ── Bottom Navigation (inline demo) ── */}

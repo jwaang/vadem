@@ -1563,3 +1563,54 @@ body {
   font-weight: 500;
   line-height: 1;
 }
+
+/* ============================================================
+   Time Slot Divider Component
+   ============================================================ */
+
+.time-slot-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.time-slot-divider-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-round);
+  font-size: var(--text-base);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.time-slot-divider-morning .time-slot-divider-icon {
+  background-color: var(--accent-light);
+}
+
+.time-slot-divider-afternoon .time-slot-divider-icon {
+  background-color: var(--primary-light);
+}
+
+.time-slot-divider-evening .time-slot-divider-icon {
+  background-color: var(--vault-light);
+}
+
+.time-slot-divider-label {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  line-height: 1;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.time-slot-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--border);
+  min-width: 20px;
+}

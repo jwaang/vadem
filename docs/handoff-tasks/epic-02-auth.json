@@ -1,7 +1,7 @@
 {
   "name": "Epic 2: Creator Authentication",
-  "branchName": "ralph/epic-02-auth",
   "description": "Signup, login, OAuth, session management. Required before any creator features.",
+  "branchName": "ralph/epic-02-auth",
   "userStories": [
     {
       "id": "US-021",
@@ -20,8 +20,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Load /convex to configure Convex auth and write the signup mutation (email uniqueness check, password validation). Load /convex-best-practices for validator patterns and error handling. Load /nextjs-best-practices for App Router redirect to wizard on success and post-auth route protection. Load /tailwind-css-patterns for signup form layout and error state styling. Load /tailwind-design-system to ensure Input/Button match design tokens (border, radius, focus ring). Use /dev-browser to verify the full signup flow, test duplicate email error, and confirm redirect to wizard.",
       "dependsOn": [
         "US-002",
         "US-004",
@@ -44,8 +44,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Load /convex for the login mutation, signIn action, and useQuery session state. Load /convex-best-practices for session persistence patterns and error propagation from auth failures. Load /nextjs-best-practices for App Router redirect to dashboard on success, middleware session guard, and the forgot-password placeholder route. Load /tailwind-css-patterns for login form layout and invalid credentials error state styling. Use /dev-browser to verify the login flow, test the wrong-password error message, and confirm session survives a browser refresh.",
       "dependsOn": [
         "US-021"
       ]
@@ -67,7 +67,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex to configure Google and Apple OAuth providers in Convex auth and handle the OAuth callback with identity linking. Load /convex-best-practices for account merging strategy when the same email exists across providers. Load /frontend-design to build the OAuth buttons following provider brand guidelines (Google colors + logo, Apple black button). Load /nextjs-best-practices for OAuth redirect and callback route handling in App Router. Use /dev-browser to verify both OAuth flows, test new vs returning user paths, and confirm same-email account merging.",
       "dependsOn": [
         "US-021"
       ]
@@ -89,11 +89,14 @@
       ],
       "priority": 4,
       "passes": false,
-      "notes": "",
+      "notes": "Load /frontend-design to build the dashboard layout — property summary card, active trip status, recent activity preview, and empty states with the 'Let's set up your home' CTA. Load /tailwind-css-patterns for the responsive grid at mobile/tablet/desktop breakpoints and navigation structure. Load /tailwind-design-system to apply design tokens consistently across card/section components (shadow, radius, color tokens). Load /nextjs-react-typescript for TypeScript interfaces for dashboard data, App Router layout with CreatorLayout, and session-based routing guard. Load /convex for useQuery hooks fetching property/trip/activity data and the signOut mutation for logout. Use /dev-browser to verify the dashboard at all breakpoints, test the empty state for new users with no property, and confirm the logout flow from the settings menu.",
       "dependsOn": [
         "US-020",
         "US-021"
       ]
     }
-  ]
+  ],
+  "metadata": {
+    "updatedAt": "2026-02-18T23:55:56.593Z"
+  }
 }

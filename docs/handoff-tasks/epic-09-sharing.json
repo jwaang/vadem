@@ -1,0 +1,108 @@
+{
+  "name": "Epic 9: Sharing & Link Management",
+  "branchName": "ralph/epic-09-sharing",
+  "description": "Link generation, password protection, expiration, and the sitter routing experience.",
+  "userStories": [
+    {
+      "id": "US-063",
+      "title": "Generate shareable link",
+      "description": "As a creator, I want to generate a unique shareable link for my trip so I can send it to the sitter.",
+      "acceptanceCriteria": [
+        "'Share' button on trip setup (final step) and on active trip dashboard",
+        "Generates unique URL (e.g., handoff.app/t/[unique-id])",
+        "Copy-to-clipboard button with success toast",
+        "Share via native Web Share API (text, email, WhatsApp on mobile)",
+        "Link stored in Trips table",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040", "US-041"]
+    },
+    {
+      "id": "US-064",
+      "title": "Link password protection",
+      "description": "As a creator, I want to optionally password-protect the Handoff link so only intended recipients can view it.",
+      "acceptanceCriteria": [
+        "Toggle: 'Require password to view' (default: off)",
+        "If on: creator sets a simple password (separate from vault PIN)",
+        "Sitter opening the link sees a password prompt before any content",
+        "Incorrect password shows error, allows retry",
+        "Password stored hashed in Trips table",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill",
+        "Access control verification — password-protected links block unauthorized access"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-063"]
+    },
+    {
+      "id": "US-065",
+      "title": "Link expiration",
+      "description": "As a creator, I want the link to automatically expire when the trip ends so old links don't grant indefinite access.",
+      "acceptanceCriteria": [
+        "Link expiration auto-set to trip end date",
+        "Creator can optionally adjust expiry (earlier, not later than trip end)",
+        "After expiry: link shows 'This handoff has expired' message",
+        "Expired links cannot access any content (manual, vault, tasks)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Expiration logic — confirm time-bound access auto-expires correctly"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-063", "US-045"]
+    },
+    {
+      "id": "US-066",
+      "title": "Regenerate/revoke link",
+      "description": "As a creator, I want to regenerate the link so I can revoke access for all previous recipients.",
+      "acceptanceCriteria": [
+        "'Reset Link' button on trip management page",
+        "Confirmation dialog: 'This will revoke access for anyone with the current link'",
+        "Generates a new unique URL, old URL returns 'This link is no longer valid'",
+        "New link must be shared again with sitters",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-063"]
+    },
+    {
+      "id": "US-067",
+      "title": "Sitter view routing",
+      "description": "As a sitter, I want to open the shared link and immediately see the Today View without any download or signup.",
+      "acceptanceCriteria": [
+        "Link opens in browser, no app download prompt",
+        "If password-protected: password screen first -> then Today View",
+        "If trip not yet started: 'This handoff starts on [date]' with preview of property name and pet names",
+        "If trip active: Today View (US-046)",
+        "If trip expired: 'This handoff has ended' with friendly message",
+        "Bottom navigation: Today, Manual, Vault, Contacts",
+        "Service worker caches on first load for offline access",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-046", "US-064", "US-065", "US-016"]
+    }
+  ]
+}

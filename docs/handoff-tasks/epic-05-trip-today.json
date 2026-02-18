@@ -1,0 +1,170 @@
+{
+  "name": "Epic 5: Trip Overlay & Today View",
+  "branchName": "ralph/epic-05-trip-today",
+  "description": "Trip creation, time-bound overlay content, and the sitter's contextual landing page.",
+  "userStories": [
+    {
+      "id": "US-040",
+      "title": "Trip data model in Convex",
+      "description": "As a developer, I need the Trip schema with overlay items, sitter list, and task completion tracking.",
+      "acceptanceCriteria": [
+        "Trips table: id, propertyId, startDate, endDate, status (draft/active/completed/expired), shareLink, linkPassword, linkExpiry",
+        "Sitters table: id, tripId, name, phone, vaultAccess (boolean)",
+        "OverlayItems table: id, tripId, text, date, timeSlot, proofRequired, locationCardId",
+        "TaskCompletions table: id, tripId, taskRef (instructionId or overlayItemId), taskType (recurring/overlay), sitterName, completedAt, proofPhotoUrl",
+        "Indexes on tripId, propertyId, status",
+        "Query: get active trip for property",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-002", "US-025"]
+    },
+    {
+      "id": "US-041",
+      "title": "Create new trip",
+      "description": "As a creator, I want to create a new trip with start and end dates so I can prepare for an upcoming absence.",
+      "acceptanceCriteria": [
+        "'New Trip' button on dashboard",
+        "Date picker: start date and end date (end must be after start)",
+        "Cannot create a trip if another trip is active (one at a time for v1)",
+        "Trip created in 'draft' status",
+        "Redirects to trip setup flow (overlay items -> sitters -> proof settings -> share)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-024", "US-040"]
+    },
+    {
+      "id": "US-042",
+      "title": "Add overlay items to trip",
+      "description": "As a creator, I want to add trip-specific instructions that don't belong in the permanent manual so the sitter knows what's different this week.",
+      "acceptanceCriteria": [
+        "'Anything different this trip?' screen after setting dates",
+        "Add overlay item: text, optional specific date, time slot, proof required toggle",
+        "Optional location card attachment per overlay item",
+        "Pre-filled suggestions: 'Any medication changes?', 'Any scheduled visitors?', 'Any special instructions?'",
+        "'Skip' option if nothing is different",
+        "Overlay items saved to OverlayItems table",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040", "US-041"]
+    },
+    {
+      "id": "US-043",
+      "title": "Add sitters to trip",
+      "description": "As a creator, I want to add sitter(s) by name and phone number so they can be granted vault access.",
+      "acceptanceCriteria": [
+        "Add sitter form: name (required), phone number (required), vault access toggle (default: on)",
+        "Phone number validation (US format for v1)",
+        "Can add multiple sitters",
+        "Sitter list displayed with edit/remove options",
+        "Sitter data saved to Sitters table",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040", "US-041"]
+    },
+    {
+      "id": "US-044",
+      "title": "Set proof requirements per task",
+      "description": "As a creator, I want to toggle photo proof on/off per task before sharing so I control the accountability level.",
+      "acceptanceCriteria": [
+        "List of all tasks (recurring from manual + overlay items) with proof toggle per task",
+        "Default: all toggles OFF",
+        "Recommendation text: 'We suggest 1-3 proof items per day'",
+        "Count of proof-required tasks shown",
+        "Settings saved to instruction/overlay proofRequired field",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040", "US-042"]
+    },
+    {
+      "id": "US-045",
+      "title": "Trip overlay auto-expiration",
+      "description": "As a system, I need to automatically expire trips and overlay content when the end date passes so the manual reverts to baseline.",
+      "acceptanceCriteria": [
+        "Scheduled Convex function checks for expired trips (daily or on access)",
+        "Trip status changes from 'active' to 'expired' when endDate < now",
+        "Overlay items no longer appear in sitter view after expiration",
+        "Vault access revoked automatically on expiration (see US-055)",
+        "Owner receives 'Trip complete' notification",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040"]
+    },
+    {
+      "id": "US-046",
+      "title": "Today View — sitter landing page",
+      "description": "As a sitter, I want to land on the Today View when I open the Handoff link so I see only what's relevant right now.",
+      "acceptanceCriteria": [
+        "Today View is the default screen when sitter opens the link",
+        "Header: greeting with sitter name (if registered) or generic, trip dates, day X of Y, task summary stats",
+        "Emergency contact bar below header",
+        "Time-slotted task list: Morning, Afternoon, Evening, Anytime sections with dividers",
+        "Recurring tasks from manual populate daily",
+        "One-time overlay tasks populate on their specific date",
+        "Trip overlay items show amber overlay badge",
+        "'Full Manual' accessible via bottom nav",
+        "Tomorrow preview: collapsed section at bottom",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-009", "US-011", "US-012", "US-017", "US-040", "US-025"]
+    },
+    {
+      "id": "US-047",
+      "title": "Daily task reset logic",
+      "description": "As a system, I need tasks to reset each day so the sitter sees a fresh checklist every morning.",
+      "acceptanceCriteria": [
+        "Task completion status is per-day (completions logged with date)",
+        "New day = all recurring tasks unchecked",
+        "Previous day's completions preserved in activity log and trip report",
+        "Overlay items for a specific past date no longer appear in Today View",
+        "'Yesterday' tasks not shown (only today and tomorrow preview)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-040", "US-046"]
+    }
+  ]
+}

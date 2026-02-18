@@ -1,0 +1,427 @@
+{
+  "name": "Epic 1: Project Foundation & Design System",
+  "branchName": "ralph/epic-01-foundation",
+  "description": "Scaffolding, tooling, Convex setup, design tokens, and reusable UI components. Everything else depends on this.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Initialize Next.js project with TypeScript and tooling",
+      "description": "As a developer, I need a properly configured Next.js project with TypeScript, ESLint, Prettier, and pnpm so the team has a consistent development environment.",
+      "acceptanceCriteria": [
+        "Next.js 14+ app router project initialized with TypeScript strict mode",
+        "ESLint configured with Next.js recommended rules",
+        "Prettier configured for consistent formatting",
+        "pnpm typecheck, pnpm lint, and pnpm build all pass",
+        ".gitignore covers node_modules, .next, .env.local",
+        "README with setup instructions",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Set up Convex backend",
+      "description": "As a developer, I need Convex.dev configured as the backend so we have real-time data, serverless functions, and file storage from the start.",
+      "acceptanceCriteria": [
+        "Convex installed and configured with the Next.js project",
+        "convex/ directory initialized with schema file",
+        "Convex dev server runs alongside Next.js dev server",
+        "Environment variables for Convex deployment URL configured",
+        "Basic health-check query works end-to-end",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-001"]
+    },
+    {
+      "id": "US-003",
+      "title": "Implement design system tokens",
+      "description": "As a developer, I need all design tokens from handoff-design-system.md implemented as CSS custom properties and/or Tailwind config so every component uses consistent styling.",
+      "acceptanceCriteria": [
+        "All color tokens implemented (--primary, --secondary, --accent, --vault, backgrounds, text, borders, semantic)",
+        "Typography: Google Fonts loaded (Instrument Serif, Bricolage Grotesque, Caveat), font-family tokens set",
+        "Type scale tokens (--text-xs through --text-6xl), line-height, and letter-spacing tokens",
+        "Spacing scale (--space-1 through --space-24)",
+        "Border radius tokens (--radius-sm through --radius-round)",
+        "Shadow tokens including --shadow-polaroid",
+        "Transition/easing tokens (--ease-out, --ease-spring, durations)",
+        "Linen background with subtle noise texture on body",
+        "Verify in browser: tokens render correctly at 375px and 768px",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Reference handoff-design-system.md for all token values",
+      "dependsOn": ["US-001"]
+    },
+    {
+      "id": "US-004",
+      "title": "Build core UI components — Buttons",
+      "description": "As a developer, I need reusable Button components matching the design system so all actions are visually consistent.",
+      "acceptanceCriteria": [
+        "Variants: primary (terracotta), secondary (sage), vault (slate), ghost, soft, danger",
+        "Sizes: lg, default, sm",
+        "Supports leading icon slot",
+        "Hover: translateY(-1px) + shadow elevation + darker background",
+        "Active: inner overlay",
+        "Primary casts colored shadow matching its background",
+        "Disabled state with reduced opacity",
+        "Verify in browser at 375px",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-005",
+      "title": "Build core UI components — Inputs & Search Bar",
+      "description": "As a developer, I need reusable Input, Textarea, and SearchBar components matching the design system.",
+      "acceptanceCriteria": [
+        "Text input with label, hint text, and error state support",
+        "Focus: border changes to --primary, focus ring --primary-subtle",
+        "Error: border --danger, hint text turns red",
+        "Textarea with vertical resize, min-height 100px",
+        "SearchBar: icon inside left padding, sunken default bg, raised bg on focus",
+        "Placeholder text in --text-muted",
+        "Verify in browser at 375px",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-006",
+      "title": "Build core UI components — Badges & Pills",
+      "description": "As a developer, I need reusable Badge components for status indicators, room tags, time slots, and trip overlay markers.",
+      "acceptanceCriteria": [
+        "Variants: overlay (amber, star prefix), room (neutral), vault (slate, lock prefix), success, warning, danger, time",
+        "All badges: 12px font, 600 weight, pill radius, consistent padding",
+        "Room badges accept dynamic room name text",
+        "Time badges accept time string",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-007",
+      "title": "Build Location Card component",
+      "description": "As a developer, I need the signature Location Card component — the polaroid-style photo card with handwritten caption that is Handoff's visual identity.",
+      "acceptanceCriteria": [
+        "Card structure: photo (4:3 aspect ratio) + Caveat-font caption + room badge",
+        "Photo with --radius-md, object-fit: cover",
+        "--shadow-polaroid shadow",
+        "Supports tilt variants: tilted-left (-1.5deg), neutral (0deg), tilted-right (+1.2deg)",
+        "Hover: translateY(-4px) + rotation shift + --shadow-xl",
+        "Tappable — expands to full-screen photo/video on click",
+        "Placeholder state when no image uploaded",
+        "280px default width, responsive in grid contexts",
+        "Verify in browser: visual matches design system polaroid spec",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Signature UX element — must match design system exactly",
+      "dependsOn": ["US-003", "US-006"]
+    },
+    {
+      "id": "US-008",
+      "title": "Build Pet Profile Card component",
+      "description": "As a developer, I need the Pet Profile Card component — the emotional core of the product — displaying the pet's photo as hero with structured details below.",
+      "acceptanceCriteria": [
+        "Hero photo: 1:1 aspect ratio, full bleed, object-fit: cover",
+        "Name in Instrument Serif text-3xl",
+        "Breed + age in text-sm muted",
+        "Detail rows with emoji icons: feeding, medications, walking, vet (tap-to-call in sage)",
+        "Personality note in Caveat font on --accent-subtle background",
+        "--radius-xl, --shadow-md, hover lifts to --shadow-lg",
+        "Placeholder gradient when no photo",
+        "Max width 360px",
+        "Verify in browser at 375px",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003", "US-006"]
+    },
+    {
+      "id": "US-009",
+      "title": "Build Task Item component",
+      "description": "As a developer, I need the Task Item component with interactive check-off, proof button, and overlay badge support.",
+      "acceptanceCriteria": [
+        "Structure: checkbox + body (text + meta badges) + optional proof button",
+        "Checkbox: 26px, --radius-sm, --border-strong border",
+        "Check animation: fills --secondary, white checkmark SVG, spring bounce (checkPop keyframe)",
+        "Completed state: --secondary-subtle bg, text strikethrough in muted",
+        "Overlay state: 3px left border in --accent, overlay badge in meta",
+        "Proof button: dashed border, camera icon, hover turns terracotta",
+        "Time badge and room badge in meta row",
+        "Hover: border darkens + --shadow-sm",
+        "Click toggles completion state",
+        "Verify in browser: spring animation feels satisfying",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003", "US-006"]
+    },
+    {
+      "id": "US-010",
+      "title": "Build Vault Item component",
+      "description": "As a developer, I need the Vault Item component with revealed, locked, and hidden states.",
+      "acceptanceCriteria": [
+        "Structure: icon + label/hint + value or verify button",
+        "Icon: 44px, --radius-md, --vault background, white icon",
+        "Revealed state: --secondary-subtle bg, code visible in monospace, letter-spacing: 0.15em",
+        "Locked state (unverified): fully hidden, message 'verify your phone number to view' + verify button",
+        "No blurred/teased state for unregistered viewers",
+        "--vault-subtle background, --vault-light border",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003", "US-004"]
+    },
+    {
+      "id": "US-011",
+      "title": "Build Emergency Contact Bar component",
+      "description": "As a developer, I need a horizontally scrollable emergency contact bar for quick tap-to-call access.",
+      "acceptanceCriteria": [
+        "Horizontal scroll with -webkit-overflow-scrolling: touch",
+        "Per contact: 36px round icon (color-coded by role) + name + role + 'Call' link",
+        "Icon colors: owner (--primary-light), vet (--secondary-light), neighbor (--accent-light), emergency (--danger-light)",
+        "Hover: border --secondary, bg --secondary-subtle",
+        "tel: href for tap-to-call on mobile",
+        "min-width: max-content per contact chip",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-012",
+      "title": "Build Today View Header component",
+      "description": "As a developer, I need the Today View header that sets context for the sitter — greeting, date, and task summary stats.",
+      "acceptanceCriteria": [
+        "Gradient background: --primary to --primary-hover (135deg)",
+        "Decorative circle: rgba(255,255,255,0.06) top-right",
+        "Bottom radius: --radius-2xl",
+        "Greeting: Instrument Serif, text-3xl, white, uses sitter name",
+        "Date line: text-sm, 80% opacity, shows day X of Y",
+        "Summary stats: glassmorphism chips (tasks today, completed, proof needed)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-013",
+      "title": "Build Wizard Progress Indicator component",
+      "description": "As a developer, I need a 6-step wizard progress indicator for the guided setup flow.",
+      "acceptanceCriteria": [
+        "6 steps: Home, Pets, Access, Contacts, Instructions, Review",
+        "Completed: sage dot with checkmark, sage label",
+        "Active: terracotta dot with number, terracotta label, colored shadow",
+        "Upcoming: border-outlined dot, muted number and label",
+        "Connector lines between steps: sage when completed, --border otherwise",
+        "Horizontally scrollable on narrow screens",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-014",
+      "title": "Build Section Navigation component",
+      "description": "As a developer, I need horizontal scrollable pills for navigating manual sections in the sitter view.",
+      "acceptanceCriteria": [
+        "Pill per section: emoji + text, --radius-pill",
+        "Active: --primary background, white text",
+        "Inactive: --bg-raised, --border, --text-secondary",
+        "Hover: --bg-sunken",
+        "Horizontal scroll with smooth behavior",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003", "US-006"]
+    },
+    {
+      "id": "US-015",
+      "title": "Build Notification Toast component",
+      "description": "As a developer, I need toast notification components for owner-facing event alerts.",
+      "acceptanceCriteria": [
+        "Variants: success (sage left border), vault (slate left border), warning (amber left border)",
+        "Structure: icon + title + message + timestamp",
+        "Entrance animation: slide from right with spring easing, 0.5s",
+        "Max width 380px",
+        "Auto-dismiss after 5 seconds with manual close option",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-016",
+      "title": "Build Bottom Navigation component",
+      "description": "As a developer, I need the 4-tab mobile bottom navigation for the sitter view.",
+      "acceptanceCriteria": [
+        "4 tabs: Today, Manual, Vault, Contacts",
+        "Active tab: --primary color",
+        "Inactive: --text-muted",
+        "Tab label: text-xs, 500 weight",
+        "Top border radius --radius-xl, upward shadow",
+        "Fixed to bottom of viewport on mobile",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-017",
+      "title": "Build Time Slot Divider component",
+      "description": "As a developer, I need time slot dividers to separate morning/afternoon/evening task groups in the Today View.",
+      "acceptanceCriteria": [
+        "Variants: morning (sun emoji, --accent-light), afternoon (cloud-sun emoji, --primary-light), evening (moon emoji, --vault-light)",
+        "32px round icon + uppercase label + horizontal line filling remaining width",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-018",
+      "title": "Build Activity Feed Item component",
+      "description": "As a developer, I need activity feed item components for the owner's chronological log.",
+      "acceptanceCriteria": [
+        "Color-coded 8px dots: view (terracotta), task (sage), vault (slate), proof (amber)",
+        "Text with bold name, text-sm, timestamp in text-xs muted",
+        "Items separated by 1px bottom border",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-003"]
+    },
+    {
+      "id": "US-019",
+      "title": "Configure PWA manifest and service worker",
+      "description": "As a developer, I need PWA configuration so the app is installable and supports offline access.",
+      "acceptanceCriteria": [
+        "manifest.json with app name 'Handoff', theme color #C2704A, background #FAF6F1",
+        "App icons at required sizes (192px, 512px)",
+        "Service worker registered with basic caching strategy",
+        "'Add to Home Screen' prompt works on iOS and Android",
+        "Verify: app loads offline after first visit (basic shell)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-001"]
+    },
+    {
+      "id": "US-020",
+      "title": "Set up responsive layout shell",
+      "description": "As a developer, I need the responsive app layout shell with creator dashboard layout and sitter view layout.",
+      "acceptanceCriteria": [
+        "Creator layout: sidebar nav (desktop), bottom nav (mobile), main content area",
+        "Sitter layout: full-width mobile-first, bottom navigation, today view as default",
+        "Breakpoints: 375px (mobile), 768px (tablet), 1024px (desktop)",
+        "Max content width constrained appropriately per view",
+        "Verify at all 3 breakpoints",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-001", "US-003", "US-016"]
+    }
+  ]
+}

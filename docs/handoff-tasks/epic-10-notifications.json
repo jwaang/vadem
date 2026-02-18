@@ -1,0 +1,150 @@
+{
+  "name": "Epic 10: Notifications & Activity Feed",
+  "branchName": "ralph/epic-10-notifications",
+  "description": "Push notifications, in-app activity log, and notification preferences.",
+  "userStories": [
+    {
+      "id": "US-068",
+      "title": "Activity feed data model",
+      "description": "As a developer, I need an ActivityLog schema to store all sitter interaction events.",
+      "acceptanceCriteria": [
+        "ActivityLog table: id, tripId, eventType (link_opened/task_completed/proof_uploaded/vault_accessed/trip_started/trip_expired), timestamp, sitterName, sitterPhone, metadata (JSON: taskRef, vaultItemId, proofPhotoUrl, etc.)",
+        "Index on tripId + timestamp for chronological queries",
+        "Mutation: logEvent (called from other mutations/actions)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-002", "US-040"]
+    },
+    {
+      "id": "US-069",
+      "title": "Activity feed display",
+      "description": "As an owner, I want to see a chronological activity feed so I can track everything the sitter does.",
+      "acceptanceCriteria": [
+        "Feed in trip detail view and on dashboard for active trip",
+        "Events rendered with Activity Feed Item component (color-coded dots)",
+        "Events: link opened (terracotta), task completed (sage), proof uploaded (amber), vault accessed (slate)",
+        "Filterable by event type",
+        "Feed persists after trip ends (available in trip report)",
+        "Real-time updates via Convex subscriptions",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-018", "US-068"]
+    },
+    {
+      "id": "US-070",
+      "title": "Web push notification setup",
+      "description": "As a developer, I need web push notifications configured so the owner can receive real-time alerts.",
+      "acceptanceCriteria": [
+        "Web Push API configured with VAPID keys",
+        "Service worker handles push events",
+        "Permission prompt shown to creator on first login (not to sitters)",
+        "Push subscription stored in user settings",
+        "Fallback: if push denied, notifications only in-app",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-019"]
+    },
+    {
+      "id": "US-071",
+      "title": "Push notification — sitter opened link",
+      "description": "As an owner, I want to be notified when the sitter first opens my Handoff so I know they received it.",
+      "acceptanceCriteria": [
+        "Push notification: 'Sarah opened your Handoff'",
+        "Triggered once per sitter per trip (first open only)",
+        "Activity log entry created simultaneously",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-068", "US-070"]
+    },
+    {
+      "id": "US-072",
+      "title": "Push notification — task completed",
+      "description": "As an owner, I want to be notified when the sitter completes tasks so I can track progress.",
+      "acceptanceCriteria": [
+        "Push notification: 'Sarah completed morning feeding' (or with photo: '...with photo at 7:12 AM')",
+        "Respects owner notification preferences (all tasks / proof-only / digest)",
+        "Digest mode: batch notifications into one summary per hour",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-060", "US-068", "US-070"]
+    },
+    {
+      "id": "US-073",
+      "title": "Push notification — vault accessed",
+      "description": "As an owner, I want to be notified immediately when someone accesses a vault item.",
+      "acceptanceCriteria": [
+        "Push notification: 'Sarah accessed your alarm code at 2:34 PM'",
+        "Always sent (not suppressible — security event)",
+        "Activity log entry created simultaneously",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Security event — always sent regardless of notification preferences",
+      "dependsOn": ["US-052", "US-070"]
+    },
+    {
+      "id": "US-074",
+      "title": "Push notification — trip ending soon",
+      "description": "As an owner, I want to be reminded 24 hours before my trip ends so I can prepare for my return.",
+      "acceptanceCriteria": [
+        "Push notification: 'Your trip ends tomorrow. Vault access will expire automatically.'",
+        "Sent 24 hours before trip endDate",
+        "Scheduled via Convex cron or scheduled function",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-045", "US-070"]
+    },
+    {
+      "id": "US-075",
+      "title": "Notification preferences",
+      "description": "As an owner, I want to configure which notifications I receive so I'm not overwhelmed.",
+      "acceptanceCriteria": [
+        "Settings page with notification toggles: Task completions (All / Proof-only / Digest / Off), Vault access (Always on, non-configurable), Link opened (On / Off), Trip ending (On / Off)",
+        "Default: proof-only for tasks, all others on",
+        "Saved to user settings in Convex",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-024", "US-070"]
+    }
+  ]
+}

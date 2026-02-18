@@ -1,0 +1,66 @@
+{
+  "name": "Epic 7: Emergency Contacts",
+  "branchName": "ralph/epic-07-contacts",
+  "description": "Contact management and tap-to-call for sitters.",
+  "userStories": [
+    {
+      "id": "US-057",
+      "title": "Emergency contact data model",
+      "description": "As a developer, I need the EmergencyContacts schema in Convex.",
+      "acceptanceCriteria": [
+        "EmergencyContacts table: id, propertyId, name, role, phone, notes, sortOrder",
+        "Queries: get contacts by propertyId, ordered by sortOrder",
+        "Mutations: create, update, delete, reorder",
+        "Pre-seed: ASPCA Poison Control (888-426-4435) as default",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-002"]
+    },
+    {
+      "id": "US-058",
+      "title": "Add and manage emergency contacts",
+      "description": "As a creator, I want to add, edit, reorder, and delete emergency contacts.",
+      "acceptanceCriteria": [
+        "Add contact form: name, role (dropdown: Owner, Partner, Veterinarian, Neighbor, Emergency, Custom), phone, notes",
+        "Edit any contact inline",
+        "Delete with confirmation",
+        "Drag to reorder",
+        "Poison control pre-filled and non-deletable (but editable)",
+        "Accessible from wizard step 4 and dashboard -> My Property",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-057", "US-005"]
+    },
+    {
+      "id": "US-059",
+      "title": "Emergency contact display (sitter view)",
+      "description": "As a sitter, I want to see emergency contacts with tap-to-call so I can reach the right person instantly.",
+      "acceptanceCriteria": [
+        "Emergency Contact Bar rendered on Today View and accessible from every screen",
+        "Tap contact -> initiates phone call (tel: link)",
+        "Contacts ordered by creator's sort order",
+        "Color-coded icons by role per design system",
+        "Accessible via 'Contacts' tab in bottom navigation as a full-page view with notes visible",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-011", "US-057"]
+    }
+  ]
+}

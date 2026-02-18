@@ -3,10 +3,10 @@
   "sessionId": "aa62d6c6-cc4a-468b-b2fe-6d1478f08585",
   "status": "running",
   "startedAt": "2026-02-18T15:43:43.224Z",
-  "updatedAt": "2026-02-18T16:04:52.452Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-18T16:08:16.802Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -113,8 +113,8 @@
       {
         "id": "US-017",
         "title": "Build Time Slot Divider component",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-018",
@@ -136,7 +136,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-017",
+      "taskTitle": "Build Time Slot Divider component",
+      "taskCompleted": true,
+      "durationMs": 186561,
+      "startedAt": "2026-02-18T16:01:45.887Z",
+      "endedAt": "2026-02-18T16:04:52.448Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

@@ -20,6 +20,7 @@ import { WizardProgress } from "@/components/ui/WizardProgress";
 import { NotificationToast } from "@/components/ui/NotificationToast";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { TimeSlotDivider } from "@/components/ui/TimeSlotDivider";
+import { ActivityFeedItem } from "@/components/ui/ActivityFeedItem";
 
 function PlusIcon() {
   return (
@@ -125,6 +126,59 @@ export default function Home() {
           <TimeSlotDivider slot="morning" />
           <TimeSlotDivider slot="afternoon" />
           <TimeSlotDivider slot="evening" />
+        </div>
+      </section>
+
+      {/* ── Activity Feed Items ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Activity Feed
+        </h2>
+        <div
+          style={{
+            backgroundColor: "var(--bg-raised)",
+            borderRadius: "var(--radius-md)",
+            border: "1.5px solid var(--border)",
+            padding: "0 var(--space-4)",
+          }}
+        >
+          <ActivityFeedItem
+            type="view"
+            name="Jamie"
+            action="viewed the morning checklist"
+            timestamp="2 min ago"
+          />
+          <ActivityFeedItem
+            type="task"
+            name="Jamie"
+            action={'completed \u201cFeed Luna breakfast\u201d'}
+            timestamp="15 min ago"
+          />
+          <ActivityFeedItem
+            type="vault"
+            name="Jamie"
+            action="accessed the front door code"
+            timestamp="1 hour ago"
+          />
+          <ActivityFeedItem
+            type="proof"
+            name="Jamie"
+            action={'uploaded proof for \u201cWalk Luna\u201d'}
+            timestamp="2 hours ago"
+          />
+          <ActivityFeedItem
+            type="view"
+            name="Jamie"
+            action="opened the pet manual"
+            timestamp="3 hours ago"
+            hideBorder
+          />
         </div>
       </section>
 

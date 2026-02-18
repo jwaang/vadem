@@ -312,3 +312,19 @@ after each iteration and it's included in prompts for context.
   - `flex: 1` on the line element with `min-width: 20px` ensures the line always fills remaining space but never collapses to zero
   - Using variant-specific CSS classes (`.time-slot-divider-morning .time-slot-divider-icon`) for background colors keeps the component logic simple — just a slot config record mapping variant → emoji + label
 ---
+
+## 2026-02-18 - US-018
+- Created `ActivityFeedItem` component at `src/components/ui/ActivityFeedItem.tsx` — activity log entry with color-coded dot, bold name, action text, and timestamp
+- 4 activity types with 8px color-coded dots: `view` (terracotta/primary), `task` (sage/secondary), `vault` (slate/vault), `proof` (amber/accent)
+- Text: bold name (`--text`, 600 weight) + action text (`--text-secondary`, `--text-sm`) on one line, timestamp (`--text-xs`, `--text-muted`) below
+- Items separated by 1px bottom border via `.activity-feed-item-bordered` class; `hideBorder` prop for last item
+- Pure presentational component — no `"use client"` needed, no state or event handlers
+- Added CSS classes in `globals.css`: `.activity-feed-item`, `.activity-feed-item-bordered`, `.activity-feed-dot`, `.activity-feed-dot-view`, `.activity-feed-dot-task`, `.activity-feed-dot-vault`, `.activity-feed-dot-proof`, `.activity-feed-content`, `.activity-feed-text`, `.activity-feed-name`, `.activity-feed-timestamp`
+- Updated `page.tsx` with Activity Feed showcase (5 sample items in a bordered card container)
+- Files added: `src/components/ui/ActivityFeedItem.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - Curly/smart quotes (`\u201c` / `\u201d`) in JSX string attributes cause TS parse errors — must use `{'string with \u201cquotes\u201d'}` expression syntax instead
+  - `margin-top: 6px` on the 8px dot aligns it vertically with the center of `text-sm` (14px) text — formula: `(lineHeight * fontSize - dotSize) / 2`
+  - The `hideBorder` prop pattern (opt-out rather than opt-in) keeps the common case clean — most items have borders, only the last one opts out
+---

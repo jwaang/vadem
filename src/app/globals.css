@@ -1614,3 +1614,71 @@ body {
   background-color: var(--border);
   min-width: 20px;
 }
+
+/* ============================================================
+   Activity Feed Item Component
+   ============================================================ */
+
+.activity-feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.activity-feed-item-bordered {
+  border-bottom: 1px solid var(--border);
+}
+
+/* 8px color-coded dot */
+.activity-feed-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: var(--radius-round);
+  margin-top: 6px; /* vertically center with text-sm line */
+  flex-shrink: 0;
+}
+
+.activity-feed-dot-view {
+  background-color: var(--primary);
+}
+
+.activity-feed-dot-task {
+  background-color: var(--secondary);
+}
+
+.activity-feed-dot-vault {
+  background-color: var(--vault);
+}
+
+.activity-feed-dot-proof {
+  background-color: var(--accent);
+}
+
+.activity-feed-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.activity-feed-text {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.activity-feed-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-feed-timestamp {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+}

@@ -1,0 +1,17 @@
+configVersion = "2.1"
+autoCommit = true
+subagentTracingDetail = "full"
+iterationDelay = 0
+maxIterations = 10
+agent = "claude"
+defaultAgent = "claude"
+tracker = "json"
+defaultTracker = "json"
+
+[parallel]
+mode = "auto"
+maxWorkers = 1
+directMerge = true
+
+[notifications]
+sound = "system"

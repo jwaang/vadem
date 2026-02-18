@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "sessionId": "400b5be9-6926-42ca-9a0b-bd470802aa5f",
+  "status": "paused",
+  "startedAt": "2026-02-18T04:21:01.000Z",
+  "updatedAt": "2026-02-18T04:40:52.846Z",
+  "currentIteration": 3,
+  "maxIterations": 10,
+  "tasksCompleted": 3,
+  "isPaused": true,
+  "agentPlugin": "claude",
+  "trackerState": {
+    "plugin": "json",
+    "prdPath": "./docs/handoff-tasks/epic-01-foundation.json",
+    "totalTasks": 20,
+    "tasks": [
+      {
+        "id": "US-001",
+        "title": "Initialize Next.js project with TypeScript and tooling",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-002",
+        "title": "Set up Convex backend",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-003",
+        "title": "Implement design system tokens",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-004",
+        "title": "Build core UI components — Buttons",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-005",
+        "title": "Build core UI components — Inputs & Search Bar",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-006",
+        "title": "Build core UI components — Badges & Pills",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-007",
+        "title": "Build Location Card component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-008",
+        "title": "Build Pet Profile Card component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-009",
+        "title": "Build Task Item component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-010",
+        "title": "Build Vault Item component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-011",
+        "title": "Build Emergency Contact Bar component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-012",
+        "title": "Build Today View Header component",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-013",
+        "title": "Build Wizard Progress Indicator component",
+        "status": "completed",
+        "completedInSession": true
+      },
+      {
+        "id": "US-014",
+        "title": "Build Section Navigation component",
+        "status": "completed",
+        "completedInSession": true
+      },
+      {
+        "id": "US-015",
+        "title": "Build Notification Toast component",
+        "status": "completed",
+        "completedInSession": true
+      },
+      {
+        "id": "US-016",
+        "title": "Build Bottom Navigation component",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-017",
+        "title": "Build Time Slot Divider component",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-018",
+        "title": "Build Activity Feed Item component",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-019",
+        "title": "Configure PWA manifest and service worker",
+        "status": "completed",
+        "completedInSession": false
+      },
+      {
+        "id": "US-020",
+        "title": "Set up responsive layout shell",
+        "status": "open",
+        "completedInSession": false
+      }
+    ]
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-013",
+      "taskTitle": "Build Wizard Progress Indicator component",
+      "taskCompleted": true,
+      "durationMs": 310818,
+      "startedAt": "2026-02-18T04:21:15.183Z",
+      "endedAt": "2026-02-18T04:26:26.001Z"
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "taskId": "US-014",
+      "taskTitle": "Build Section Navigation component",
+      "taskCompleted": true,
+      "durationMs": 279110,
+      "startedAt": "2026-02-18T04:26:27.037Z",
+      "endedAt": "2026-02-18T04:31:06.147Z"
+    },
+    {
+      "iteration": 3,
+      "status": "completed",
+      "taskId": "US-015",
+      "taskTitle": "Build Notification Toast component",
+      "taskCompleted": true,
+      "durationMs": 584645,
+      "startedAt": "2026-02-18T04:31:07.160Z",
+      "endedAt": "2026-02-18T04:40:51.805Z"
+    }
+  ],
+  "skippedTaskIds": [],
+  "cwd": "/Users/john/Coding/handoff",
+  "activeTaskIds": [],
+  "subagentPanelVisible": true,
+  "pausedAt": "2026-02-18T04:40:52.838Z"
+}

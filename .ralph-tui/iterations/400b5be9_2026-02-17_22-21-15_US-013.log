@@ -1,0 +1,297 @@
+# Iteration 1 Log
+
+## Metadata
+
+- **Task ID**: US-013
+- **Task Title**: Build Wizard Progress Indicator component
+- **Description**: As a developer, I need a 6-step wizard progress indicator for the guided setup flow.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-18T04:21:15.183Z
+- **Ended At**: 2026-02-18T04:26:26.001Z
+- **Duration**: 5m 10s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+
+
+I'll start by understanding the project structure, existing patterns, and then implement the Wizard Progress Indicator component.
+[94m[Task][0m Explore codebase and patterns
+[94m[Bash][0m $ find /Users/john/Coding/handoff -type f -name "*.md" | head -20
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/docs/prd.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/docs/handoff-design-system.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/README.md[0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff/src -type f -name "*.tsx" -o -name "*.ts" | grep -E "(component|lib)...
+[94m[Bash][0m $ ls -la /Users/john/Coding/handoff/
+[94m[Read][0m [95m/Users/john/Coding/handoff/src[0m
+
+[91m[Error: EISDIR: illegal operation on a directory, read '/Users/john/Coding/handoff/src'][0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff/src -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.css" \) | s...
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff/src -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.css" \) | s...
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Button.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Badge.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/TaskItem.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/TodayViewHeader.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/PetProfileCard.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/layout.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/LocationCard.tsx[0m
+Now let me read the progress file and the actual globals.css to make sure I have the exact tokens.
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/EmergencyContactBar.tsx[0m
+Now I have a thorough understanding of the codebase patterns. Let me implement the WizardProgress component.
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/components/ui/WizardProgress.tsx[0m ""use client";
+
+import { type HTMLAttributes } from "react";
+
+type StepStatus = "completed" | "active" | "upcoming";
+
+interface WizardStep {
+  label: string;
+}
+
+interface WizardProgressProps extends HT... (3146 chars)"
+Now let me add the CSS styles to globals.css.
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m edit: ".task-item-proof:hover {
+  color: var(--primary);
+..." → ".task-item-proof:hover {
+  color: var(--primary);
+..."
+[94m[TodoWrite][0m
+[94m[Bash][0m Run TypeScript type checking $ pnpm typecheck 2>&1
+[94m[Bash][0m Run linter $ pnpm lint 2>&1
+
+[91m[Error: Exit code 2
+
+> handoff@0.1.0 typecheck /Users/john/Coding/handoff
+> tsc --noEmit
+
+convex/schema.ts(1,30): error TS2307: Cannot find module 'convex/server' or its corresponding type declarations.
+next.config.ts(1,33): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+src/app/layout.tsx(1,41): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+src/app/layout.tsx(6,8): error TS2307: Cannot find module 'next/font/google' or its corresponding type declarations.
+src/app/layout.tsx(53,13): error TS2503: Cannot find namespace 'React'.
+src/app/layout.tsx(56,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/layout.tsx(56,5): error TS2307: Cannot find module 'react/jsx-runtime' or its corresponding type declarations.
+src/app/layout.tsx(57,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/layout.tsx(60,10): error TS2741: Property 'children' is missing in type '{}' but required in type '{ children: ReactNode; }'.
+src/app/layout.tsx(62,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/layout.tsx(63,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(21,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(21,5): error TS2307: Cannot find module 'react/jsx-runtime' or its corresponding type declarations.
+src/app/page.tsx(30,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(31,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(32,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(58,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(65,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(76,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(77,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(87,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(90,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(99,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(102,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(103,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(111,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(112,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(120,12): error TS2741: Property 'children' is missing in type '{ variant: "overlay"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(121,12): error TS2741: Property 'children' is missing in type '{ variant: "room"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(122,12): error TS2741: Property 'children' is missing in type '{ variant: "room"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(123,12): error TS2741: Property 'children' is missing in type '{ variant: "room"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(124,12): error TS2741: Property 'children' is missing in type '{ variant: "vault"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(125,12): error TS2741: Property 'children' is missing in type '{ variant: "success"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(126,12): error TS2741: Property 'children' is missing in type '{ variant: "warning"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(127,12): error TS2741: Property 'children' is missing in type '{ variant: "danger"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(128,12): error TS2741: Property 'children' is missing in type '{ variant: "time"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(129,12): error TS2741: Property 'children' is missing in type '{ variant: "time"; }' but required in type 'BadgeProps'.
+src/app/page.tsx(130,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/app/page.tsx(131,7): error TS7026: JSX element implicitly h
+
+... [50013 characters truncated] ...
+
+type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(56,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(57,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(58,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(75,3): error TS2339: Property 'className' does not exist on type 'LocationCardProps'.
+src/components/ui/LocationCard.tsx(92,9): error TS2503: Cannot find namespace 'React'.
+src/components/ui/LocationCard.tsx(102,9): error TS2503: Cannot find namespace 'React'.
+src/components/ui/LocationCard.tsx(113,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(128,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(130,13): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(137,13): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(139,15): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(141,15): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(142,13): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(144,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(146,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(147,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(147,57): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(148,21): error TS2741: Property 'children' is missing in type '{ variant: "room"; }' but required in type 'BadgeProps'.
+src/components/ui/LocationCard.tsx(149,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(150,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(153,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(161,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(167,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(168,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/LocationCard.tsx(172,23): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/components/ui/LocationCard.tsx(174,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(3,37): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/components/ui/PetProfileCard.tsx(38,3): error TS2339: Property 'className' does not exist on type 'PetProfileCardProps'.
+src/components/ui/PetProfileCard.tsx(42,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(42,5): error TS2307: Cannot find module 'react/jsx-runtime' or its corresponding type declarations.
+src/components/ui/PetProfileCard.tsx(47,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(49,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(56,11): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(58,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/ui/PetProfileCard.tsx(61,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicEle][0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+The typecheck errors are all pre-existing (missing `node_modules` — `Cannot find module 'react'`, etc.). Let me check if deps are installed, and check if the WizardProgress-specific code has any issues.
+[94m[Bash][0m Install dependencies $ pnpm install 2>&1 | tail -5
+[94m[Bash][0m Run TypeScript type checking $ pnpm typecheck 2>&1
+[94m[Bash][0m Run linter $ pnpm lint 2>&1
+Typecheck passes clean, lint passes with only pre-existing warnings (not from my component). Now let me run the build.
+[94m[Bash][0m Run production build $ pnpm build 2>&1
+All quality checks pass. Now let me add the component to the demo page so we can verify it in the browser.
+[94m[TodoWrite][0m
+Let me read the current page.tsx to add the WizardProgress demo.
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m edit: "import { TodayViewHeader } from "@/components/ui/T..." → "import { TodayViewHeader } from "@/components/ui/T..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m edit: "      {/* ── Badges ── */}" → "      {/* ── Wizard Progress ── */}
+      <section..."
+Now let me start the dev server and verify in the browser.
+[94m[Bash][0m Start Next.js dev server $ pnpm dev 2>&1 &
+[94m[Bash][0m Wait for dev server and check it's running $ sleep 4 && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+
+[91m[Error: Exit code 7
+000
+000][0m
+[94m[Bash][0m Check dev server after longer wait $ sleep 5 && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+
+[91m[Error: Exit code 7
+000
+000][0m
+[94m[TaskOutput][0m
+The dev server is trying to run Convex interactively. Let me run just `next dev` directly.
+[94m[Bash][0m Start Next.js dev server directly $ npx next dev --turbopack --port 3000 2>&1 &
+[94m[Bash][0m Check dev server after longer wait $ sleep 5 && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+Dev server is running. Let me verify the component in the browser.
+[94m[mcp__chrome-devtools__navigate_page][0m [96mhttp://localhost:3000[0m
+
+[91m[Error: No page selected][0m
+[94m[mcp__chrome-devtools__list_pages][0m
+
+[91m[Error: No page selected][0m
+[94m[mcp__chrome-devtools__new_page][0m [96mhttp://localhost:3000[0m
+[94m[mcp__chrome-devtools__take_screenshot][0m
+[94m[Read][0m [95m/var/folders/wd/qwqgctrd0h5g4jg6ss2t9whh0000gn/T/chrome-devtools-mcp-7yGQYz/screenshot.png[0m
+The WizardProgress component is rendering correctly in the browser. I can see all three states:
+
+1. **Step 1 of 6 (Home)**: First step active (terracotta dot with number "1", terracotta label), remaining steps upcoming (border-outlined dots, muted numbers and labels)
+2. **Step 3 of 6 (Access)**: First two steps completed (sage dots with checkmarks, sage connector lines), third step active (terracotta), remaining upcoming
+3. **Step 6 of 6 (Review)**: All five previous steps completed (sage dots with checkmarks, sage connectors), last step active (terracotta)
+
+All acceptance criteria are met visually. Let me also verify the horizontal scrolling on a narrow viewport.
+[94m[mcp__chrome-devtools__emulate][0m
+[94m[mcp__chrome-devtools__take_screenshot][0m
+I need to scroll up to see the Wizard Progress section on the narrow viewport. Let me scroll there.
+[94m[mcp__chrome-devtools__evaluate_script][0m
+[94m[mcp__chrome-devtools__take_screenshot][0m
+The component is horizontally scrollable on narrow screens — you can see the steps extend beyond the viewport with the remaining steps accessible via scroll. The connector lines are visible and the track properly overflows. All three states render correctly on mobile:
+
+- **Step 1**: Terracotta active dot with "1", upcoming steps with outlined dots
+- **Step 3**: Sage completed dots with checkmarks, sage connectors, terracotta active "3"  
+- **Step 6**: All completed dots with sage connectors visible, scrollable to see the rest
+
+Let me reset the viewport and clean up.
+[94m[mcp__chrome-devtools__emulate][0m
+Now let me update the progress file.
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "*Add reusable patterns discovered during developme..." → "*Add reusable patterns discovered during developme..."
+[94m[TodoWrite][0m
+All acceptance criteria verified:
+
+| Criteria | Status |
+|----------|--------|
+| 6 steps: Home, Pets, Access, Contacts, Instructions, Review | ✅ |
+| Completed: sage dot with checkmark, sage label | ✅ |
+| Active: terracotta dot with number, terracotta label, colored shadow | ✅ |
+| Upcoming: border-outlined dot, muted number and label | ✅ |
+| Connector lines: sage when completed, --border otherwise | ✅ |
+| Horizontally scrollable on narrow screens | ✅ |
+| `pnpm typecheck` passes | ✅ |
+| `pnpm lint` passes | ✅ (0 errors, only pre-existing warnings) |
+| `pnpm build` passes | ✅ |
+| Verified in browser | ✅ (desktop + 320px mobile) |
+
+**Files changed:**
+- `src/components/ui/WizardProgress.tsx` (new)
+- `src/app/globals.css` (added wizard-progress CSS)
+- `src/app/page.tsx` (added demo section)
+
+All changes are uncommitted for manual review.
+
+<promise>COMPLETE</promise>
+The implementation is complete. All acceptance criteria are met and verified — the component renders correctly on both desktop and mobile viewports with proper horizontal scrolling on narrow screens.
+
+<promise>COMPLETE</promise>
+US-013 is complete. Nothing further to do — all files are implemented, quality checks pass, and the component was verified in the browser on both desktop and mobile viewports.
+
+<promise>COMPLETE</promise>
+
+--- SUBAGENT TRACE ---
+{
+  "events": [
+    {
+      "id": "subagent_1771388485175_5dk0tcy",
+      "type": "spawn",
+      "timestamp": "2026-02-18T04:21:25.175Z",
+      "agentType": "Explore",
+      "description": "Explore codebase and patterns",
+      "prompt": "Explore the codebase to understand:\n1. The project structure (what framework, key directories)\n2. Read `.ralph-tui/progress.md` for implementation patterns and learnings\n3. Read the PRD or any design docs to understand the wizard flow\n4. Look at existing components to understand patterns (especially US-003 which is a prerequisite)\n5. Check the design system/theme for colors like sage, terracotta, border colors, and shadow tokens\n6. Look at tailwind config or CSS variables for the design tokens\n\nBe very thorough - read all relevant files completely."
+    },
+    {
+      "id": "subagent_1771388485175_5dk0tcy",
+      "type": "complete",
+      "timestamp": "2026-02-18T04:26:17.523Z",
+      "agentType": "Explore",
+      "description": "Explore codebase and patterns",
+      "exitStatus": "success",
+      "durationMs": 292348
+    }
+  ],
+  "hierarchy": [
+    {
+      "state": {
+        "id": "subagent_1771388485175_5dk0tcy",
+        "agentType": "Explore",
+        "description": "Explore codebase and patterns",
+        "status": "completed",
+        "childIds": [],
+        "spawnedAt": "2026-02-18T04:21:25.175Z",
+        "prompt": "Explore the codebase to understand:\n1. The project structure (what framework, key directories)\n2. Read `.ralph-tui/progress.md` for implementation patterns and learnings\n3. Read the PRD or any design docs to understand the wizard flow\n4. Look at existing components to understand patterns (especially US-003 which is a prerequisite)\n5. Check the design system/theme for colors like sage, terracotta, border colors, and shadow tokens\n6. Look at tailwind config or CSS variables for the design tokens\n\nBe very thorough - read all relevant files completely.",
+        "endedAt": "2026-02-18T04:26:17.523Z",
+        "durationMs": 292348
+      },
+      "children": []
+    }
+  ],
+  "stats": {
+    "totalSubagents": 1,
+    "byType": {
+      "Explore": 1
+    },
+    "totalDurationMs": 292348,
+    "failureCount": 0,
+    "maxDepth": 1
+  }
+}

@@ -1,0 +1,188 @@
+# Iteration 2 Log
+
+## Metadata
+
+- **Task ID**: US-014
+- **Task Title**: Build Section Navigation component
+- **Description**: As a developer, I need horizontal scrollable pills for navigating manual sections in the sitter view.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-18T04:26:27.037Z
+- **Ended At**: 2026-02-18T04:31:06.147Z
+- **Duration**: 4m 39s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+
+
+I'll start by understanding the project context, existing patterns, and then implement the Section Navigation component.
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m
+Now let me look at existing component patterns for reference.
+[94m[Glob][0m pattern: [96msrc/components/ui/*.tsx[0m
+Let me look at a couple of components to understand the patterns used, particularly ones with similar interaction patterns (pills/buttons with active state).
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Badge.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/WizardProgress.tsx[0m
+Good. I have a clear picture of the patterns. Now let me implement the Section Navigation component.
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/components/ui/SectionNav.tsx[0m ""use client";
+
+import { useState, type HTMLAttributes } from "react";
+
+interface Section {
+  id: string;
+  emoji: string;
+  label: string;
+}
+
+interface SectionNavProps extends HTMLAttributes<HTMLEleme... (1752 chars)"
+[94m[TodoWrite][0m
+Now add CSS styles. Following the established horizontal scroll pattern from EmergencyContactBar and the step/state CSS pattern.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m edit: ".wizard-connector-completed {
+  background-color: ..." → ".wizard-connector-completed {
+  background-color: ..."
+[94m[TodoWrite][0m
+Now add the demo section to page.tsx. I'll place it after the Wizard Progress section, before Badges.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m edit: "import { WizardProgress } from "@/components/ui/Wi..." → "import { SectionNav } from "@/components/ui/Sectio..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/page.tsx[0m edit: "      {/* ── Badges ── */}" → "      {/* ── Section Navigation ── */}
+      <sect..."
+[94m[TodoWrite][0m
+[94m[Bash][0m Run TypeScript type checking $ pnpm typecheck 2>&1
+
+[91m[Error: Exit code 2
+
+> handoff@0.1.0 typecheck /Users/john/Coding/handoff
+> tsc --noEmit
+
+src/components/ui/SectionNav.tsx(11,11): error TS2430: Interface 'SectionNavProps' incorrectly extends interface 'HTMLAttributes<HTMLElement>'.
+  Types of property 'onSelect' are incompatible.
+    Type '((id: string) => void) | undefined' is not assignable to type 'ReactEventHandler<HTMLElement> | undefined'.
+      Type '(id: string) => void' is not assignable to type 'ReactEventHandler<HTMLElement>'.
+        Types of parameters 'id' and 'event' are incompatible.
+          Type 'SyntheticEvent<HTMLElement, Event>' is not assignable to type 'string'.
+ ELIFECYCLE  Command failed with exit code 2.
+
+
+> handoff@0.1.0 typecheck /Users/john/Coding/handoff
+> tsc --noEmit
+
+src/components/ui/SectionNav.tsx(11,11): error TS2430: Interface 'SectionNavProps' incorrectly extends interface 'HTMLAttributes<HTMLElement>'.
+  Types of property 'onSelect' are incompatible.
+    Type '((id: string) => void) | undefined' is not assignable to type 'ReactEventHandler<HTMLElement> | undefined'.
+      Type '(id: string) => void' is not assignable to type 'ReactEventHandler<HTMLElement>'.
+        Types of parameters 'id' and 'event' are incompatible.
+          Type 'SyntheticEvent<HTMLElement, Event>' is not assignable to type 'string'.
+ ELIFECYCLE  Command failed with exit code 2.][0m
+`onSelect` conflicts with the native `HTMLAttributes` property. Let me rename it.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/components/ui/SectionNav.tsx[0m edit: "onSelect" → "onSectionChange"
+[94m[Bash][0m Run TypeScript type checking $ pnpm typecheck 2>&1
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1
+No new warnings, only pre-existing ones. Now build:
+[94m[Bash][0m Run production build $ pnpm build 2>&1
+All quality checks pass.
+[94m[TodoWrite][0m
+Now let me verify in the browser.
+[94m[Bash][0m Start Next.js dev server for browser verification $ npx next dev --turbopack --port 3000 2>&1 & sleep 3 echo "Dev server started"
+Port 3000 is already in use — server is likely already running. Let me navigate to it.
+[94m[mcp__chrome-devtools__navigate_page][0m [96mhttp://localhost:3000[0m
+[94m[mcp__chrome-devtools__wait_for][0m
+The component renders correctly. I can see the Section Navigation section with:
+- `uid=1_52`: navigation "Manual sections" — the first set with 7 tabs
+- `uid=1_54`: tab "Feeding" selected — confirming active state works with `activeId="feeding"`
+- `uid=1_61`: navigation "Manual sections" — the second set with 5 tabs  
+- `uid=1_62`: tab "Overview" selected — confirming default first-section-active works
+
+Let me take a screenshot and also test the click interaction.
+[94m[mcp__chrome-devtools__take_screenshot][0m
+I can see the pills but the active state styling isn't visually distinct enough in this screenshot. Let me take a broader screenshot to see the styling better.
+[94m[mcp__chrome-devtools__take_screenshot][0m
+The active pill ("Feeding") doesn't appear to have the primary background and white text. Let me inspect why the CSS might not be applying. Let me check the DOM more closely.
+[94m[mcp__chrome-devtools__evaluate_script][0m
+
+
+The CSS classes are present (`section-nav-pill section-nav-pill-active`) but the styles aren't applying — computed background is `rgba(0, 0, 0, 0)`. This is likely a Tailwind v4 CSS layer specificity issue where the `@import "tailwindcss"` reset overrides plain CSS classes on `<button>` elements. Let me check how other components handle button-like elements.
+[94m[mcp__chrome-devtools__evaluate_script][0m
+The `.btn-primary` works fine. The difference is that `.btn-primary` doesn't set the background directly — it's likely set via Tailwind utility classes in the Button component JSX. Let me check.
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Button.tsx[0m
+The pattern is clear — Button uses **Tailwind utility classes** (`bg-primary`, `text-text-on-primary`, etc.) for colors, not plain CSS `background-color` properties. Tailwind v4 utility classes have higher specificity than plain CSS selectors. I need to use the same pattern — apply styles via Tailwind utility classes on the elements, with CSS only for things like transitions and shadows.
+
+Let me refactor the SectionNav component to use Tailwind utilities for the visual states, and keep the CSS minimal for structural/transition properties only.
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/SectionNav.tsx[0m
+I'll update the component to use Tailwind utility classes for colors (matching the Button pattern), and keep CSS only for structural layout and transitions.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/components/ui/SectionNav.tsx[0m edit: "            <button
+              key={section.id}..." → "            <button
+              key={section.id}..."
+Now update the CSS to remove the color properties that are now handled by Tailwind utilities, keeping only structural + transition + shadow rules.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m edit: ".section-nav-pill {
+  display: inline-flex;
+  alig..." → ".section-nav-pill {
+  display: inline-flex;
+  alig..."
+Now let me verify the build still passes and check the browser.
+[94m[Bash][0m Run TypeScript type checking $ pnpm typecheck 2>&1
+[94m[mcp__chrome-devtools__navigate_page][0m
+[94m[mcp__chrome-devtools__wait_for][0m
+[94m[mcp__chrome-devtools__evaluate_script][0m
+Now the styles are applying correctly:
+- **Active pill** ("Feeding"): `bg: rgb(194, 112, 74)` (primary), `color: rgb(255, 255, 255)` (white)
+- **Inactive pill** ("Overview"): `bg: rgb(255, 255, 255)` (bg-raised), `color: rgb(107, 90, 80)` (text-secondary)
+
+Let me take a screenshot to visually confirm.
+[94m[mcp__chrome-devtools__take_screenshot][0m
+The component looks great. I can see:
+- **Active pill** ("Feeding"): terracotta/primary background with white text
+- **Inactive pills**: white background with border and secondary text
+- Pill shape with `--radius-pill`
+- Emoji + text in each pill
+- Horizontal scrolling (House Rules and Vet Info are cut off, requiring scroll)
+
+Now let me test the click interaction — clicking "Walking" should switch the active state.
+[94m[mcp__chrome-devtools__click][0m
+[94m[mcp__chrome-devtools__evaluate_script][0m
+
+
+The first demo has `activeId="feeding"` which makes it controlled — clicking won't change it (by design, the parent controls state). The second demo is uncontrolled. Let me test clicking on the second nav.
+[94m[mcp__chrome-devtools__click][0m
+[94m[mcp__chrome-devtools__evaluate_script][0m
+The uncontrolled nav works — clicking "Walking" (index 2) correctly switched `aria-selected="true"` and the active class. Let me take a screenshot to confirm the visual state change.
+[94m[mcp__chrome-devtools__take_screenshot][0m
+"Walking" is now active with the terracotta background and white text. Let me also test the hover state on an inactive pill.
+[94m[mcp__chrome-devtools__hover][0m
+[94m[mcp__chrome-devtools__evaluate_script][0m
+Hover state works — the "Emergency" pill shows `rgb(243, 237, 229)` which is `--bg-sunken (#F3EDE5)`. All acceptance criteria verified.
+
+Now let me run the final build to make sure everything is clean.
+[94m[Bash][0m Run lint and production build $ pnpm lint 2>&1 && pnpm build 2>&1
+All checks pass. Now let me update progress.md.
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+I need to add a critical learning to the Codebase Patterns section about Tailwind v4 specificity, then append the US-014 entry.
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "- **Dev server**: `pnpm dev` runs Convex which req..." → "- **Dev server**: `pnpm dev` runs Convex which req..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "## 2026-02-17 - US-013" → "## 2026-02-17 - US-014
+- Implemented Section Navig..."
+[94m[TodoWrite][0m
+Let me also save the Tailwind v4 specificity learning to auto memory since it's a critical gotcha.
+[94m[mcp__plugin_claude-mem_mcp-search__save_memory][0m
+All acceptance criteria verified:
+
+| Criteria | Status |
+|----------|--------|
+| Pill per section: emoji + text, `--radius-pill` | Verified in screenshot |
+| Active: `--primary` background, white text | `bg: rgb(194,112,74)`, `color: rgb(255,255,255)` |
+| Inactive: `--bg-raised`, `--border`, `--text-secondary` | `bg: rgb(255,255,255)`, `color: rgb(107,90,80)` |
+| Hover: `--bg-sunken` | `bg: rgb(243,237,229)` on hover |
+| Horizontal scroll with smooth behavior | `overflow-x: auto`, `scroll-behavior: smooth`, `min-width: max-content` |
+| `pnpm typecheck` passes | Clean |
+| `pnpm lint` passes | 0 errors (3 pre-existing warnings) |
+| `pnpm build` passes | Clean |
+| Verify in browser | Screenshots + click + hover tested |
+
+**Files changed:**
+- `src/components/ui/SectionNav.tsx` (new)
+- `src/app/globals.css` (modified)
+- `src/app/page.tsx` (modified)
+
+<promise>COMPLETE</promise>

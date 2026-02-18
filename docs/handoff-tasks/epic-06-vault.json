@@ -1,0 +1,185 @@
+{
+  "name": "Epic 6: Secure Vault",
+  "branchName": "ralph/epic-06-vault",
+  "description": "Encrypted credential storage, SMS PIN verification, access logging, auto-expiration.",
+  "userStories": [
+    {
+      "id": "US-048",
+      "title": "Vault data model and encryption",
+      "description": "As a developer, I need vault items stored with encryption at rest so sensitive credentials are protected.",
+      "acceptanceCriteria": [
+        "VaultItems table: id, propertyId, label, encryptedValue, instructions, locationCardId, itemType (door/alarm/wifi/gate/garage/safe/custom)",
+        "Values encrypted before storage (server-side encryption via Convex action)",
+        "Decryption only on authorized access (phone-verified sitter during active trip)",
+        "Encryption key management strategy documented",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Security-sensitive story — verify access control thoroughly",
+      "dependsOn": ["US-002"]
+    },
+    {
+      "id": "US-049",
+      "title": "Create and manage vault items",
+      "description": "As a creator, I want to add, edit, and delete vault items so I can store and update my sensitive codes.",
+      "acceptanceCriteria": [
+        "Create: select type -> enter label, value (masked input with reveal toggle), instructions, optional location card",
+        "Edit: update any field, re-encrypt on value change",
+        "Delete: with confirmation dialog",
+        "List view on dashboard showing labels (values always masked for creator too until reveal)",
+        "Accessible from wizard step 3 and from dashboard -> My Property",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-048", "US-010"]
+    },
+    {
+      "id": "US-050",
+      "title": "SMS PIN verification flow",
+      "description": "As a sitter, I want to verify my phone number via SMS PIN so I can access vault items securely.",
+      "acceptanceCriteria": [
+        "Sitter taps vault tab or vault item -> sees 'Verify your phone number to view' message",
+        "System sends 6-digit PIN via SMS to the phone number the owner registered for this sitter",
+        "Sitter enters PIN -> validated against stored PIN",
+        "PIN expires after 10 minutes",
+        "Max 3 attempts per PIN; new PIN required after 3 failures",
+        "On success: vault items revealed for this session",
+        "One verification per session (not per item)",
+        "SMS delivery via Twilio or similar (Convex action)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill",
+        "Access control verification — unauthorized users cannot access restricted data"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Security-sensitive: verify PIN expiration and attempt limiting",
+      "dependsOn": ["US-043", "US-048"]
+    },
+    {
+      "id": "US-051",
+      "title": "Vault access for verified sitters",
+      "description": "As a verified sitter, I want to see decrypted vault items so I can access door codes, WiFi, and alarm codes.",
+      "acceptanceCriteria": [
+        "After PIN verification, vault items display with Vault Item component (revealed state)",
+        "Monospace code display, copy-to-clipboard button",
+        "Instructions text and location card visible with the code",
+        "If trip is not active (before start or after end), vault returns 'This handoff is not currently active'",
+        "If sitter phone not registered for this trip, vault returns 'You don't have access to secure items'",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill",
+        "Access control verification — unauthorized users cannot access restricted data"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-050", "US-010"]
+    },
+    {
+      "id": "US-052",
+      "title": "Vault access logging",
+      "description": "As a system, I need to log every vault access event so the owner has a complete audit trail.",
+      "acceptanceCriteria": [
+        "VaultAccessLog table: id, tripId, vaultItemId, sitterPhone, sitterName, accessedAt, verified (boolean)",
+        "Log entry created when sitter views a decrypted vault item",
+        "Log entry includes which specific item was accessed",
+        "Failed verification attempts also logged (verified: false)",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Audit logging — confirm access events are logged with correct timestamps"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-050"]
+    },
+    {
+      "id": "US-053",
+      "title": "Owner notification on vault access",
+      "description": "As an owner, I want to be notified immediately when someone accesses a vault item so I have peace of mind.",
+      "acceptanceCriteria": [
+        "Push notification: '[Sitter name] accessed your [item label] at [time]'",
+        "Notification links to activity feed",
+        "Activity feed shows vault access events with slate dot",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Depends on notification infrastructure from Epic 10",
+      "dependsOn": ["US-052", "US-070"]
+    },
+    {
+      "id": "US-054",
+      "title": "Vault auto-expiration on trip end",
+      "description": "As a system, I need vault access to automatically expire when the trip ends so codes aren't accessible indefinitely.",
+      "acceptanceCriteria": [
+        "Vault queries check trip status — only return items if trip is 'active'",
+        "When trip expires (US-045), subsequent vault access attempts show 'This trip has ended'",
+        "No action required by owner — automatic",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Expiration logic — confirm time-bound access auto-expires correctly"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-045", "US-048"]
+    },
+    {
+      "id": "US-055",
+      "title": "One-click vault access revocation",
+      "description": "As an owner, I want to instantly revoke vault access for a sitter so I can respond to security concerns.",
+      "acceptanceCriteria": [
+        "'Revoke Access' button per sitter on trip management page",
+        "Confirmation dialog: 'Revoke vault access for [name]?'",
+        "On confirm: sitter's vaultAccess set to false immediately",
+        "Sitter sees 'Your access has been revoked' on next vault attempt",
+        "Owner receives confirmation toast",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill",
+        "Access control verification — revoked users cannot access vault"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-043", "US-004"]
+    },
+    {
+      "id": "US-056",
+      "title": "Vault hidden state for unregistered viewers",
+      "description": "As a sitter without vault access, I should not see any vault content — not even blurred — so there's no false sense of access.",
+      "acceptanceCriteria": [
+        "If sitter phone not registered for trip: vault tab shows 'Sarah shared secure info with you — verify your phone number to view'",
+        "No blurred codes, no item labels, no teaser content",
+        "If link is forwarded to someone not registered: same message, no vault content",
+        "Vault tab badge shows lock icon to indicate content exists",
+        "pnpm typecheck passes",
+        "pnpm lint passes",
+        "pnpm build passes",
+        "Verify in browser using dev-browser skill",
+        "Access control verification — unregistered viewers see zero vault data"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "",
+      "dependsOn": ["US-010", "US-050"]
+    }
+  ]
+}

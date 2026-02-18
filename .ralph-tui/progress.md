@@ -1,0 +1,276 @@
+# Ralph Progress Log
+
+This file tracks progress across iterations. Agents update this file
+after each iteration and it's included in prompts for context.
+
+## Codebase Patterns (Study These First)
+
+- **Next.js 16 + ESLint 9 flat config**: Uses `eslint.config.mjs` (not `.eslintrc`). Import `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript` as arrays to spread. Add `eslint-config-prettier` last to disable formatting rules.
+- **pnpm scripts**: `typecheck` = `tsc --noEmit`, `lint` = `eslint`, `build` = `next build`. All three must pass for every story.
+- **Tailwind CSS v4**: Uses `@tailwindcss/postcss` plugin, no `tailwind.config.js` — config is done via CSS `@theme` blocks.
+- **Convex codegen without deployment**: Run `npx convex codegen --system-udfs --typecheck disable` to generate `convex/_generated/` without requiring a live Convex deployment. This enables `pnpm build` to pass in CI before a deployment exists.
+- **Convex + Next.js SSG**: `ConvexReactClient` constructor throws if URL is empty string. The `ConvexClientProvider` must handle missing `NEXT_PUBLIC_CONVEX_URL` gracefully (skip provider, render children directly) so `next build` can prerender static pages.
+- **Convex dev script pattern**: Use `"dev": "npx convex dev --run 'next dev --turbopack'"` to start Convex dev server alongside Next.js in a single command.
+- **Design tokens via CSS custom properties + Tailwind v4 `@theme inline`**: All design tokens live in `:root` as CSS custom properties, then mapped into Tailwind via `@theme inline` block in `globals.css`. Use `var(--token-name)` in inline styles and Tailwind utility classes (e.g., `bg-primary`, `shadow-polaroid`, `rounded-lg`) in className.
+- **Google Fonts via `next/font/google`**: Use `next/font/google` imports (not `<link>` tags) to avoid `@next/next/no-page-custom-font` lint warning. Each font exports a `variable` CSS property that feeds into the `--font-display`/`--font-body`/`--font-handwritten` tokens.
+- **PWA manifest in Next.js 16**: Use `metadata.manifest` for the manifest link, `metadata.appleWebApp` for iOS PWA meta tags, and export a separate `viewport` const for `themeColor` (Next.js 16 splits viewport from metadata).
+- **UI components in `src/components/ui/`**: Reusable components live in `src/components/ui/`. Use CSS classes in `globals.css` for complex interactive states (hover shadows, active overlays) and Tailwind utilities for static styles (colors, text, border-radius). Export types alongside components.
+- **Turbopack CSS caching gotcha**: When adding new CSS classes to `globals.css`, Turbopack may serve a stale cached version even after reload. If new CSS classes show zero matching rules in the browser, kill the dev server, delete `.next/`, and restart. This is especially common when appending large blocks at the end of the file.
+- **Horizontal scroll pattern**: Use `overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: max-content` on the inner track, with the outer wrapper doing the scrolling. See EmergencyContactBar and WizardProgress for examples.
+- **Step/state CSS pattern**: Use `.[component]-[state]` modifier classes (e.g., `.wizard-step-completed`, `.wizard-step-active`) and nest child selectors like `.wizard-step-completed .wizard-step-dot` for state-specific styling.
+- **Dev server**: `pnpm dev` runs Convex which requires interactive terminal. Use `npx next dev --turbopack` directly for browser verification.
+- **Tailwind v4 specificity**: Plain CSS `background-color`/`color` on `<button>` elements get overridden by Tailwind's reset layer. Use Tailwind utility classes (`bg-primary`, `text-text-on-primary`, etc.) for visual states on interactive elements, and keep plain CSS only for structural/transition/shadow properties. See Button.tsx and SectionNav.tsx for examples.
+
+---
+
+## 2026-02-17 - US-001
+- Initialized Next.js 16 project with TypeScript strict mode and App Router
+- Configured ESLint with Next.js core-web-vitals + typescript rules + prettier
+- Configured Prettier with `.prettierrc` and `.prettierignore`
+- Added `typecheck`, `format`, and `format:check` scripts to package.json
+- Created README with setup instructions
+- Files added: `package.json`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`, `next.config.ts`, `next-env.d.ts`, `.prettierrc`, `.prettierignore`, `.gitignore`, `pnpm-workspace.yaml`, `README.md`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css`, `public/*`
+- **Learnings:**
+  - `create-next-app` now generates Next.js 16 by default (still satisfies "14+" requirement)
+  - ESLint 9 flat config is the default — no more `.eslintrc.*` files
+  - Tailwind CSS v4 is the default — no `tailwind.config.js`, uses CSS-based config via `@theme`
+  - `create-next-app` won't init in a directory with existing files — must init elsewhere and copy
+---
+
+## 2026-02-17 - US-002
+- Installed `convex` package (v1.31.7)
+- Initialized `convex/` directory with `schema.ts` (empty schema) and `healthCheck.ts` query
+- Generated `convex/_generated/` via `npx convex codegen --system-udfs --typecheck disable`
+- Created `src/components/ConvexClientProvider.tsx` — client component wrapping `ConvexProvider`
+- Wired `ConvexClientProvider` into `src/app/layout.tsx`
+- Updated `package.json` dev script: `npx convex dev --run 'next dev --turbopack'`; added `dev:next` for standalone Next.js
+- Created `.env.local` and `.env.example` with `NEXT_PUBLIC_CONVEX_URL`
+- Updated `.gitignore` to track `.env.example` (`!.env.example`)
+- Updated `eslint.config.mjs` to ignore `convex/_generated/**`
+- Updated `.prettierignore` to ignore `convex/_generated`
+- Files added: `convex/schema.ts`, `convex/healthCheck.ts`, `convex/_generated/*`, `convex/tsconfig.json`, `convex/README.md`, `src/components/ConvexClientProvider.tsx`, `.env.local`, `.env.example`
+- Files modified: `package.json`, `src/app/layout.tsx`, `eslint.config.mjs`, `.prettierignore`, `.gitignore`
+- **Learnings:**
+  - `npx convex codegen` requires `CONVEX_DEPLOYMENT` env var — but `--system-udfs` flag bypasses this check, allowing offline codegen
+  - Convex codegen generates `.js` + `.d.ts` files (not `.ts`) by default; this is expected and works with TS projects
+  - `ConvexReactClient("")` throws "Provided address was not an absolute URL" — must guard against empty/missing URL for SSG builds
+  - Convex's `--run` flag on `convex dev` is the recommended way to start both servers; it sets env vars automatically
+---
+
+## 2026-02-17 - US-003
+- Implemented all design tokens from `docs/handoff-design-system.md` as CSS custom properties in `:root`
+- Mapped tokens to Tailwind v4 via `@theme inline` block (colors, fonts, shadows, radii, easing, durations)
+- Loaded 3 Google Fonts via `next/font/google`: Instrument Serif (display), Bricolage Grotesque (body/UI), Caveat (handwritten)
+- Implemented linen background with inline SVG noise texture at 2.5% opacity on `body`
+- Updated `page.tsx` with token showcase (headings, color swatches, card with polaroid shadow, badge pills)
+- Removed default Geist fonts and dark mode styles
+- Files modified: `src/app/globals.css`, `src/app/layout.tsx`, `src/app/page.tsx`
+- **Learnings:**
+  - `@next/next/no-page-custom-font` warns if you use `<link>` for Google Fonts in layout — must use `next/font/google` imports instead
+  - `next/font/google` `Instrument_Serif` only supports `weight: "400"` (not variable weight), but supports `style: ["normal", "italic"]`
+  - Tailwind v4 `@theme inline` maps CSS custom properties to utility classes — e.g., `--color-primary: var(--primary)` enables `bg-primary`, `text-primary` etc.
+  - SVG noise texture works as inline data URI in `background-image` — no external file needed
+  - Font variable names from `next/font` (e.g., `--font-instrument-serif`) must be used in the CSS `--font-display` token, not the raw font name
+---
+
+## 2026-02-17 - US-019
+- Configured PWA manifest at `public/manifest.json` with app name "Handoff", theme color `#C2704A`, background `#FAF6F1`, standalone display
+- Generated app icons at `public/icons/icon-192x192.png` and `public/icons/icon-512x512.png` (branded with "H" on theme color background)
+- Created service worker at `public/sw.js` with network-first caching strategy (precaches `/` and `/manifest.json`, caches all GET requests on fetch)
+- Created `src/components/ServiceWorkerRegistrar.tsx` — client component that registers the service worker on mount
+- Updated `src/app/layout.tsx` — added manifest link, apple-web-app meta tags, theme-color viewport, apple-touch-icon, and ServiceWorkerRegistrar
+- Files added: `public/manifest.json`, `public/icons/icon-192x192.png`, `public/icons/icon-512x512.png`, `public/sw.js`, `src/components/ServiceWorkerRegistrar.tsx`
+- Files modified: `src/app/layout.tsx`
+- **Learnings:**
+  - Next.js 16 requires `themeColor` to be in a separate `export const viewport: Viewport` — it cannot go in the `metadata` export
+  - Service workers in `public/` are served at root path by Next.js, so `public/sw.js` → `/sw.js`
+  - Pure Node.js PNG generation works via `zlib.deflateSync` on raw RGBA pixel data — no external image libraries needed for placeholder icons
+  - macOS has `sips` for image conversion but it can't create PNGs from scratch; programmatic generation is more reliable
+---
+
+## 2026-02-17 - US-004
+- Created `Button` component at `src/components/ui/Button.tsx` with `forwardRef` support
+- Implemented 6 variants: primary (terracotta), secondary (sage), vault (slate), ghost (transparent+border), soft (primary-light), danger
+- Implemented 3 sizes: lg (`16px 32px`, radius-lg), default (`12px 20px`, radius-md), sm (`8px 12px`, radius-sm)
+- Leading icon slot via `icon` prop (renders in `<span className="btn-icon">`)
+- Hover: `translateY(-1px)` + shadow elevation + darker background (all variants)
+- Active: `inset 0 0 0 100px rgba(0,0,0,0.06)` overlay on all variants
+- Primary casts colored shadow `0 4px 14px rgba(194,112,74,0.25)` at rest, intensifies on hover
+- Disabled: `opacity: 0.4` + `cursor: not-allowed` + `pointer-events: none`
+- Button CSS classes added to `globals.css` for interactive states; Tailwind utilities for static styles
+- Updated `page.tsx` with full button showcase (variants, sizes, icons, disabled, size×variant matrix)
+- Verified at 375px viewport — all buttons render correctly and wrap properly
+- Files added: `src/components/ui/Button.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - For complex interactive states (hover shadow transitions, active overlays, colored shadows), CSS classes in `globals.css` are cleaner than inline styles or Tailwind utilities — especially when needing `:active:not(:disabled)` selectors
+  - Tailwind v4's `bg-transparent` class can be used as a CSS selector (`.btn.bg-transparent`) to target ghost variant without extra classes
+  - `inset 0 0 0 100px rgba(0,0,0,0.06)` creates a uniform inner overlay effect — the large spread covers the entire button regardless of size
+  - Using `border: none` in base `.btn` then adding `border` via Tailwind on ghost variant works well — the ghost variant's `border border-border-default` overrides correctly
+---
+
+## 2026-02-17 - US-005
+- Created `Input` component at `src/components/ui/Input.tsx` with `forwardRef` support, label, hint text, and error state
+- Created `Textarea` component at `src/components/ui/Textarea.tsx` with `forwardRef`, vertical-only resize, min-height 100px
+- Created `SearchBar` component at `src/components/ui/SearchBar.tsx` with inline magnifying glass icon, sunken default bg, raised bg on focus
+- Added CSS classes in `globals.css`: `.input-wrapper`, `.input-label`, `.input-field`, `.input-error`, `.input-textarea`, `.input-hint`, `.input-hint-error`, `.search-bar-wrapper`, `.search-bar-icon`, `.search-bar-input`
+- Updated `page.tsx` with full input component showcase (text inputs with label/hint/error, textareas, search bar)
+- Verified at 375px viewport — all inputs render correctly, focus/error states work as expected
+- Files added: `src/components/ui/Input.tsx`, `src/components/ui/Textarea.tsx`, `src/components/ui/SearchBar.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - CSS `focus-within` on the wrapper (`.search-bar-wrapper:focus-within .search-bar-icon`) is cleaner than JS state for changing icon color on input focus
+  - `box-shadow: 0 0 0 3px var(--primary-subtle)` creates a soft focus ring without affecting layout — works alongside border-color change for double visual cue
+  - For SearchBar left padding, `calc(var(--space-3) + 18px + var(--space-2))` accounts for padding + icon width + gap — avoids hardcoded magic numbers
+  - `shadow-inner` token (`inset 0 1px 3px rgba(42,31,26,0.06)`) on SearchBar default state creates the "sunken" feel specified in the design system
+  - Sharing CSS class names (`.input-field`, `.input-hint`) between Input and Textarea avoids duplication — Textarea just adds `.input-textarea` for min-height and resize
+---
+
+## 2026-02-17 - US-006
+- Created `Badge` component at `src/components/ui/Badge.tsx` with 7 variants: overlay, room, vault, success, warning, danger, time
+- Overlay badge prefixed with `✦`, vault badge prefixed with `🔒` — prefixes defined in component via partial record
+- Added CSS classes in `globals.css`: `.badge` (base), `.badge-overlay`, `.badge-room`, `.badge-vault`, `.badge-success`, `.badge-warning`, `.badge-danger`, `.badge-time`
+- All badges: 12px font (`--text-xs`), 600 weight, pill radius (`--radius-pill`), `3px 10px` padding
+- Overlay, room, vault variants include border; success, warning, danger, time are borderless
+- Room badges accept dynamic text (e.g., "Kitchen", "Garage") via children
+- Time badges accept time strings (e.g., "7:00 AM") via children
+- Updated `page.tsx` with full badge showcase section
+- Verified in browser at localhost:3000 — all variants render correctly
+- Files added: `src/components/ui/Badge.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - Badge component is simpler than Button — no need for `forwardRef` or `"use client"` since it's a pure presentational `<span>` with no event handlers or state
+  - Using a `Partial<Record<BadgeVariant, string>>` for prefixes cleanly handles variants that have no prefix without conditional logic
+  - Warning badge text color `#8B6420` is a custom dark amber — not a design token, hardcoded in CSS since it's specific to the warning badge contrast needs
+  - `line-height: 1` on badges prevents extra vertical space from the default line-height, keeping the pill shape tight
+---
+
+## 2026-02-17 - US-007
+- Implemented LocationCard component — polaroid-style photo card with handwritten Caveat caption and room badge
+- Files changed:
+  - `src/components/ui/LocationCard.tsx` (new) — component with tilt variants, placeholder state, fullscreen overlay
+  - `src/app/globals.css` — added Location Card CSS section (~120 lines)
+  - `src/app/page.tsx` — added LocationCard import and showcase section with 4 examples
+- **Learnings:**
+  - Tilt hover transitions need per-variant overrides (tilted-left hover shifts to -2deg, neutral to -0.5deg, tilted-right to 0.7deg) for natural feel — a single hover rule would snap all tilts to the same angle
+  - `<img>` used intentionally over `next/image` for external URLs (avoids `remotePatterns` config) and fullscreen overlay; lint warnings are expected
+  - The `aspect-ratio: 4 / 3` CSS property works well for the photo container without padding-bottom hacks
+  - `role="dialog"` + `aria-label` on the overlay provides good a11y tree structure automatically
+  - Placeholder card deliberately omits `role="button"` and `tabIndex` since there's nothing to expand
+---
+
+## 2026-02-17 - US-008
+- Created `PetProfileCard` component at `src/components/ui/PetProfileCard.tsx` with hero photo, details, and personality note
+- Structure: 1:1 hero photo (or gradient placeholder) + name (Instrument Serif) + breed/age meta + detail rows + personality note
+- Detail rows: emoji icon (24px) + label + value, with optional `tel:` link in sage/secondary color for phone numbers
+- Personality note rendered in Caveat handwritten font on accent-subtle background
+- Placeholder gradient: linear-gradient from primary-light → accent-light → secondary-light at 135deg
+- Hover: shadow-md → shadow-lg elevation
+- Added CSS classes in `globals.css`: `.pet-card`, `.pet-card-hero`, `.pet-card-img`, `.pet-card-placeholder`, `.pet-card-body`, `.pet-card-name`, `.pet-card-meta`, `.pet-card-details`, `.pet-card-detail-row`, `.pet-card-detail-emoji`, `.pet-card-detail-label`, `.pet-card-detail-value`, `.pet-card-detail-phone`, `.pet-card-personality`
+- Updated `page.tsx` with Pet Profile Card showcase
+- Files added: `src/components/ui/PetProfileCard.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+---
+
+## 2026-02-17 - US-009
+- Created `TaskItem` component at `src/components/ui/TaskItem.tsx` with checkbox toggle, badges, and proof button
+- Supports controlled and uncontrolled completion state via `completed` / `defaultCompleted` props
+- Checkbox: 26px rounded square with sage/secondary fill + white checkmark SVG on completion, spring `checkPop` animation
+- Completed state: secondary-subtle bg, line-through text in muted color
+- Overlay state: 3px left border in accent color
+- Meta row: time badge, room badge, overlay badge ("This Trip Only") via Badge component
+- Proof button: dashed border, camera icon, hover highlights in primary color
+- Accessible: `role="checkbox"`, `aria-checked`, keyboard support (Space/Enter)
+- Added CSS classes in `globals.css`: `.task-item`, `.task-item-completed`, `.task-item-overlay`, `.task-item-checkbox`, `.task-item-checkbox-checked`, `.task-item-checkmark`, `.task-item-body`, `.task-item-text`, `.task-item-meta`, `.task-item-proof`, `@keyframes checkPop`
+- Updated `page.tsx` with Task Item showcase
+- Files added: `src/components/ui/TaskItem.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+---
+
+## 2026-02-17 - US-010
+- Created `VaultItem` component at `src/components/ui/VaultItem.tsx` with three states: revealed, locked, hidden
+- Structure: icon (44px, --radius-md, --vault bg, white icon) + label/hint + value or verify button
+- Revealed state: --secondary-subtle bg, --secondary-light border, monospace code with letter-spacing 0.15em
+- Locked state (unverified): --vault-subtle bg, --vault-light border, shows label + hint + verify button
+- Hidden state: --vault-subtle bg, --vault-light border, no label/code shown, only "verify your phone number" message + verify button — no blurred/teased state
+- Exported `LockIcon` helper SVG component for default vault icon usage
+- Added CSS classes in `globals.css`: `.vault-item`, `.vault-item-revealed`, `.vault-item-locked`, `.vault-item-icon`, `.vault-item-content`, `.vault-item-label`, `.vault-item-hint`, `.vault-item-message`, `.vault-item-value`, `.vault-item-action`
+- Updated `page.tsx` with vault item showcase showing all three states
+- Files added: `src/components/ui/VaultItem.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - VaultItem is a pure presentational component (no `"use client"` needed) since Button handles its own client-side concerns — the VaultItem just renders conditionally based on `state` prop
+  - `ui-monospace, 'Courier New', monospace` is the standard system monospace font stack — works across macOS (SF Mono), Windows (Cascadia Code), and Linux (Ubuntu Mono)
+  - For multi-state components, a single CSS base class (`.vault-item`) + state modifier classes (`.vault-item-revealed`, `.vault-item-locked`) is cleaner than variant maps when only background/border change between states
+  - `min-width: 0` on the flex content area prevents long label text from overflowing the flex container — essential for vault items with long credential names
+---
+
+## 2026-02-17 - US-011
+- Created `EmergencyContactBar` component at `src/components/ui/EmergencyContactBar.tsx` with horizontally scrollable contact chips
+- Per contact chip: 36px round icon (color-coded by role) + name + role label + `Call` link with `tel:` href
+- Icon colors: owner (`--primary-light`), vet (`--secondary-light`), neighbor (`--accent-light`), emergency (`--danger-light`)
+- Hover state: border changes to `--secondary`, bg changes to `--secondary-subtle`
+- `-webkit-overflow-scrolling: touch` for smooth mobile scroll
+- `min-width: max-content` on each chip prevents text wrapping
+- Default icon shows role initial letter (O/V/N/E) with role-specific text color; custom icon slot via `icon` prop
+- Added CSS classes in `globals.css`: `.contact-bar`, `.contact-bar-scroll`, `.contact-chip`, `.contact-chip-icon`, `.contact-chip-icon-text`, `.contact-chip-info`, `.contact-chip-name`, `.contact-chip-role`, `.contact-chip-call`
+- Updated `page.tsx` with Emergency Contact Bar showcase (5 sample contacts)
+- Verified at 375px mobile viewport — horizontal scroll works, `tel:` links correct
+- Files added: `src/components/ui/EmergencyContactBar.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - `-webkit-overflow-scrolling: touch` still needed for iOS momentum scrolling in 2026 — standard `overflow-x: auto` alone doesn't give the rubber-band feel
+  - `scrollbar-width: thin` on the scroll container gives a subtle scrollbar hint on desktop without the chunky default
+  - Using `"use client"` is needed here because of the `onClick` handler on the Call link (`e.stopPropagation()`)
+  - `min-width: max-content` on flex children inside an overflow scroll container is the cleanest way to prevent chips from shrinking
+---
+
+## 2026-02-17 - US-012
+- Created `TodayViewHeader` component at `src/components/ui/TodayViewHeader.tsx` with greeting, day counter, and summary stats
+- Structure: decorative circle + greeting heading (Instrument Serif) + "Day X of Y" subtext + stat chips row
+- Stat chips: 3 chips showing tasks today, completed, and proof needed — each with bold value + muted label
+- Decorative circle: 120px warm-wash gradient with primary-light border, positioned top-right
+- Background: warm-wash with bottom border
+- Added CSS classes in `globals.css`: `.today-header`, `.today-header-circle`, `.today-header-content`, `.today-header-greeting`, `.today-header-date`, `.today-header-stats`, `.today-header-chip`, `.today-header-chip-value`, `.today-header-chip-label`
+- Updated `page.tsx` with Today View Header showcase
+- Files added: `src/components/ui/TodayViewHeader.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+---
+
+## 2026-02-17 - US-013
+- Implemented 6-step Wizard Progress Indicator component
+- Files changed:
+  - `src/components/ui/WizardProgress.tsx` (new) — Component with 3 step states: completed (sage + checkmark), active (terracotta + number + shadow), upcoming (outlined + muted)
+  - `src/app/globals.css` — Added `.wizard-progress`, `.wizard-step`, `.wizard-connector` CSS classes
+  - `src/app/page.tsx` — Added WizardProgress demo section showing steps 1, 3, and 6
+- **Learnings:**
+  - Connector line vertical centering: `margin-top: 15px` to align 2px line with center of 32px dot
+  - `min-width: max-content` on the `<ol>` track ensures all 6 steps stay in a single row and scroll on narrow screens
+  - Using `<nav>` + `<ol>` for semantic step navigation with `aria-label="Setup progress"` and `aria-current="step"` on active step
+  - The colored shadow on the active dot (`0 4px 14px rgba(194,112,74,0.35)`) reuses the same terracotta shadow pattern from `.btn-primary`
+---
+
+## 2026-02-17 - US-014
+- Implemented Section Navigation component — horizontal scrollable pills for navigating manual sections in sitter view
+- Files changed:
+  - `src/components/ui/SectionNav.tsx` (new) — Pill navigation with emoji + label, controlled/uncontrolled active state, `role="tablist"`/`role="tab"` ARIA semantics
+  - `src/app/globals.css` — Added `.section-nav`, `.section-nav-track`, `.section-nav-pill`, `.section-nav-pill-active`, `.section-nav-emoji` CSS classes
+  - `src/app/page.tsx` — Added SectionNav demo section with two examples (controlled with `activeId` and uncontrolled default)
+- **Learnings:**
+  - `onSelect` conflicts with `HTMLAttributes<HTMLElement>` native prop — renamed to `onSectionChange` to avoid TS2430 interface incompatibility
+  - Tailwind v4 button reset overrides plain CSS `background-color`/`color` — must use Tailwind utility classes (`bg-primary`, `text-text-on-primary`, `border-primary`) for visual states on `<button>` elements, keeping CSS only for structural layout, transitions, and shadows
+  - Colored shadow on active pill (`0 2px 8px rgba(194,112,74,0.25)`) kept in CSS since `box-shadow` is not affected by Tailwind's reset layer
+---
+
+## 2026-02-17 - US-015
+- Implemented NotificationToast component — owner-facing toast notifications with 3 variants
+- Files changed:
+  - `src/components/ui/NotificationToast.tsx` (new) — Client component with success/vault/warning variants, auto-dismiss (5s default), manual close, slide-from-right entrance animation
+  - `src/app/globals.css` — Added `.notification-toast`, `.notification-toast-[variant]`, `.notification-toast-exit`, `.notification-toast-icon`, `.notification-toast-content`, `.notification-toast-title`, `.notification-toast-message`, `.notification-toast-timestamp`, `.notification-toast-close` CSS classes + `@keyframes notification-toast-slide-in/out`
+  - `src/app/page.tsx` — Added NotificationToast demo section with all 3 variants (auto-dismiss disabled for showcase)
+- **Learnings:**
+  - Turbopack CSS caching is aggressive — after appending new CSS blocks to `globals.css`, the dev server may serve stale styles. Fix: kill server, `rm -rf .next/`, restart. This wasted significant debugging time.
+  - Exit animation state management: when using `exiting` + `internalVisible` states for enter/exit animations, must reset `exiting = false` in the timeout callback alongside setting `internalVisible = false`, otherwise the guard `if (!visible && !exiting) return null` never triggers (both conditions must be true to unmount).
+  - Component prefix naming convention: used `notification-toast-*` prefix for all CSS classes, consistent with `task-item-*`, `vault-item-*`, `section-nav-*` pattern in the codebase.
+  - Entrance animation uses `var(--ease-spring)` (cubic-bezier 0.34, 1.56, 0.64, 1) for the bouncy slide-in, exit uses `var(--ease-out)` for smooth departure.
+---

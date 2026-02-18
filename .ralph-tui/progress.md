@@ -21,6 +21,11 @@ after each iteration and it's included in prompts for context.
 - **Dev server**: `pnpm dev` runs Convex which requires interactive terminal. Use `npx next dev --turbopack` directly for browser verification.
 - **Tailwind v4 specificity**: Plain CSS `background-color`/`color` on `<button>` elements get overridden by Tailwind's reset layer. Use Tailwind utility classes (`bg-primary`, `text-text-on-primary`, etc.) for visual states on interactive elements, and keep plain CSS only for structural/transition/shadow properties. See Button.tsx and SectionNav.tsx for examples.
 - **Layout components in `src/components/layouts/`**: Responsive layout shells (CreatorLayout, SitterLayout) live in `layouts/` dir. They override BottomNav's `position: fixed` to `position: sticky` within their containers via `.creator-layout .bottom-nav` CSS selectors. Breakpoints: 375px (mobile), 768px (tablet), 1024px (desktop).
+- **Convex hooks in pages without guaranteed provider**: When a page uses Convex hooks but `NEXT_PUBLIC_CONVEX_URL` may be missing (CI/build), split into an outer component that checks the env var and an inner component holding the hooks. The inner only renders when the var is truthy (ConvexProvider exists). This avoids "useAction must be in ConvexProvider" crashes.
+- **`ssr: false` with `next/dynamic` must be in a Client Component**: In Next.js 16, `dynamic(() => import('./X'), { ssr: false })` throws a build error if called in a Server Component. Create a dedicated `"use client"` wrapper component that does the dynamic import.
+- **Convex `"use node"` TypeScript inference**: Actions marked `"use node"` lose TypeScript inference for handler return types. Explicitly annotate the handler: `handler: async (ctx, args): Promise<{ ... }> => { ... }` and cast internal mutation results via `as Id<"tablename">`.
+- **Convex codegen local binary**: Use `node_modules/.bin/convex codegen --system-udfs --typecheck disable` (not `npx convex codegen`) to avoid downloading a different version. Run `pnpm install` first if `node_modules/.bin/convex` doesn't exist.
+- **Auth pages route structure**: Signup page at `src/app/signup/` uses 3 files: `page.tsx` (server, metadata), `SignupPageClient.tsx` (client wrapper with `dynamic(ssr:false)`), `SignupForm.tsx` (actual form with Convex hooks + env guard).
 
 ---
 
@@ -345,4 +350,26 @@ after each iteration and it's included in prompts for context.
   - `100dvh` (dynamic viewport height) is better than `100vh` for mobile layouts because it accounts for the browser chrome (address bar, etc.)
   - Sidebar uses `position: sticky; top: 0; height: 100dvh` to stay visible while the main content scrolls — this avoids needing a separate scroll container for the sidebar
   - Controlled/uncontrolled pattern for sidebar nav follows the same pattern as BottomNav and SectionNav (internal state + optional external control)
+---
+
+## 2026-02-18 - US-021
+- Implemented creator signup with email and password authentication
+- Added `users` table to Convex schema with `by_email` index for email uniqueness queries
+- Created `convex/users.ts` with `create` internal mutation that checks email uniqueness and throws `EMAIL_TAKEN` error
+- Created `convex/auth.ts` with `signup` action (`"use node"` runtime) using PBKDF2 hashing via Node.js `crypto` module — no external bcrypt package needed
+- Created `src/app/signup/page.tsx` (server component) with metadata, wordmark, heading, and sign-in link
+- Created `src/app/signup/SignupPageClient.tsx` (client wrapper) that uses `dynamic(ssr: false)` to lazy-load the form — required because `ssr: false` cannot be used in Server Components
+- Created `src/app/signup/SignupForm.tsx` with guard pattern: outer component checks `NEXT_PUBLIC_CONVEX_URL` and renders a fallback when Convex is not configured; inner `SignupFormInner` holds all Convex hooks
+- Client-side validation: email format check, password ≥ 8 characters, passwords match
+- Server-side email uniqueness check returns `EMAIL_TAKEN` error which is surfaced as a field error
+- On success: redirects to `/wizard` via `router.push`
+- Files added: `convex/users.ts`, `convex/auth.ts`, `src/app/signup/page.tsx`, `src/app/signup/SignupPageClient.tsx`, `src/app/signup/SignupForm.tsx`
+- Files modified: `convex/schema.ts`, `convex/_generated/` (re-generated)
+- **Learnings:**
+  - `"use node"` in Convex actions causes TypeScript to lose inference for `handler` return types — must add explicit return type annotation like `Promise<{ userId: Id<"users"> }>` and cast `ctx.runMutation` result with `as Id<"users">`
+  - `ssr: false` with `next/dynamic` is NOT allowed in Server Components in Next.js 16 — must move the `dynamic()` call into a `"use client"` wrapper component
+  - `useAction` (and all Convex hooks) throw immediately if no `ConvexProvider` is in the React tree — guard by splitting into an outer component that checks `NEXT_PUBLIC_CONVEX_URL` and an inner component that holds the hooks; the inner only renders when ConvexProvider is guaranteed to exist
+  - PBKDF2 via Node.js `crypto` module (`pbkdf2Sync`, `randomBytes`) works perfectly in Convex `"use node"` actions — secure password hashing without adding npm dependencies
+  - Password stored as `${salt}:${hash}` (hex-encoded, colon-separated) for easy splitting during login verification
+  - `pnpm install` must be run before `node_modules/.bin/convex codegen` — `npx convex codegen` tries to download a different version; use the locally installed binary instead
 ---

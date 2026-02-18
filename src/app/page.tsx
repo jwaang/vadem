@@ -1,3 +1,4 @@
+import { TodayViewHeader } from "@/components/ui/TodayViewHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
@@ -83,6 +84,18 @@ export default function Home() {
       >
         Component showcase
       </p>
+
+      {/* ── Today View Header ── */}
+      <section style={{ marginBottom: "var(--space-8)", marginLeft: "calc(-1 * var(--space-4))", marginRight: "calc(-1 * var(--space-4))", marginTop: "calc(-1 * var(--space-8))" }}>
+        <TodayViewHeader
+          sitterName="Jamie"
+          currentDay={2}
+          totalDays={5}
+          tasksToday={6}
+          completedTasks={2}
+          proofNeeded={3}
+        />
+      </section>
 
       {/* ── Badges ── */}
       <section style={{ marginBottom: "var(--space-8)" }}>

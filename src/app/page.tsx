@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -52,6 +53,38 @@ export default function Home() {
       >
         Component showcase
       </p>
+
+      {/* ── Badges ── */}
+      <section style={{ marginBottom: "var(--space-8)" }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-2xl)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          Badges &amp; Pills
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "var(--space-3)",
+            alignItems: "center",
+          }}
+        >
+          <Badge variant="overlay">This Trip Only</Badge>
+          <Badge variant="room">Kitchen</Badge>
+          <Badge variant="room">Garage</Badge>
+          <Badge variant="room">Backyard</Badge>
+          <Badge variant="vault">Secure</Badge>
+          <Badge variant="success">Active</Badge>
+          <Badge variant="warning">Due Today</Badge>
+          <Badge variant="danger">Overdue</Badge>
+          <Badge variant="time">7:00 AM</Badge>
+          <Badge variant="time">6:00 PM</Badge>
+        </div>
+      </section>
 
       {/* ── Inputs ── */}
       <section style={{ marginBottom: "var(--space-8)" }}>

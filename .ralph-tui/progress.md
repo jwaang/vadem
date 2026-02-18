@@ -120,3 +120,22 @@ after each iteration and it's included in prompts for context.
   - `shadow-inner` token (`inset 0 1px 3px rgba(42,31,26,0.06)`) on SearchBar default state creates the "sunken" feel specified in the design system
   - Sharing CSS class names (`.input-field`, `.input-hint`) between Input and Textarea avoids duplication — Textarea just adds `.input-textarea` for min-height and resize
 ---
+
+## 2026-02-17 - US-006
+- Created `Badge` component at `src/components/ui/Badge.tsx` with 7 variants: overlay, room, vault, success, warning, danger, time
+- Overlay badge prefixed with `✦`, vault badge prefixed with `🔒` — prefixes defined in component via partial record
+- Added CSS classes in `globals.css`: `.badge` (base), `.badge-overlay`, `.badge-room`, `.badge-vault`, `.badge-success`, `.badge-warning`, `.badge-danger`, `.badge-time`
+- All badges: 12px font (`--text-xs`), 600 weight, pill radius (`--radius-pill`), `3px 10px` padding
+- Overlay, room, vault variants include border; success, warning, danger, time are borderless
+- Room badges accept dynamic text (e.g., "Kitchen", "Garage") via children
+- Time badges accept time strings (e.g., "7:00 AM") via children
+- Updated `page.tsx` with full badge showcase section
+- Verified in browser at localhost:3000 — all variants render correctly
+- Files added: `src/components/ui/Badge.tsx`
+- Files modified: `src/app/globals.css`, `src/app/page.tsx`
+- **Learnings:**
+  - Badge component is simpler than Button — no need for `forwardRef` or `"use client"` since it's a pure presentational `<span>` with no event handlers or state
+  - Using a `Partial<Record<BadgeVariant, string>>` for prefixes cleanly handles variants that have no prefix without conditional logic
+  - Warning badge text color `#8B6420` is a custom dark amber — not a design token, hardcoded in CSS since it's specific to the warning badge contrast needs
+  - `line-height: 1` on badges prevents extra vertical space from the default line-height, keeping the pill shape tight
+---

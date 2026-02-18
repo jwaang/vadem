@@ -1,7 +1,7 @@
 {
   "name": "Epic 1: Project Foundation & Design System",
-  "branchName": "ralph/epic-01-foundation",
   "description": "Scaffolding, tooling, Convex setup, design tokens, and reusable UI components. Everything else depends on this.",
+  "branchName": "ralph/epic-01-foundation",
   "userStories": [
     {
       "id": "US-001",
@@ -19,7 +19,7 @@
         "pnpm build passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": []
     },
@@ -38,9 +38,11 @@
         "pnpm build passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": ["US-001"]
+      "dependsOn": [
+        "US-001"
+      ]
     },
     {
       "id": "US-003",
@@ -62,9 +64,11 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Reference handoff-design-system.md for all token values",
-      "dependsOn": ["US-001"]
+      "dependsOn": [
+        "US-001"
+      ]
     },
     {
       "id": "US-004",
@@ -85,9 +89,11 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-005",
@@ -107,9 +113,11 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-006",
@@ -128,7 +136,9 @@
       "priority": 6,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-007",
@@ -152,7 +162,10 @@
       "priority": 7,
       "passes": false,
       "notes": "Signature UX element — must match design system exactly",
-      "dependsOn": ["US-003", "US-006"]
+      "dependsOn": [
+        "US-003",
+        "US-006"
+      ]
     },
     {
       "id": "US-008",
@@ -176,7 +189,10 @@
       "priority": 8,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003", "US-006"]
+      "dependsOn": [
+        "US-003",
+        "US-006"
+      ]
     },
     {
       "id": "US-009",
@@ -201,7 +217,10 @@
       "priority": 9,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003", "US-006"]
+      "dependsOn": [
+        "US-003",
+        "US-006"
+      ]
     },
     {
       "id": "US-010",
@@ -222,7 +241,10 @@
       "priority": 10,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003", "US-004"]
+      "dependsOn": [
+        "US-003",
+        "US-004"
+      ]
     },
     {
       "id": "US-011",
@@ -243,7 +265,9 @@
       "priority": 11,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-012",
@@ -264,7 +288,9 @@
       "priority": 12,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-013",
@@ -285,7 +311,9 @@
       "priority": 13,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-014",
@@ -305,7 +333,10 @@
       "priority": 14,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003", "US-006"]
+      "dependsOn": [
+        "US-003",
+        "US-006"
+      ]
     },
     {
       "id": "US-015",
@@ -325,7 +356,9 @@
       "priority": 15,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-016",
@@ -346,7 +379,9 @@
       "priority": 16,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-017",
@@ -363,7 +398,9 @@
       "priority": 17,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-018",
@@ -381,7 +418,9 @@
       "priority": 18,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-003"]
+      "dependsOn": [
+        "US-003"
+      ]
     },
     {
       "id": "US-019",
@@ -399,9 +438,11 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": ["US-001"]
+      "dependsOn": [
+        "US-001"
+      ]
     },
     {
       "id": "US-020",
@@ -421,7 +462,14 @@
       "priority": 20,
       "passes": false,
       "notes": "",
-      "dependsOn": ["US-001", "US-003", "US-016"]
+      "dependsOn": [
+        "US-001",
+        "US-003",
+        "US-016"
+      ]
     }
-  ]
+  ],
+  "metadata": {
+    "updatedAt": "2026-02-18T03:16:40.079Z"
+  }
 }

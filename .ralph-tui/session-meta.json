@@ -1,14 +1,14 @@
 {
   "id": "34ba25d2-a53e-43eb-aecb-c74a47206806",
-  "status": "completed",
+  "status": "interrupted",
   "startedAt": "2026-02-18T01:16:13.452Z",
-  "updatedAt": "2026-02-18T01:18:16.329Z",
+  "updatedAt": "2026-02-18T03:16:58.016Z",
   "agentPlugin": "claude",
   "trackerPlugin": "json",
-  "currentIteration": 0,
+  "currentIteration": 1,
   "maxIterations": 10,
   "totalTasks": 0,
   "tasksCompleted": 0,
   "cwd": "/Users/john/Coding/handoff",
-  "endedAt": "2026-02-18T01:18:16.329Z"
+  "endedAt": "2026-02-18T03:16:58.016Z"
 }

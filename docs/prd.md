@@ -33,6 +33,7 @@ Replace the chaotic handoff experience (text threads, Google Docs, sticky notes,
 |---|---|
 | Platform | **PWA (web-first)** — no app store required, shareable links work natively, offline via service worker |
 | Frontend | **Next.js** |
+| Styling | **Tailwind CSS v4** via `@tailwindcss/postcss` — utility-first, design tokens as CSS custom properties in `globals.css` |
 | Backend / DB / Real-time | **Convex.dev** |
 | Storage | Cloud storage for photos/videos (S3-compatible or Convex file storage) |
 | Auth (creator) | Email/password or OAuth (Google, Apple) |

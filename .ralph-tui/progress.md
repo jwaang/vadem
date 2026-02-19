@@ -14,7 +14,8 @@ after each iteration and it's included in prompts for context.
 - **Design tokens via CSS custom properties + Tailwind v4 `@theme inline`**: All design tokens live in `:root` as CSS custom properties, then mapped into Tailwind via `@theme inline` block in `globals.css`. Use `var(--token-name)` in inline styles and Tailwind utility classes (e.g., `bg-primary`, `shadow-polaroid`, `rounded-lg`) in className.
 - **Google Fonts via `next/font/google`**: Use `next/font/google` imports (not `<link>` tags) to avoid `@next/next/no-page-custom-font` lint warning. Each font exports a `variable` CSS property that feeds into the `--font-display`/`--font-body`/`--font-handwritten` tokens.
 - **PWA manifest in Next.js 16**: Use `metadata.manifest` for the manifest link, `metadata.appleWebApp` for iOS PWA meta tags, and export a separate `viewport` const for `themeColor` (Next.js 16 splits viewport from metadata).
-- **UI components in `src/components/ui/`**: Reusable components live in `src/components/ui/`. Use CSS classes in `globals.css` for complex interactive states (hover shadows, active overlays) and Tailwind utilities for static styles (colors, text, border-radius). Export types alongside components.
+- **UI components in `src/components/ui/`**: Reusable components live in `src/components/ui/`. Export types alongside components.
+- **Tailwind-first styling (critical)**: Use Tailwind utility classes for ALL styling by default. Only add classes to `globals.css` when Tailwind genuinely cannot express it: complex pseudo-selectors (`:focus-within`, `:active:not(:disabled)`), `@keyframes` animations, nested state modifiers (`.component-state .child`), and `@utility` definitions. Never create a `globals.css` class for something expressible as Tailwind utilities — e.g., adding `oauth-btn` or `oauth-divider` classes to `globals.css` is wrong; those should be Tailwind classes directly on the element. When in doubt, use Tailwind.
 - **Turbopack CSS caching gotcha**: When adding new CSS classes to `globals.css`, Turbopack may serve a stale cached version even after reload. If new CSS classes show zero matching rules in the browser, kill the dev server, delete `.next/`, and restart. This is especially common when appending large blocks at the end of the file.
 - **Horizontal scroll pattern**: Use `overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: max-content` on the inner track, with the outer wrapper doing the scrolling. See EmergencyContactBar and WizardProgress for examples.
 - **Step/state CSS pattern**: Use `.[component]-[state]` modifier classes (e.g., `.wizard-step-completed`, `.wizard-step-active`) and nest child selectors like `.wizard-step-completed .wizard-step-dot` for state-specific styling.
@@ -72,6 +73,28 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
 - **Input/Textarea**: `1.5px` border (only inputs use 1.5px — all other components use 1px), focus ring `0 0 0 3px --primary-subtle`
 - **Borders rule**: inputs = `1.5px`, all other components (cards, task items, vault items) = `1px`
 - **Body**: SVG noise texture at 2.5% opacity for paper-like warmth
+
+### Product Overview (`docs/prd.md`)
+
+**Handoff** — PWA for homeowners to create structured, media-rich care manuals for house/pet sitters, shared via a single link. No app download required.
+
+**Two user roles:**
+- **Creator** (homeowner): Full account (email/password or OAuth). Builds and manages the manual, creates trips, controls vault access, receives notifications.
+- **Sitter** (recipient): No account needed. Link-only access by default; phone-PIN verification unlocks vault; can optionally sign up to become a creator.
+
+**Core features (v1):**
+- **Property Manual**: Guided 7-step wizard to build a reusable home care doc — pets, access info, emergency contacts, house sections (appliances, kitchen, trash, plants, house rules, departure)
+- **Pet Profiles**: Rich structured profiles — photo, feeding, vet, meds, personality notes, behavioral quirks
+- **Location Cards**: Polaroid-style photo/video cards attached to any instruction — "where is it?" problem solver; the signature UI element
+- **Trip Overlay + Today View**: Time-bound layer over the manual; creates a time-slotted task list ("today view") the sitter sees upon opening the link
+- **Vault**: Secure credentials (alarm codes, WiFi, lockbox) — fully hidden to unverified sitters; phone-PIN gated; access logged with timestamp; auto-expires at trip end
+- **Emergency Contacts**: Tap-to-call bar with owner, vet, neighbor, emergency roles
+- **Task Check-Off + Proof**: Sitter checks off tasks; optional photo proof with name attribution
+- **Activity Feed**: Owner sees real-time feed — who viewed, checked off tasks, accessed vault
+- **Sharing**: Unique shareable link per trip; owner can revoke; forwarded link can't access vault
+
+**Epics at a glance** (`docs/handoff-tasks/`):
+- epic-01 Foundation/PWA, epic-02 Auth, epic-03 Manual Wizard, epic-04 Location Cards, epic-05 Trip+Today, epic-06 Vault, epic-07 Contacts, epic-08 Tasks+Proof, epic-09 Sharing, epic-10 Notifications, epic-11 Trip Report, epic-12 Offline/PWA, epic-13 Conversion
 
 ---
 

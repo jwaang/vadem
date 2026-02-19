@@ -737,3 +737,17 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Service worker cache-first for images**: `isConvexStorageRequest()` checks `url.hostname.endsWith(".convex.cloud")` + `url.pathname.startsWith("/api/storage/")`. The `Accept` header differentiates image vs video fetches (`video/*` bypasses cache-first). Cache-first: check `caches.match()` first, only `fetch()` if miss, then `cache.put()` the response.
   - **Confirmed `touch-action` via `window.getComputedStyle(img).touchAction`** in browser: returns `"pinch-zoom"` confirming the style applies correctly.
 ---
+
+## 2026-02-19 - US-040
+- Added 4 new tables to `convex/schema.ts`: `trips`, `sitters`, `overlayItems`, `taskCompletions`
+- Created `convex/trips.ts` — create, listByProperty, getActiveTripForProperty, update, remove; `by_property_status` index on [propertyId, status]
+- Created `convex/sitters.ts` — create, listByTrip, update, remove; `by_trip` index on [tripId]
+- Created `convex/overlayItems.ts` — create, listByTrip, listByTripAndDate, update, remove; `by_trip_date` index on [tripId, date]
+- Created `convex/taskCompletions.ts` — create, listByTrip, getByTripAndTaskRef, update, remove; `by_trip_taskref` index on [tripId, taskRef]
+- Re-ran codegen; typecheck, lint, and build all pass
+- **Learnings:**
+  - **Trip schema**: `shareLink`, `linkPassword`, `linkExpiry` are all optional since trips may be created before sharing is configured. `status` uses the 4-literal union pattern from the task spec.
+  - **taskRef as v.string()**: Like `parentId` for location cards, `taskRef` is a polymorphic reference (can be an instructionId for recurring tasks or an overlayItemId for overlay tasks) — use `v.string()` not `v.id("tablename")` and pair with `taskType` discriminant.
+  - **Compound index for deduplication**: `by_trip_taskref` on [tripId, taskRef] enables `getByTripAndTaskRef` query for idempotent task completion checks.
+  - **Shared validator constants**: Define `tripStatusValidator`, `timeSlotValidator`, `taskTypeValidator` as module-level consts and reuse in args, update args, and returns validators to keep shape in sync without duplication.
+---

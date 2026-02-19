@@ -1,61 +1,70 @@
 {
   "version": 1,
-  "sessionId": "7c2de5ae-f923-46d4-8f87-cfc19cd11d70",
+  "sessionId": "f0875ba8-fee0-4fa7-bce1-0af53b407bde",
   "status": "running",
-  "startedAt": "2026-02-19T19:36:13.046Z",
-  "updatedAt": "2026-02-19T20:07:21.441Z",
-  "currentIteration": 2,
+  "startedAt": "2026-02-19T20:07:49.410Z",
+  "updatedAt": "2026-02-19T20:12:10.634Z",
+  "currentIteration": 0,
   "maxIterations": 10,
-  "tasksCompleted": 2,
+  "tasksCompleted": 0,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./docs/handoff-tasks/epic-04-location-cards.json",
-    "totalTasks": 3,
+    "prdPath": "./docs/handoff-tasks/epic-05-trip-today.json",
+    "totalTasks": 8,
     "tasks": [
       {
-        "id": "US-037",
-        "title": "Upload photo for location card",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-040",
+        "title": "Trip data model in Convex",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-038",
-        "title": "Upload video for location card",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-041",
+        "title": "Create new trip",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-039",
-        "title": "Location card display (sitter view)",
+        "id": "US-042",
+        "title": "Add overlay items to trip",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-043",
+        "title": "Add sitters to trip",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-044",
+        "title": "Set proof requirements per task",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-045",
+        "title": "Trip overlay auto-expiration",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-046",
+        "title": "Today View — sitter landing page",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-047",
+        "title": "Daily task reset logic",
         "status": "open",
         "completedInSession": false
       }
     ]
   },
-  "iterations": [
-    {
-      "iteration": 1,
-      "status": "completed",
-      "taskId": "US-037",
-      "taskTitle": "Upload photo for location card",
-      "taskCompleted": true,
-      "durationMs": 521222,
-      "startedAt": "2026-02-19T19:36:29.569Z",
-      "endedAt": "2026-02-19T19:45:10.791Z"
-    },
-    {
-      "iteration": 2,
-      "status": "completed",
-      "taskId": "US-038",
-      "taskTitle": "Upload video for location card",
-      "taskCompleted": true,
-      "durationMs": 948343,
-      "startedAt": "2026-02-19T19:45:10.961Z",
-      "endedAt": "2026-02-19T20:00:59.304Z"
-    }
-  ],
+  "iterations": [],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

@@ -1,14 +1,14 @@
 {
-  "id": "7c2de5ae-f923-46d4-8f87-cfc19cd11d70",
+  "id": "f0875ba8-fee0-4fa7-bce1-0af53b407bde",
   "status": "running",
-  "startedAt": "2026-02-19T19:36:12.716Z",
-  "updatedAt": "2026-02-19T20:00:59.442Z",
+  "startedAt": "2026-02-19T20:07:49.329Z",
+  "updatedAt": "2026-02-19T20:07:49.330Z",
   "agentPlugin": "claude",
   "trackerPlugin": "json",
-  "prdPath": "./docs/handoff-tasks/epic-04-location-cards.json",
-  "currentIteration": 2,
+  "prdPath": "./docs/handoff-tasks/epic-05-trip-today.json",
+  "currentIteration": 0,
   "maxIterations": 10,
   "totalTasks": 0,
-  "tasksCompleted": 2,
+  "tasksCompleted": 0,
   "cwd": "/Users/john/Coding/handoff"
 }

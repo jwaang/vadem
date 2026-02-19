@@ -1,0 +1,106 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: US-039
+- **Task Title**: Location card display (sitter view)
+- **Description**: As a sitter, I want to see location cards inline with instructions so I can find things without asking the owner.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-19T20:00:59.443Z
+- **Ended At**: 2026-02-19T20:07:21.434Z
+- **Duration**: 6m 21s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/docs/handoff-tasks/epic-04-location-cards.json[0m
+Let me look at the existing LocationCard component and ManualView to understand what's been built:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/LocationCard.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/manual/[propertyId]/ManualView.tsx[0m
+Now let me look at the service worker and check what's already been implemented:
+[94m[Read][0m [95m/Users/john/Coding/handoff/public/sw.js[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m
+Let me check if the animation class for the full-screen overlay is defined and review the quality of the current implementation:
+[94m[Grep][0m [95m/Users/john/Coding/handoff/src/app/globals.css[0m pattern: [96mlocation-fade-in|animate-location[0m
+[94m[Bash][0m Run typecheck $ pnpm typecheck 2>&1 | tail -20
+[94m[Bash][0m Run lint $ pnpm lint 2>&1 | tail -20
+[94m[Bash][0m Run build $ pnpm build 2>&1 | tail -30
+The build passes cleanly. Let me analyze what's already implemented vs what's needed:
+
+**Already implemented:**
+- LocationCard polaroid style with Caveat caption, room badge ✅
+- Tappable to expand full-screen with close button ✅  
+- Video with controls + autoPlay in full-screen ✅
+- Horizontal scroll for multiple cards ✅
+- Service worker caches images (network-first with cache fallback) ✅
+
+**Missing:**
+1. `touch-action: pinch-zoom` on the full-screen photo `<img>` (required for pinch-to-zoom AC)
+2. Service worker could be improved with cache-first strategy for Convex storage image URLs specifically (per notes)
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/components/ui/LocationCard.tsx[0m edit: "          ) : (
+            /* eslint-disable-next..." → "          ) : (
+            /* eslint-disable-next..."
+[94m[TodoWrite][0m
+Now update the service worker to use cache-first for Convex storage image URLs:
+[94m[Write][0m [95m/Users/john/Coding/handoff/public/sw.js[0m "/// <reference lib="webworker" />
+
+const CACHE_NAME = "handoff-v1";
+const PRECACHE_URLS = ["/", "/manifest.json"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CAC... (2577 chars)"
+[94m[TodoWrite][0m
+[94m[Bash][0m Run typecheck and lint $ pnpm typecheck 2>&1 && pnpm lint 2>&1 | tail -10
+There's a lint warning from the unused `accept` variable in sw.js. Let me fix that:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/public/sw.js[0m edit: "/** Returns true if this request is for a Convex s..." → "/** Returns true if this request is for a Convex s..."
+[94m[Read][0m [95m/Users/john/Coding/handoff/public/sw.js[0m
+The double braces on line 47 are unnecessary. Let me clean that up:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/public/sw.js[0m edit: "  // Cache-first strategy for Convex storage image..." → "  // Cache-first strategy for Convex storage image..."
+[94m[Bash][0m Run lint check $ pnpm lint 2>&1 | tail -10
+Only the pre-existing warning remains. Let me run the build:
+[94m[Bash][0m Run build $ pnpm build 2>&1 | tail -20
+Build passes. Now let me do a browser verification:
+[94m[Skill][0m
+[94m[Bash][0m Start dev-browser server $ cd /Users/john/Coding/handoff/skills/dev-browser && ./server.sh & sleep 3 echo "Server started"
+[94m[Glob][0m [95m/Users/john[0m pattern: [96m**/dev-browser/server.sh[0m
+
+[91m[Error: Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.][0m
+[94m[Glob][0m [95m/Users/john/.claude/skills/dev-browser[0m pattern: [96mserver.sh[0m
+[94m[Bash][0m Start dev-browser server $ cd /Users/john/.claude/skills/dev-browser && ./server.sh & sleep 3 echo "Server started"
+[94m[Bash][0m Start Next.js dev server $ npx next dev --turbopack --port 3003 2>&1 & sleep 5 echo "Next.js started"
+A Next.js server is already running. Let me find which port it's on:
+[94m[Bash][0m Find Next.js server port $ lsof -i :3000 -i :3001 -i :3002 -i :3003 2>/dev/null | grep LISTEN | head -10
+[94m[Bash][0m Check port 3000 and 3001 $ lsof -i :3001 2>/dev/null | grep LISTEN
+[94m[Bash][0m Test which port Next.js is on $ curl -s http://localhost:3000 | head -5 2>&1 || echo "3000 not running" curl -s http://localhost:300...
+Next.js is on port 3000. Now let me verify the location card display in the browser:
+[94m[Bash][0m Connect to dev browser and navigate to app $ EOF
+[94m[Bash][0m Navigate to manual view and take screenshot $ EOF
+[94m[Read][0m [95m/Users/john/.claude/skills/dev-browser/tmp/manual-view.png[0m
+The manual view loads correctly with SitterLayout and bottom nav. Let me check the component showcase page to verify the LocationCard polaroid style renders correctly:
+[94m[Bash][0m Check LocationCard rendering on showcase page $ EOF
+[94m[Read][0m [95m/Users/john/.claude/skills/dev-browser/tmp/location-card-showcase.png[0m
+Location cards render correctly with polaroid style and Caveat (handwritten) captions. Let me take a wider screenshot to see the full layout and then verify the full-screen expand:
+[94m[Bash][0m Verify location card expand and full-screen overlay $ EOF
+[94m[Read][0m [95m/Users/john/.claude/skills/dev-browser/tmp/location-card-expanded.png[0m
+The full-screen overlay works correctly — `touch-action: pinch-zoom` is confirmed on the img. Let me check the wide screenshot:
+[94m[Read][0m [95m/Users/john/.claude/skills/dev-browser/tmp/location-cards-wide.png[0m
+All acceptance criteria are verified. Let me update the progress file and signal completion:
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "  - **Write tool for large file rewrites**: When a..." → "  - **Write tool for large file rewrites**: When a..."
+All acceptance criteria verified:
+
+- ✅ Location card renders inline below instruction (existing in ManualView.tsx)
+- ✅ Polaroid style: `shadow-polaroid`, Caveat font caption, room badge — confirmed in browser
+- ✅ Tappable to expand full-screen — confirmed working
+- ✅ Full-screen viewer: `touch-action: pinch-zoom` added + confirmed via `getComputedStyle`, close button present, video uses `<video controls autoPlay>`
+- ✅ Multiple cards horizontal scroll (`overflow-x-auto flex gap-4` with `-mx-4 px-4`)
+- ✅ Images cached by service worker — updated to cache-first for Convex storage URLs, video excluded per Epic 12 strategy
+- ✅ typecheck, lint, build all pass
+
+<promise>COMPLETE</promise>

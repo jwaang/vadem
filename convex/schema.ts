@@ -139,4 +139,49 @@ export default defineSchema({
     sortOrder: v.number(),
     isLocked: v.boolean(),
   }).index("by_property_sort", ["propertyId", "sortOrder"]),
+
+  trips: defineTable({
+    propertyId: v.id("properties"),
+    startDate: v.string(),
+    endDate: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("expired"),
+    ),
+    shareLink: v.optional(v.string()),
+    linkPassword: v.optional(v.string()),
+    linkExpiry: v.optional(v.number()),
+  }).index("by_property_status", ["propertyId", "status"]),
+
+  sitters: defineTable({
+    tripId: v.id("trips"),
+    name: v.string(),
+    phone: v.optional(v.string()),
+    vaultAccess: v.boolean(),
+  }).index("by_trip", ["tripId"]),
+
+  overlayItems: defineTable({
+    tripId: v.id("trips"),
+    text: v.string(),
+    date: v.string(),
+    timeSlot: v.union(
+      v.literal("morning"),
+      v.literal("afternoon"),
+      v.literal("evening"),
+      v.literal("anytime"),
+    ),
+    proofRequired: v.boolean(),
+    locationCardId: v.optional(v.id("locationCards")),
+  }).index("by_trip_date", ["tripId", "date"]),
+
+  taskCompletions: defineTable({
+    tripId: v.id("trips"),
+    taskRef: v.string(),
+    taskType: v.union(v.literal("recurring"), v.literal("overlay")),
+    sitterName: v.string(),
+    completedAt: v.number(),
+    proofPhotoUrl: v.optional(v.string()),
+  }).index("by_trip_taskref", ["tripId", "taskRef"]),
 });

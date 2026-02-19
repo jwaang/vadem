@@ -444,3 +444,21 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - Convex `"use node"` actions can call `node:crypto`'s `createSign('SHA256')` with an EC private key to produce ES256 (ECDSA) signatures for Apple's client secret JWT without any external JWT library
   - Making schema fields optional (`v.optional(v.string())`) is backward-compatible with `ctx.db.insert()` — just omit the field or pass `undefined`; existing queries that don't reference the optional field continue to work
 ---
+
+## 2026-02-18 - US-024
+- Implemented full creator dashboard shell replacing the placeholder `src/app/dashboard/page.tsx`
+- Dashboard wraps in `CreatorLayout` (sidebar + bottom nav); sidebar state controls which view renders
+- **Three view sections driven by `activeNav` state:**
+  - `"property"` (default) → `DashboardOverview`: greeting, property summary card (empty state "Let's set up your home"), active trip status (empty state "No active trips / Create your first trip"), recent activity preview with `ActivityFeedItem`
+  - `"trips"` → `TripsSection`: empty state CTA + "How trips work" numbered guide
+  - `"settings"` → `SettingsSection`: account email card with Active badge + sign-out button that clears auth and redirects to `/login`
+- All empty states use a shared `EmptyStateCard` component (icon, title, description, CTA button)
+- Icons (House, Calendar, Clock) defined inline as typed SVG components — no external icon library needed
+- Logout flow: `signOut()` from `useAuth()` then `router.push("/login")` — confirmed working in browser
+- Files changed: `src/app/dashboard/page.tsx` (complete rewrite)
+- **Learnings:**
+  - `CreatorLayout` is controlled-nav-friendly: pass `activeNav` + `onNavChange` props and manage state in the parent page — the sidebar highlights correctly and the parent renders appropriate content
+  - `BottomNav` on mobile shows sitter-oriented tabs (Today/Manual/Vault/Contacts) even within `CreatorLayout` — this is a placeholder until a creator-specific mobile nav is built in a later story; the sidebar satisfies the desktop navigation AC
+  - Email → display name extraction: `email.split("@")[0].replace(/[^a-zA-Z]/g, " ").split(" ")[0]` gives a reasonable first-name guess without a separate name field
+  - `dev-browser` server runs on port 9222 (not 3001); connect with default `connect()` which defaults to `http://localhost:9222`
+---

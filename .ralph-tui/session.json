@@ -3,10 +3,10 @@
   "sessionId": "07fb1135-a34e-466e-bda6-219c19ba046b",
   "status": "running",
   "startedAt": "2026-02-18T23:57:12.773Z",
-  "updatedAt": "2026-02-19T00:12:35.900Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-19T00:21:58.392Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -29,8 +29,8 @@
       {
         "id": "US-023",
         "title": "OAuth login (Google, Apple)",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-024",
@@ -40,7 +40,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-023",
+      "taskTitle": "OAuth login (Google, Apple)",
+      "taskCompleted": true,
+      "durationMs": 898303,
+      "startedAt": "2026-02-18T23:57:37.592Z",
+      "endedAt": "2026-02-19T00:12:35.895Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

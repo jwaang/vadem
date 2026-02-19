@@ -62,6 +62,7 @@ export default defineSchema({
       v.literal("instruction"),
       v.literal("pet"),
       v.literal("vault"),
+      v.literal("overlayItem"),
     ),
     storageId: v.optional(v.id("_storage")),
     videoStorageId: v.optional(v.id("_storage")),
@@ -165,7 +166,7 @@ export default defineSchema({
   overlayItems: defineTable({
     tripId: v.id("trips"),
     text: v.string(),
-    date: v.string(),
+    date: v.optional(v.string()),
     timeSlot: v.union(
       v.literal("morning"),
       v.literal("afternoon"),

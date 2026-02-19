@@ -6,6 +6,7 @@ const parentTypeValidator = v.union(
   v.literal("instruction"),
   v.literal("pet"),
   v.literal("vault"),
+  v.literal("overlayItem"),
 );
 
 /** Returns a one-time URL the client can POST an image blob to. */

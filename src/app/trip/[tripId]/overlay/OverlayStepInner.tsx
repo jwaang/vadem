@@ -1,0 +1,548 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
+import { Button } from "@/components/ui/Button";
+import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
+
+const SUGGESTIONS = [
+  "Any medication changes?",
+  "Any scheduled visitors?",
+  "Any special instructions?",
+];
+
+type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
+
+const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
+  anytime: "Anytime",
+};
+
+const STEPS = [
+  { label: "Overlay Items", active: true },
+  { label: "Sitters", active: false },
+  { label: "Proof Settings", active: false },
+  { label: "Share", active: false },
+];
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
+
+function TrashIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4h6v2" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+// ── Saved item row ─────────────────────────────────────────────────────────────
+
+interface SavedItemRowProps {
+  item: {
+    _id: Id<"overlayItems">;
+    text: string;
+    date?: string;
+    timeSlot: TimeSlot;
+    proofRequired: boolean;
+    locationCardId?: Id<"locationCards">;
+  };
+  onDelete: (id: Id<"overlayItems">) => void;
+}
+
+function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
+  const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+  const [photoAttached, setPhotoAttached] = useState(!!item.locationCardId);
+
+  return (
+    <>
+      <div className="bg-bg-raised rounded-lg border border-border-default p-4 flex flex-col gap-3">
+        {/* Item text + delete */}
+        <div className="flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm font-medium text-text-primary leading-snug">
+              {item.text}
+            </p>
+          </div>
+          <button
+            onClick={() => onDelete(item._id)}
+            className="text-text-muted hover:text-danger transition-colors duration-150 shrink-0 mt-0.5"
+            aria-label="Delete item"
+          >
+            <TrashIcon />
+          </button>
+        </div>
+
+        {/* Badges row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Trip overlay badge */}
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-pill bg-accent-light text-accent border border-accent">
+            ✦ This Trip Only
+          </span>
+
+          {/* Time slot */}
+          {item.timeSlot !== "anytime" && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
+              {TIME_SLOT_LABELS[item.timeSlot]}
+            </span>
+          )}
+
+          {/* Date */}
+          {item.date && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
+              {item.date}
+            </span>
+          )}
+
+          {/* Proof required */}
+          {item.proofRequired && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-warning-light text-warning">
+              📷 Proof needed
+            </span>
+          )}
+
+          {/* Photo attached */}
+          {photoAttached && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-secondary-light text-secondary">
+              ✓ Photo card
+            </span>
+          )}
+        </div>
+
+        {/* Attach photo card button */}
+        {!photoAttached && (
+          <button
+            onClick={() => setShowPhotoUploader(true)}
+            className="self-start inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted border border-dashed border-border-strong rounded-md px-3 py-1.5 hover:text-primary hover:border-primary transition-colors duration-150"
+          >
+            <CameraIcon />
+            Attach location card
+          </button>
+        )}
+      </div>
+
+      {/* Photo uploader modal */}
+      {showPhotoUploader && (
+        <LocationCardUploader
+          parentId={item._id}
+          parentType="overlayItem"
+          onSuccess={() => {
+            setPhotoAttached(true);
+            setShowPhotoUploader(false);
+          }}
+          onClose={() => setShowPhotoUploader(false)}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Add item form ──────────────────────────────────────────────────────────────
+
+interface AddItemFormProps {
+  tripId: Id<"trips">;
+  onAdded: () => void;
+}
+
+function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
+  const createItem = useMutation(api.overlayItems.create);
+
+  const [text, setText] = useState("");
+  const [date, setDate] = useState("");
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>("anytime");
+  const [proofRequired, setProofRequired] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [error, setError] = useState("");
+
+  function applySuggestion(suggestion: string) {
+    setText(suggestion);
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!text.trim()) {
+      setError("Please describe the trip-specific task.");
+      return;
+    }
+    setIsAdding(true);
+    setError("");
+    try {
+      await createItem({
+        tripId,
+        text: text.trim(),
+        date: date || undefined,
+        timeSlot,
+        proofRequired,
+      });
+      // Reset form
+      setText("");
+      setDate("");
+      setTimeSlot("anytime");
+      setProofRequired(false);
+      onAdded();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add item.");
+    } finally {
+      setIsAdding(false);
+    }
+  }
+
+  return (
+    <div className="bg-bg-raised rounded-xl border border-border-default p-5 flex flex-col gap-4">
+      <div>
+        <h3 className="font-body text-sm font-semibold text-text-primary">
+          Add a trip-specific task
+        </h3>
+        <p className="font-body text-xs text-text-muted mt-0.5">
+          Tap a suggestion or type your own
+        </p>
+      </div>
+
+      {/* Suggestion chips */}
+      <div className="flex flex-wrap gap-2">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => applySuggestion(s)}
+            className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-pill border border-accent-light bg-accent-subtle text-accent hover:bg-accent-light transition-colors duration-150"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={handleAdd} className="flex flex-col gap-4">
+        {/* Text input */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="overlay-text"
+            className="font-body text-xs font-semibold text-text-secondary"
+          >
+            Description
+          </label>
+          <textarea
+            id="overlay-text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="e.g. Give Luna her ear drops twice daily"
+            rows={2}
+            className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 resize-none outline-none transition-[border-color,box-shadow] duration-150"
+            style={{
+              border: "1.5px solid var(--border-default)",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--primary)";
+              e.currentTarget.style.boxShadow =
+                "0 0 0 3px var(--primary-subtle)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-default)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+        </div>
+
+        {/* Date + Time slot row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="overlay-date"
+              className="font-body text-xs font-semibold text-text-secondary"
+            >
+              Specific date{" "}
+              <span className="font-normal text-text-muted">(optional)</span>
+            </label>
+            <input
+              id="overlay-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 outline-none transition-[border-color,box-shadow] duration-150"
+              style={{
+                border: "1.5px solid var(--border-default)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 3px var(--primary-subtle)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+            <p className="font-body text-xs text-text-muted">
+              Leave empty to apply all days
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="overlay-slot"
+              className="font-body text-xs font-semibold text-text-secondary"
+            >
+              Time slot
+            </label>
+            <select
+              id="overlay-slot"
+              value={timeSlot}
+              onChange={(e) => setTimeSlot(e.target.value as TimeSlot)}
+              className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 outline-none transition-[border-color,box-shadow] duration-150"
+              style={{
+                border: "1.5px solid var(--border-default)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 3px var(--primary-subtle)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <option value="anytime">Anytime</option>
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Proof required toggle */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={proofRequired}
+            onClick={() => setProofRequired((v) => !v)}
+            className={[
+              "relative inline-flex h-6 w-11 shrink-0 rounded-pill border-2 border-transparent transition-colors duration-250",
+              proofRequired ? "bg-primary" : "bg-border-strong",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "inline-block h-5 w-5 rounded-round bg-white shadow transition-[translate] duration-250",
+                proofRequired ? "translate-x-5" : "translate-x-0",
+              ].join(" ")}
+            />
+            <span className="sr-only">Require photo proof</span>
+          </button>
+          <div>
+            <p className="font-body text-sm font-medium text-text-primary">
+              Require proof photo
+            </p>
+            <p className="font-body text-xs text-text-muted">
+              Sitter must upload a photo to mark as done
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="font-body text-xs text-danger bg-danger-light rounded-md px-3 py-2"
+          >
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isAdding || !text.trim()}
+        >
+          {isAdding ? "Adding…" : "Add item"}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+// ── Inner component (requires ConvexProvider) ──────────────────────────────────
+
+function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
+  const router = useRouter();
+  const items = useQuery(api.overlayItems.listByTrip, { tripId });
+  const removeItem = useMutation(api.overlayItems.remove);
+
+  const [deletingId, setDeletingId] = useState<Id<"overlayItems"> | null>(null);
+
+  async function handleDelete(id: Id<"overlayItems">) {
+    setDeletingId(id);
+    try {
+      await removeItem({ overlayItemId: id });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleContinue() {
+    router.push(`/trip/${tripId}/sitters`);
+  }
+
+  const hasItems = items && items.length > 0;
+
+  return (
+    <div className="min-h-dvh bg-bg flex flex-col">
+      {/* Header */}
+      <header className="bg-bg-raised border-b border-border-default px-4 py-4 flex items-center gap-3">
+        <a
+          href="/dashboard"
+          className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
+        >
+          ← Dashboard
+        </a>
+        <span className="text-border-strong">|</span>
+        <h1 className="font-body text-sm font-semibold text-text-primary">
+          Trip Setup
+        </h1>
+      </header>
+
+      {/* Step indicator */}
+      <div className="bg-bg-raised border-b border-border-default px-4 py-3">
+        <div className="max-w-lg mx-auto flex items-center gap-2 overflow-x-auto">
+          {STEPS.map(({ label, active }, i) => (
+            <div key={label} className="flex items-center gap-2 shrink-0">
+              {i > 0 && (
+                <span className="text-border-strong font-body text-xs">→</span>
+              )}
+              <span
+                className={[
+                  "font-body text-xs font-semibold px-3 py-1 rounded-pill",
+                  active
+                    ? "bg-accent text-text-on-primary"
+                    : "text-text-muted bg-bg-sunken",
+                ].join(" ")}
+              >
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <main className="flex-1 px-4 py-8">
+        <div className="max-w-lg mx-auto flex flex-col gap-6">
+          {/* Heading */}
+          <div>
+            <h2 className="font-display text-3xl text-text-primary leading-tight">
+              Anything different this trip?
+            </h2>
+            <p className="font-body text-sm text-text-secondary mt-2">
+              Add trip-specific tasks that don&apos;t belong in your permanent
+              manual — one-time reminders, special instructions, or anything
+              different from your usual routine.
+            </p>
+          </div>
+
+          {/* Saved items list */}
+          {hasItems && (
+            <div className="flex flex-col gap-3">
+              <h3 className="font-body text-xs font-semibold text-text-muted uppercase tracking-wide">
+                Added items ({items.length})
+              </h3>
+              {items.map((item) => (
+                <SavedItemRow
+                  key={item._id}
+                  item={{
+                    _id: item._id,
+                    text: item.text,
+                    date: item.date,
+                    timeSlot: item.timeSlot as TimeSlot,
+                    proofRequired: item.proofRequired,
+                    locationCardId: item.locationCardId,
+                  }}
+                  onDelete={handleDelete}
+                />
+              ))}
+              {deletingId && (
+                <p className="font-body text-xs text-text-muted text-center">
+                  Deleting…
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Add item form */}
+          <AddItemForm tripId={tripId} onAdded={() => {}} />
+
+          {/* Skip / Continue */}
+          <div className="flex items-center justify-between pt-2">
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="font-body text-sm font-semibold text-text-muted hover:text-text-secondary transition-colors duration-150"
+            >
+              {hasItems ? "Skip for now" : "Skip →"}
+            </button>
+
+            {hasItems && (
+              <Button variant="primary" onClick={handleContinue}>
+                Continue →
+              </Button>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ── Default export (env guard) ─────────────────────────────────────────────────
+
+export default function OverlayStepInner({ tripId }: { tripId: string }) {
+  if (!CONVEX_URL) {
+    return (
+      <div className="min-h-dvh bg-bg flex items-center justify-center">
+        <p className="font-body text-sm text-text-muted">
+          Configuration error: Convex URL not set.
+        </p>
+      </div>
+    );
+  }
+  return <OverlayStep tripId={tripId as Id<"trips">} />;
+}

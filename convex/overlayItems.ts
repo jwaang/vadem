@@ -14,7 +14,7 @@ const overlayItemObject = v.object({
   _creationTime: v.number(),
   tripId: v.id("trips"),
   text: v.string(),
-  date: v.string(),
+  date: v.optional(v.string()),
   timeSlot: timeSlotValidator,
   proofRequired: v.boolean(),
   locationCardId: v.optional(v.id("locationCards")),
@@ -24,7 +24,7 @@ export const create = mutation({
   args: {
     tripId: v.id("trips"),
     text: v.string(),
-    date: v.string(),
+    date: v.optional(v.string()),
     timeSlot: timeSlotValidator,
     proofRequired: v.boolean(),
     locationCardId: v.optional(v.id("locationCards")),

@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout, type CreatorNavId } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { ActivityFeedItem } from "@/components/ui/ActivityFeedItem";
 import { Badge } from "@/components/ui/Badge";
 
@@ -73,6 +76,26 @@ function ClockIcon({ className }: { className?: string }) {
   );
 }
 
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
 // ── Shared Empty State Card ───────────────────────────────────────────
 
 interface EmptyStateCardProps {
@@ -123,9 +146,213 @@ function EmptyStateCard({
   );
 }
 
+// ── New Trip Form (inner — uses Convex hooks) ─────────────────────────
+
+function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  // Auth chain: token → userId → propertyId
+  const sessionData = useQuery(
+    api.auth.validateSession,
+    user?.token ? { token: user.token } : "skip",
+  );
+  const userId = sessionData?.userId;
+
+  const properties = useQuery(
+    api.properties.listByOwner,
+    userId ? { ownerId: userId } : "skip",
+  );
+  const propertyId = properties?.[0]?._id;
+
+  // Conflict check: active or draft trip already exists
+  const existingTrip = useQuery(
+    api.trips.getExistingTrip,
+    propertyId ? { propertyId } : "skip",
+  );
+
+  const createTrip = useMutation(api.trips.createTrip);
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [dateError, setDateError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function validateDates(): boolean {
+    if (!startDate || !endDate) {
+      setDateError("Please select both a start date and an end date.");
+      return false;
+    }
+    if (endDate <= startDate) {
+      setDateError("End date must be after start date.");
+      return false;
+    }
+    setDateError("");
+    return true;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validateDates()) return;
+
+    if (!propertyId) {
+      setSubmitError("No property found. Please set up your home first.");
+      return;
+    }
+
+    if (existingTrip) {
+      setSubmitError(
+        `You already have a ${existingTrip.status} trip (${existingTrip.startDate} → ${existingTrip.endDate}). Please complete or delete it first.`,
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      const tripId = await createTrip({ propertyId, startDate, endDate });
+      router.push(`/trip/${tripId}/overlay`);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to create trip. Please try again.";
+      setSubmitError(msg);
+      setIsSubmitting(false);
+    }
+  }
+
+  // Existing trip — show blocking message
+  if (existingTrip) {
+    return (
+      <div
+        className="bg-bg-raised rounded-xl border border-border-default p-6 flex flex-col gap-4"
+        style={{ boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-accent-subtle flex items-center justify-center shrink-0">
+            <CalendarIcon className="text-accent" />
+          </div>
+          <div className="flex flex-col gap-1 min-w-0">
+            <p className="font-body text-sm font-semibold text-text-primary">
+              Trip already in progress
+            </p>
+            <p className="font-body text-xs text-text-secondary">
+              {existingTrip.startDate} → {existingTrip.endDate}
+            </p>
+            <Badge variant="overlay">
+              {existingTrip.status.charAt(0).toUpperCase() + existingTrip.status.slice(1)}
+            </Badge>
+          </div>
+        </div>
+        <p className="font-body text-xs text-text-muted">
+          You can only have one active trip at a time. Continue setting up your current trip or delete it to start a new one.
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => router.push(`/trip/${existingTrip._id}/overlay`)}
+        >
+          Continue Trip Setup
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="bg-bg-raised rounded-xl border border-border-default p-6 flex flex-col gap-5"
+      style={{ boxShadow: "var(--shadow-sm)" }}
+    >
+      <div>
+        <h3 className="font-body text-base font-semibold text-text-primary">
+          New Trip
+        </h3>
+        <p className="font-body text-xs text-text-secondary mt-0.5">
+          Set your travel dates to get started.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Start date"
+            type="date"
+            id="trip-start-date"
+            value={startDate}
+            min={today}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setDateError("");
+            }}
+            required
+          />
+          <Input
+            label="End date"
+            type="date"
+            id="trip-end-date"
+            value={endDate}
+            min={startDate || today}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setDateError("");
+            }}
+            required
+          />
+        </div>
+
+        {dateError && (
+          <p className="font-body text-xs text-danger" role="alert">
+            {dateError}
+          </p>
+        )}
+
+        {submitError && (
+          <p className="font-body text-xs text-danger" role="alert">
+            {submitError}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting}
+            className="flex-1"
+          >
+            {isSubmitting ? "Creating…" : "Create Trip"}
+          </Button>
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ── New Trip Form (outer — env guard) ────────────────────────────────
+
+function NewTripForm({ onCancel }: { onCancel: () => void }) {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) {
+    return (
+      <p className="font-body text-xs text-text-muted">
+        Convex not configured. Set up NEXT_PUBLIC_CONVEX_URL to create trips.
+      </p>
+    );
+  }
+  return <NewTripFormInner onCancel={onCancel} />;
+}
+
 // ── Dashboard Overview ───────────────────────────────────────────────
 
-function DashboardOverview({ email }: { email: string }) {
+interface DashboardOverviewProps {
+  email: string;
+  onNavigateToTrips: () => void;
+}
+
+function DashboardOverview({ email, onNavigateToTrips }: DashboardOverviewProps) {
   // Derive a friendly first name from email
   const firstName =
     email.split("@")[0].replace(/[^a-zA-Z]/g, " ").split(" ")[0] ?? email;
@@ -191,7 +418,8 @@ function DashboardOverview({ email }: { email: string }) {
           iconBg="bg-accent-subtle"
           title="No active trips"
           description="Create a trip to generate a shareable manual and invite your house sitter."
-          cta="Create your first trip"
+          cta="New Trip"
+          onCta={onNavigateToTrips}
         />
       </section>
 
@@ -232,48 +460,69 @@ function DashboardOverview({ email }: { email: string }) {
 // ── Trips Section ────────────────────────────────────────────────────
 
 function TripsSection() {
+  const [showForm, setShowForm] = useState(false);
+
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-display text-4xl text-text-primary leading-tight">
-          Trips
-        </h1>
-        <p className="font-body text-sm text-text-secondary mt-1.5">
-          Plan and manage your upcoming trips
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl text-text-primary leading-tight">
+            Trips
+          </h1>
+          <p className="font-body text-sm text-text-secondary mt-1.5">
+            Plan and manage your upcoming trips
+          </p>
+        </div>
+        {!showForm && (
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<PlusIcon />}
+            onClick={() => setShowForm(true)}
+          >
+            New Trip
+          </Button>
+        )}
       </div>
 
-      <EmptyStateCard
-        icon={<CalendarIcon className="text-accent" />}
-        iconBg="bg-accent-subtle"
-        title="No trips yet"
-        description="Create a trip to generate a shareable manual and invite your house sitter."
-        cta="Create your first trip"
-        variant="solid"
-      />
+      {showForm ? (
+        <NewTripForm onCancel={() => setShowForm(false)} />
+      ) : (
+        <EmptyStateCard
+          icon={<CalendarIcon className="text-accent" />}
+          iconBg="bg-accent-subtle"
+          title="No trips yet"
+          description="Create a trip to generate a shareable manual and invite your house sitter."
+          cta="New Trip"
+          onCta={() => setShowForm(true)}
+          variant="solid"
+        />
+      )}
 
       {/* How trips work */}
-      <div className="flex flex-col gap-3">
-        <h2 className="font-body text-sm font-semibold text-text-secondary uppercase tracking-wide">
-          How trips work
-        </h2>
-        {[
-          { step: "1", text: "Set your travel dates" },
-          { step: "2", text: "Invite your sitter by link or email" },
-          { step: "3", text: "They get a personalized care manual" },
-          { step: "4", text: "Track activity and get updates in real time" },
-        ].map(({ step, text }) => (
-          <div
-            key={step}
-            className="bg-bg-raised rounded-lg border border-border-default px-4 py-3 flex items-center gap-4"
-          >
-            <span className="w-6 h-6 rounded-round bg-accent-subtle text-accent font-body text-xs font-bold flex items-center justify-center shrink-0">
-              {step}
-            </span>
-            <p className="font-body text-sm text-text-secondary">{text}</p>
-          </div>
-        ))}
-      </div>
+      {!showForm && (
+        <div className="flex flex-col gap-3">
+          <h2 className="font-body text-sm font-semibold text-text-secondary uppercase tracking-wide">
+            How trips work
+          </h2>
+          {[
+            { step: "1", text: "Set your travel dates" },
+            { step: "2", text: "Invite your sitter by link or email" },
+            { step: "3", text: "They get a personalized care manual" },
+            { step: "4", text: "Track activity and get updates in real time" },
+          ].map(({ step, text }) => (
+            <div
+              key={step}
+              className="bg-bg-raised rounded-lg border border-border-default px-4 py-3 flex items-center gap-4"
+            >
+              <span className="w-6 h-6 rounded-round bg-accent-subtle text-accent font-body text-xs font-bold flex items-center justify-center shrink-0">
+                {step}
+              </span>
+              <p className="font-body text-sm text-text-secondary">{text}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -390,7 +639,12 @@ export default function DashboardPage() {
         return <SettingsSection email={user!.email} onSignOut={handleSignOut} />;
       default:
         // "property" nav shows the full dashboard overview
-        return <DashboardOverview email={user!.email} />;
+        return (
+          <DashboardOverview
+            email={user!.email}
+            onNavigateToTrips={() => setActiveNav("trips")}
+          />
+        );
     }
   }
 

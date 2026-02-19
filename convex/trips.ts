@@ -1,6 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import { ConvexError } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 const tripStatusValidator = v.union(
   v.literal("draft"),
@@ -34,6 +33,63 @@ export const create = mutation({
   returns: v.id("trips"),
   handler: async (ctx, args) => {
     return await ctx.db.insert("trips", args);
+  },
+});
+
+// Returns the first active or draft trip for a property (for client-side conflict check).
+export const getExistingTrip = query({
+  args: { propertyId: v.id("properties") },
+  returns: v.union(tripObject, v.null()),
+  handler: async (ctx, args) => {
+    const draft = await ctx.db
+      .query("trips")
+      .withIndex("by_property_status", (q) =>
+        q.eq("propertyId", args.propertyId).eq("status", "draft"),
+      )
+      .first();
+    if (draft) return draft;
+    return await ctx.db
+      .query("trips")
+      .withIndex("by_property_status", (q) =>
+        q.eq("propertyId", args.propertyId).eq("status", "active"),
+      )
+      .first();
+  },
+});
+
+// Creates a new draft trip, enforcing the one-active-trip rule.
+export const createTrip = mutation({
+  args: {
+    propertyId: v.id("properties"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.id("trips"),
+  handler: async (ctx, args) => {
+    const existingDraft = await ctx.db
+      .query("trips")
+      .withIndex("by_property_status", (q) =>
+        q.eq("propertyId", args.propertyId).eq("status", "draft"),
+      )
+      .first();
+    const existingActive = await ctx.db
+      .query("trips")
+      .withIndex("by_property_status", (q) =>
+        q.eq("propertyId", args.propertyId).eq("status", "active"),
+      )
+      .first();
+    if (existingDraft || existingActive) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message: "A trip is already in progress for this property.",
+      });
+    }
+    return await ctx.db.insert("trips", {
+      propertyId: args.propertyId,
+      startDate: args.startDate,
+      endDate: args.endDate,
+      status: "draft",
+    });
   },
 });
 

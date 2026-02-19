@@ -751,3 +751,20 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Compound index for deduplication**: `by_trip_taskref` on [tripId, taskRef] enables `getByTripAndTaskRef` query for idempotent task completion checks.
   - **Shared validator constants**: Define `tripStatusValidator`, `timeSlotValidator`, `taskTypeValidator` as module-level consts and reuse in args, update args, and returns validators to keep shape in sync without duplication.
 ---
+
+## 2026-02-19 - US-042
+- Implemented full overlay items step at `/trip/[tripId]/overlay`
+- **Files changed:**
+  - `convex/schema.ts` — Made `overlayItems.date` optional (`v.optional(v.string())`); added `v.literal("overlayItem")` to `locationCards.parentType` union so location cards can be attached to overlay items
+  - `convex/overlayItems.ts` — Updated `overlayItemObject` and `create` args to use `date: v.optional(v.string())`
+  - `convex/locationCards.ts` — Added `v.literal("overlayItem")` to `parentTypeValidator` to keep in sync with schema
+  - `src/components/ui/LocationCardUploader.tsx` — Added `"overlayItem"` to `parentType` prop union
+  - `src/app/trip/[tripId]/overlay/page.tsx` — Replaced placeholder with server component wrapper (metadata + renders OverlayPageClient)
+  - `src/app/trip/[tripId]/overlay/OverlayPageClient.tsx` (new) — `"use client"` + `dynamic(ssr:false)` wrapper following 3-file pattern
+  - `src/app/trip/[tripId]/overlay/OverlayStepInner.tsx` (new) — Full implementation: env guard, Convex hooks, suggestion chips, add form (text/date/time slot/proof toggle), saved items list with amber badges, "Attach location card" button per item using LocationCardUploader, Skip/Continue navigation
+- **Learnings:**
+  - **5-level relative path for trip overlay**: Files at `src/app/trip/[tripId]/overlay/` need `../../../../../convex/_generated/api` (5 `../`) not 4 — one level deeper than `src/app/wizard/[step]/`
+  - **Convex `parentTypeValidator` must match schema**: When adding a new literal to the schema's union, must also update the corresponding validator const in the functions file (`locationCards.ts` had its own `parentTypeValidator` separate from the schema) — otherwise typecheck fails with "Two different types with this name exist"
+  - **Optional index field behavior**: Making `overlayItems.date` optional means items without a date are excluded from `listByTripAndDate` queries (filtered by date) but appear in `listByTrip` — correct behavior for "applies all days" items
+  - **Skip vs Continue UX**: When items exist, show "Skip for now" (left, muted) + "Continue →" (right, primary). When no items, show "Skip →" only. Verified in browser both paths navigate to `/trip/${tripId}/sitters`
+---

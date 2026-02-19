@@ -43,7 +43,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to write createTrip mutation that first checks for any existing active/draft trip for the propertyId (throw error if found), then creates a new trip record with 'draft' status. Write a getExistingTrip query for the client-side conflict check before submitting the form. Load /nextjs-best-practices to handle router.push('/trip/[tripId]/overlay') after successful trip creation, scaffolding the trip setup as a multi-step flow at src/app/trip/[tripId]/. Load /tailwind-design-system to style the 'New Trip' button using btn-primary on the dashboard, and the date picker form using the Input component from src/components/ui with bg-bg-raised rounded-xl shadow-md card container. Validate that end date is after start date client-side with an inline error in text-danger font-body. Use /dev-browser to verify: 'New Trip' button is visible on dashboard, selecting dates with end before start shows a validation error, submitting redirects to the overlay items step, and attempting to create a second trip while one exists shows a blocking error.",
       "dependsOn": [
         "US-024",
@@ -67,12 +67,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to wire useMutation(api.overlayItems.create) for each saved item, with tripId from the URL param. Load /frontend-design to build the overlay items step: render the 3 suggestion prompts as tappable chips that pre-fill the text input, an 'Add item' form with text input, optional date picker (defaults to empty = applies all days), time slot dropdown, proof toggle, and 'Attach location card' button. Show saved items as a list above the add form. Load /tailwind-design-system to render overlay items with the accent amber color (bg-accent-light text-accent) badge to distinguish them from recurring instructions, matching the 'trip overlay badge' spec. Use /dev-browser to verify: suggestion chips pre-fill the text input, an item saves and appears in the list, the date field is optional, Skip navigates to the sitters step without creating any overlay items.",
       "dependsOn": [
         "US-040",
         "US-041"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-043",
@@ -196,6 +197,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T20:12:10.631Z"
+    "updatedAt": "2026-02-19T22:31:28.764Z"
   }
 }

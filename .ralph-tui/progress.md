@@ -30,6 +30,47 @@ after each iteration and it's included in prompts for context.
 - **localStorage auth with SSR guard**: Auth context using `useState(lazyInitFn)` with `if (typeof window === "undefined") return null` guard reads localStorage once on client mount without triggering `react-hooks/set-state-in-effect` lint error. Session stored as `{ token, email }` JSON in `localStorage` under key `handoff_session`.
 - **Dashboard redirect guard**: `useEffect(() => { if (!isLoading && !user) router.replace("/login") }, [user, isLoading, router])` — reads session from `useAuth()`, redirects to login if unauthenticated.
 
+### Design System (`docs/handoff-design-system.md`)
+
+Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — earthy tones, generous radius, handwritten accents.
+
+**Typography** (3 fonts, 3 roles):
+- `font-display` / Instrument Serif — headings, hero text, wordmark
+- `font-body` / Bricolage Grotesque — body text, buttons, inputs, labels
+- `font-handwritten` / Caveat — location card captions, personality notes
+- Scale: `text-xs`=12px, `text-sm`=14px, `text-base`=16px, `text-lg`=18px, `text-xl`=20px, `text-2xl`=24px, `text-3xl`=30px, `text-4xl`=36px, `text-5xl`=48px, `text-6xl`=60px
+
+**Colors** (Tailwind classes map directly — use `bg-primary`, `text-primary`, etc.):
+- **Primary** Terracotta `#C2704A` — primary actions, active states; variants: `-hover` `#A85C38`, `-active` `#934F30`, `-light` `#F5E6DD`, `-subtle` `#FAF0EA`
+- **Secondary** Sage `#5E8B6A` — success, completed states; variants: `-hover` `#4D7558`, `-light` `#E4EDE7`, `-subtle` `#F2F7F3`
+- **Accent** Amber `#D4943A` — highlights, trip overlays, warnings; variants: `-hover` `#BB7F2E`, `-light` `#FBF0DD`, `-subtle` `#FDF8F0`
+- **Vault** Slate `#3D4F5F` — security elements; variants: `-hover` `#2F3F4D`, `-light` `#E8ECF0`, `-subtle` `#F2F4F6`
+- **Backgrounds**: `bg-bg` linen `#FAF6F1` (page), `bg-bg-raised` white `#FFFFFF` (cards), `bg-bg-sunken` sand `#F3EDE5` (recessed), `bg-bg-warm-wash` `#FDF8F3`
+- **Text**: `text-text-primary` ink `#2A1F1A`, `text-text-secondary` `#6B5A50`, `text-text-muted` `#A89890`, `text-text-on-primary` white
+- **Borders**: `border-border-default` `#E8DFD6`, `border-border-strong` `#D4C8BC`, `border-border-focus` = primary
+- **Semantic**: `text-success`/`bg-success-light`, `text-warning`/`bg-warning-light`, `text-danger`/`bg-danger-light`
+
+**Border Radius**:
+- `rounded-sm`=6px checkboxes/badges, `rounded-md`=10px buttons/inputs/images, `rounded-lg`=14px **cards/task items/vault items/toasts**, `rounded-xl`=20px pet cards/today container, `rounded-2xl`=28px modals/today header, `rounded-pill`=9999px badge pills, `rounded-round`=50% avatars
+
+**Shadows** (warm-tinted `rgba(42,31,26,...)`):
+- `shadow-xs` subtle, `shadow-sm` cards at rest, `shadow-md` hover/dropdowns, `shadow-lg` modals/toasts, `shadow-xl` hero elements, `shadow-polaroid` location cards (signature), `shadow-inner` sunken inputs
+
+**Motion**:
+- `ease-out` = `cubic-bezier(0.16, 1, 0.3, 1)` — cards, modals, page transitions
+- `ease-spring` = `cubic-bezier(0.34, 1.56, 0.64, 1)` — checkboxes, toggles, buttons (slight overshoot)
+- Durations: `duration-150` fast hover/press, `duration-250` normal card transitions, `duration-400` slow modal entrance, `duration-600` page load staggers
+- **Tailwind v4 transitions**: use individual properties — `transition-[translate,rotate,box-shadow]` NOT `transition-[transform,box-shadow]`; `transition-[opacity,scale]` NOT `transition-[opacity,transform]`
+
+**Key component specs**:
+- **LocationCard** (signature): polaroid style, 8px padding around inset image, `rounded-lg`, `shadow-polaroid`, slight rotation (`-1.5deg`/`0deg`/`+1.2deg`), hover `translateY(-4px)` + rotation shift + `shadow-xl`, subtle `ring-1 ring-inset ring-[rgba(42,31,26,0.06)]`
+- **TaskItem**: `rounded-lg border py-4 px-5 gap-4`, checkbox 26px `rounded-sm`, completed = `secondary-subtle` bg + strikethrough, `checkPop` spring animation 350ms on check
+- **VaultItem**: `rounded-lg border py-4 px-5 gap-4`, revealed = `secondary-subtle` bg, code in monospace `letter-spacing: 0.15em`
+- **Button**: hover `translateY(-1px)` + shadow elevation, active inner overlay `rgba(0,0,0,0.06)`, disabled `opacity-40`
+- **Input/Textarea**: `1.5px` border (only inputs use 1.5px — all other components use 1px), focus ring `0 0 0 3px --primary-subtle`
+- **Borders rule**: inputs = `1.5px`, all other components (cards, task items, vault items) = `1px`
+- **Body**: SVG noise texture at 2.5% opacity for paper-like warmth
+
 ---
 
 ## 2026-02-17 - US-001

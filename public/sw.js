@@ -26,6 +26,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const url = new URL(event.request.url);
+
+  // Never intercept auth callbacks — OAuth redirects must reach the app directly
+  if (url.pathname.startsWith("/auth/callback")) return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {

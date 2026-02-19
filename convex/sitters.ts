@@ -2,6 +2,16 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
+const US_PHONE_RE = /^\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+
+function validatePhone(phone: string): void {
+  if (!US_PHONE_RE.test(phone)) {
+    throw new ConvexError(
+      "Please enter a valid US phone number (e.g. (555) 867-5309).",
+    );
+  }
+}
+
 const sitterObject = v.object({
   _id: v.id("sitters"),
   _creationTime: v.number(),
@@ -20,6 +30,9 @@ export const create = mutation({
   },
   returns: v.id("sitters"),
   handler: async (ctx, args) => {
+    if (args.phone !== undefined) {
+      validatePhone(args.phone);
+    }
     return await ctx.db.insert("sitters", args);
   },
 });
@@ -44,6 +57,9 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (args.phone !== undefined) {
+      validatePhone(args.phone);
+    }
     const { sitterId, ...fields } = args;
     const updates = Object.fromEntries(
       Object.entries(fields).filter(([, val]) => val !== undefined),
@@ -61,10 +77,7 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     const sitter = await ctx.db.get(args.sitterId);
     if (!sitter) {
-      throw new ConvexError({
-        code: "NOT_FOUND",
-        message: "Sitter not found",
-      });
+      throw new ConvexError("Sitter not found.");
     }
     await ctx.db.delete(args.sitterId);
     return null;

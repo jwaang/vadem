@@ -91,12 +91,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement createSitter, updateSitter, deleteSitter mutations and getSittersByTripId query. Validate the phone field in the mutation using a regex for US format (e.g. /^\\+?1?[\\s.-]?\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$/) and throw a ConvexError with a user-facing message on invalid format. Load /frontend-design to build the sitter list UI: name + phone inputs with vault access toggle (default on), an 'Add sitter' button that appends a new form row, and existing sitters shown as cards with edit/remove actions. Load /tailwind-design-system to render sitter cards using bg-bg-raised rounded-lg border-border-default, a vault lock icon in text-vault when vaultAccess is on, and the secondary color for the toggle active state. Use /dev-browser to verify: entering an invalid phone format shows an inline error, a saved sitter appears as a card, the vault toggle defaults to on, removing a sitter shows a confirm prompt.",
       "dependsOn": [
         "US-040",
         "US-041"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-044",
@@ -197,6 +198,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T22:31:28.764Z"
+    "updatedAt": "2026-02-19T22:41:16.791Z"
   }
 }

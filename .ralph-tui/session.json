@@ -3,10 +3,10 @@
   "sessionId": "25017497-f030-4ff8-9ae5-b49f0449d85e",
   "status": "running",
   "startedAt": "2026-02-19T22:18:59.153Z",
-  "updatedAt": "2026-02-19T22:31:28.767Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-19T22:41:16.794Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -29,8 +29,8 @@
       {
         "id": "US-042",
         "title": "Add overlay items to trip",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-043",
@@ -64,9 +64,20 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-042",
+      "taskTitle": "Add overlay items to trip",
+      "taskCompleted": true,
+      "durationMs": 733798,
+      "startedAt": "2026-02-19T22:19:14.963Z",
+      "endedAt": "2026-02-19T22:31:28.761Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],
-  "subagentPanelVisible": false
+  "subagentPanelVisible": true
 }

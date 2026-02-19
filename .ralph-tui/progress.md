@@ -768,3 +768,17 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Optional index field behavior**: Making `overlayItems.date` optional means items without a date are excluded from `listByTripAndDate` queries (filtered by date) but appear in `listByTrip` — correct behavior for "applies all days" items
   - **Skip vs Continue UX**: When items exist, show "Skip for now" (left, muted) + "Continue →" (right, primary). When no items, show "Skip →" only. Verified in browser both paths navigate to `/trip/${tripId}/sitters`
 ---
+
+## 2026-02-19 - US-043
+- Implemented sitter management step in trip setup flow
+- Files changed:
+  - `convex/sitters.ts` — added US phone validation regex in `create` and `update` mutations; throws ConvexError string on invalid format
+  - `src/app/trip/[tripId]/sitters/page.tsx` — server component with metadata
+  - `src/app/trip/[tripId]/sitters/SittersPageClient.tsx` — `"use client"` wrapper with `dynamic(ssr:false)`
+  - `src/app/trip/[tripId]/sitters/SittersStepInner.tsx` — full sitter UI: add form, sitter cards with edit/remove, inline confirm, vault toggle
+- **Learnings:**
+  - `ConvexError("string")` sets `err.message` to the string directly — use string args for user-facing errors caught with `err instanceof Error ? err.message : ...`
+  - Vault toggle uses `bg-secondary` (sage green) for active state per design system
+  - Inline confirm prompt (state-based "Remove? Yes No") is cleaner than `window.confirm` for mobile UX
+  - Client-side phone validation runs before Convex mutation to give immediate feedback; server also validates as defense-in-depth
+---

@@ -50,7 +50,11 @@ function CallbackHandlerInner({ provider }: CallbackHandlerProps) {
     if (error || !code || hasRun.current) return;
     hasRun.current = true;
 
-    const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
+    const origin =
+      provider === "apple" && process.env.NEXT_PUBLIC_APPLE_REDIRECT_ORIGIN
+        ? process.env.NEXT_PUBLIC_APPLE_REDIRECT_ORIGIN
+        : window.location.origin;
+    const redirectUri = `${origin}/auth/callback/${provider}`;
 
     exchangeCode({ provider, code, redirectUri })
       .then(({ token, email }) => {

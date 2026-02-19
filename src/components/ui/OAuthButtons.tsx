@@ -98,13 +98,16 @@ export function OAuthButtons({ className }: OAuthButtonsProps) {
     window.location.href = buildAppleUrl(redirectUri);
   };
 
+  const baseBtn =
+    "btn flex items-center justify-center gap-[10px] w-full py-[11px] px-5 rounded-md font-body text-sm font-medium leading-none cursor-pointer border-[1.5px] border-solid transition-[translate,box-shadow,background-color,border-color] duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
     <div className={className}>
       {/* Google button */}
       <button
         type="button"
         onClick={handleGoogle}
-        className="oauth-btn oauth-btn-google"
+        className={`${baseBtn} oauth-google`}
         aria-label="Continue with Google"
       >
         <GoogleLogo />
@@ -115,7 +118,7 @@ export function OAuthButtons({ className }: OAuthButtonsProps) {
       <button
         type="button"
         onClick={handleApple}
-        className="oauth-btn oauth-btn-apple"
+        className={`${baseBtn} oauth-apple`}
         aria-label="Continue with Apple"
       >
         <AppleLogo />

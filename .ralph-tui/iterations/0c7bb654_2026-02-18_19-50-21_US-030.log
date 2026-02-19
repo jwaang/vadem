@@ -1,0 +1,63 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: US-030
+- **Task Title**: Pet profile data model in Convex
+- **Description**: As a developer, I need the Pet schema in Convex so pet profiles can be stored with all required and optional fields.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-19T01:50:21.583Z
+- **Ended At**: 2026-02-19T01:52:36.517Z
+- **Duration**: 2m 14s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m
+Now let me check if `convex/pets.ts` already exists, and look at the existing Convex files for pattern reference:
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/*.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/properties.ts[0m
+Let me also look at `sections.ts` for the full CRUD pattern reference:
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/sections.ts[0m
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m edit: "  locationCards: defineTable({
+    parentId: v.str..." → "  locationCards: defineTable({
+    parentId: v.str..."
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/convex/pets.ts[0m "import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+import { ConvexError } from "convex/values";
+
+const medicationObject = v.object({
+  name: v.string(),
+  dosage... (4676 chars)"
+[94m[TodoWrite][0m
+[94m[Bash][0m Run Convex codegen to regenerate _generated/ files $ node_modules/.bin/convex codegen --system-udfs --typecheck disable 2>&1
+[94m[Bash][0m Run TypeScript type check $ pnpm typecheck 2>&1
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1
+All checks pass (only pre-existing `<img>` warnings, 0 errors). Let me run the build as well:
+[94m[Bash][0m Run Next.js production build $ pnpm build 2>&1
+Build passes. Let me update progress.md and mark complete:
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "  - `params` in Next.js 16 App Router dynamic page..." → "  - `params` in Next.js 16 App Router dynamic page..."
+US-030 is complete. Here's what was implemented:
+
+**`convex/schema.ts`** — Added `pets` table with all required fields:
+- Required: `propertyId`, `name`, `species`, `sortOrder`
+- Arrays: `photos` (`v.array(v.id("_storage"))`), `medications` (array of `{name, dosage, frequency, time, locationCardId?}`)
+- Optional strings: `breed`, `age`, `feedingInstructions`, `vetName`, `vetPhone`, `personalityNotes`, `medicalConditions`, `behavioralQuirks`, `allergies`, `microchipNumber`, `insuranceInfo`, `walkingRoutine`, `groomingNeeds`, `comfortItems`
+- Index: `by_property_sort` on `[propertyId, sortOrder]`
+
+**`convex/pets.ts`** — CRUD operations following established patterns:
+- `create` — inserts all fields
+- `getPetsByPropertyId` — queries by `propertyId` index, ordered ascending by `sortOrder`
+- `update` — patches only provided (non-undefined) fields
+- `remove` — existence check + delete with `ConvexError` on missing
+
+All quality checks pass: typecheck ✅, lint ✅ (0 errors), build ✅.
+
+<promise>COMPLETE</promise>

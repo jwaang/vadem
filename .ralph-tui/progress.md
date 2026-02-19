@@ -523,6 +523,8 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - `useQuery(api.auth.validateSession, user?.token ? { token } : "skip")` is the clean pattern to get userId from session token; "skip" prevents the query from running when there's no token
   - Photo preview uses `<img>` with `eslint-disable-next-line @next/next/no-img-element` since it's a local blob URL (no `next/image` optimization possible for blob URLs)
   - `params` in Next.js 16 App Router dynamic pages is a `Promise<{ step: string }>` — must `await params` in the server component
+- **Multi-photo upload pattern**: `multiple` attribute on file input + `Array.from(e.target.files ?? [])` + `Promise.all(files.map(async (file) => uploadUrl...))` for parallel uploads. Reset input value after each selection so user can add more photos incrementally.
+
 ---
 
 ## 2026-02-18 - US-030
@@ -533,4 +535,19 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
 - **Learnings:**
   - Reusable validator constant (`const medicationObject = v.object({...})`) can be shared between `create` args, `update` args, and the `petObject` returns validator — avoids duplication and keeps the schema shape in sync
   - For complex nested object arrays in Convex, define the sub-object validator as a `const` and reference it in all three places: schema definition, create args, and returns validator
+---
+
+## 2026-02-18 - US-027
+- Implemented wizard step 2 "Add your pets" at `/wizard/2`
+- **Files changed:**
+  - `src/app/wizard/[step]/Step2Pets.tsx` (new) — full pet form with required/optional fields, multi-photo upload thumbnail grid, collapsible "More details" section, medications sub-form with add/remove rows, real-time pet list via Convex query, `SavedPetCard` subcomponent resolving storage URLs
+  - `src/app/wizard/[step]/WizardStepInner.tsx` — added `Step2Pets` import + routing for `step === 2`
+- **Learnings:**
+  - `Doc<"tablename">` IS exported from `convex/_generated/dataModel` alongside `Id` — use `import type { Id, Doc } from "../../../../convex/_generated/dataModel"` for Convex document typing in components
+  - Split form into a separate `PetForm` component and a `SavedPetCard` component for clean separation. `SavedPetCard` calls `useQuery(api.storage.getUrl, ...)` with "skip" pattern — this is valid inside a dedicated component since hooks don't change between renders
+  - Multi-photo grid: track `photoFiles: File[]` and `photoPreviews: string[]` in parallel arrays by index. Use `URL.createObjectURL` for previews, `URL.revokeObjectURL` on removal. Reset file input value after each selection so the same file can be re-selected after removal
+  - Collapsible "More details" section: `useState(false)` + chevron icon with CSS `rotate` transition — no external library needed
+  - Medications sub-form: array of `MedicationRow` objects in form state; `addMedication`/`removeMedication`/`updateMedication` handlers with index-based updates. Use compact inline `<input>` elements (not `<Input>` wrapper) in a 2-column grid for compact medication rows
+  - `propertyId` chain: session token → `validateSession` → userId → `listByOwner` → `properties[0]._id`. Each step uses "skip" pattern when previous step's result is undefined
+  - "Property not found" error appears correctly in browser when no Convex backend is running — the guard condition `if (!propertyId)` works as expected
 ---

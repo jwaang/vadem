@@ -90,12 +90,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to wire useMutation(api.pets.create) and useQuery(api.pets.getPetsByPropertyId) in the wizard step 2 page, with optimistic updates so each saved pet card appears immediately. Load /frontend-design to build the pet profile form: required fields at top with clear validation, collapsible 'More details' section for optional fields, medications sub-form with add/remove rows (name, dosage, frequency, time fields per row), and photo array upload showing thumbnail grid. Load /tailwind-design-system to render saved pets as PetProfileCard summary cards (src/components/ui/PetProfileCard) below the form, apply font-body for all labels, use danger-light/text-danger for required field errors, and secondary color for the species/breed badge. Use /dev-browser to verify: 'Add a pet' shows the form, required fields block submission when empty, a saved pet renders as a PetProfileCard, adding a second pet appends a second card, Skip navigates to step 3.",
       "dependsOn": [
         "US-026",
         "US-030"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-028",
@@ -295,6 +296,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T01:52:36.519Z"
+    "updatedAt": "2026-02-19T02:01:40.053Z"
   }
 }

@@ -23,6 +23,7 @@ import type * as properties from "../properties.js";
 import type * as sections from "../sections.js";
 import type * as storage from "../storage.js";
 import type * as users from "../users.js";
+import type * as vaultItems from "../vaultItems.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   sections: typeof sections;
   storage: typeof storage;
   users: typeof users;
+  vaultItems: typeof vaultItems;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -537,6 +537,21 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - For complex nested object arrays in Convex, define the sub-object validator as a `const` and reference it in all three places: schema definition, create args, and returns validator
 ---
 
+## 2026-02-18 - US-028
+- Implemented wizard step 3 "Add access info (vault items)" at `/wizard/3`
+- **Files changed:**
+  - `convex/schema.ts` — Added `vaultItems` table with `type` as `v.union` of 7 literals (`door_code`, `alarm_code`, `wifi`, `gate_code`, `garage_code`, `safe_combination`, `custom`), `label`, `value`, `instructions`, `sortOrder`; `by_property_sort` compound index
+  - `convex/vaultItems.ts` (new) — `create`, `listByPropertyId`, `update`, `remove` mutations/queries following established CRUD pattern; shared `vaultItemType` validator reused across `create`, `update`, and `vaultItemObject` returns validator
+  - `convex/_generated/*` — Re-run codegen
+  - `src/app/wizard/[step]/Step3Access.tsx` (new) — 7-type icon-grid selector (Door/Alarm/WiFi/Gate/Garage/Safe/Custom SVG icons); `MaskedInput` component with eye-toggle (show/hide); `SavedVaultItem` card showing masked value + toggle + delete; `VaultForm` with validation; `Step3Access` main component following Step2Pets pattern
+  - `src/app/wizard/[step]/WizardStepInner.tsx` — Added Step3Access import + routing for `step === 3`
+- **Learnings:**
+  - **Masked input with toggle**: A flex wrapper div with `focus-within:border-primary` on the container (not the input) + border-l between input and eye button — avoids absolute positioning and focus-ring edge cases
+  - **Type selector icon-grid**: `aria-pressed` attribute gives accessible state to type selector buttons; `border-[1.5px]` on inputs vs `border` on cards — consistent with design system rules
+  - **Label pre-fill logic**: Check if label matches ANY type's default label before replacing (not just empty) — so switching from Door to WiFi correctly updates the pre-fill even if user hasn't edited it
+  - **Snapshot refs change on re-render**: After a React state change, aria snapshot refs are invalidated — always call `getAISnapshot()` again before `selectSnapshotRef()` when the page has re-rendered; OR use `page.click('button:has-text("...")')` for stable selectors
+---
+
 ## 2026-02-18 - US-027
 - Implemented wizard step 2 "Add your pets" at `/wizard/2`
 - **Files changed:**

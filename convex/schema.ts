@@ -61,6 +61,23 @@ export default defineSchema({
     roomTag: v.optional(v.string()),
   }).index("by_parent", ["parentId", "parentType"]),
 
+  vaultItems: defineTable({
+    propertyId: v.id("properties"),
+    type: v.union(
+      v.literal("door_code"),
+      v.literal("alarm_code"),
+      v.literal("wifi"),
+      v.literal("gate_code"),
+      v.literal("garage_code"),
+      v.literal("safe_combination"),
+      v.literal("custom"),
+    ),
+    label: v.string(),
+    value: v.string(),
+    instructions: v.optional(v.string()),
+    sortOrder: v.number(),
+  }).index("by_property_sort", ["propertyId", "sortOrder"]),
+
   pets: defineTable({
     propertyId: v.id("properties"),
     name: v.string(),

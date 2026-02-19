@@ -4,6 +4,7 @@ import Link from "next/link";
 import { WizardProgress } from "@/components/ui/WizardProgress";
 import Step1Home from "./Step1Home";
 import Step2Pets from "./Step2Pets";
+import Step3Access from "./Step3Access";
 
 interface WizardStepInnerProps {
   step: number;
@@ -81,6 +82,8 @@ export default function WizardStepInner({ step }: WizardStepInnerProps) {
         <Step1Home />
       ) : step === 2 ? (
         <Step2Pets />
+      ) : step === 3 ? (
+        <Step3Access />
       ) : (
         <ComingSoon step={step} />
       )}

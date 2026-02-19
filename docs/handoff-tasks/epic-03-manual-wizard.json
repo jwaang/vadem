@@ -114,12 +114,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement VaultItems table mutations (create, update, delete) linked by propertyId, with a type field as v.union of the 7 pre-built literals plus 'custom'. Load /tailwind-design-system to reuse the VaultItem component pattern from src/components/ui — apply vault color tokens (bg-vault, text-vault, border-vault) for item cards, a masked input (type=password with show/hide toggle using text-text-muted eye icon) for the value field, and font-handwritten for the revealed value display per the design system spec. Load /frontend-design to build the type selector as an icon-grid picker (door, alarm, WiFi, gate, garage, safe, custom icons) that pre-fills the label field. Use /dev-browser to verify: selecting a type pre-fills the label, value field masks on input with toggle, 'Add another' appends a new blank item form, Skip navigates to step 4 without requiring any vault items.",
       "dependsOn": [
         "US-026",
         "US-049"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-029",
@@ -296,6 +297,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T02:01:40.053Z"
+    "updatedAt": "2026-02-19T02:10:55.483Z"
   }
 }

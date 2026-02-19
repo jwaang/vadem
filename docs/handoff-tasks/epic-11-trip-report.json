@@ -18,7 +18,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to write getTripReport query in convex/reports.ts. It accepts tripId and returns a structured object: { trip: { startDate, endDate, status, sitters[] }, tasks: [{ id, text, section, timeSlot, completions: [{ sitterName, completedAt, proofPhotoUrl }] }], overlayItems: [{ text, date, completions[] }], vaultAccessLog: [{ sitterName, itemLabel, accessedAt }], activityTimeline: ActivityLog[] }. Merge recurring instructions and overlay items into a unified task list, cross-referencing TaskCompletions by taskRef. A task with zero completions for a given day is 'not done'; completions with a timestamp are 'done'. Mark a task 'skipped' if it had no completions and the trip is expired. Verify the query is callable during active trips (live progress) and returns the same structure — just with fewer completions and status='active'.",
       "dependsOn": ["US-040", "US-068"]
     },
     {
@@ -38,7 +38,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to wire useQuery(api.reports.getTripReport, { tripId }) in the report page, which works for both active and completed trips. Load /nextjs-best-practices to set up src/app/dashboard/trips/[tripId]/report/page.tsx within CreatorLayout, linked from the trip detail card on the dashboard. Load /tailwind-design-system to structure the scrollable report: (1) Summary card — bg-bg-raised rounded-xl shadow-sm with trip dates, sitter names, and overall X/Y tasks done count; (2) Task completion list — each task as a rounded-lg card with a secondary/success dot (bg-secondary-light text-secondary) for done and danger dot (bg-danger-light text-danger) for not done, completion timestamp in text-text-muted; (3) Proof photos — a 2-column grid of 120px rounded-md thumbnails tappable to the full-screen viewer from US-039; (4) Vault access log — bg-vault-subtle rounded-lg list rows with sitter name, item label, and timestamp; (5) Activity timeline using ActivityFeedItem components (US-018). Use /dev-browser to verify: done tasks show green indicator with timestamp, not-done tasks show red indicator, proof photos open full-screen on tap, the vault log section shows the correct access events.",
       "dependsOn": ["US-076", "US-018"]
     },
     {
@@ -56,7 +56,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to write a generateTripReportPdf Convex action (convex/reportActions.ts, 'use node') that calls getTripReport internally, uses the @react-pdf/renderer or puppeteer npm package to generate a PDF, and returns the PDF as a base64 string or uploads it to Convex file storage and returns a download URL. Use @react-pdf/renderer if adding a new dependency, as it works in Node.js without a browser runtime. The PDF should include: a Handoff wordmark header, trip summary section, task list with ✓/✗ symbols and timestamps, proof photos scaled to fit (compress to max 800px wide using sharp or canvas before embedding), and vault access log. The 'Download PDF' button in the trip report page calls this action, shows a loading spinner while generating, then triggers a browser download via an <a href='[dataUrl]' download='trip-report.pdf'> click.",
       "dependsOn": ["US-077"]
     },
     {
@@ -74,7 +74,7 @@
       ],
       "priority": 4,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to add a reportShareLink field to the Trips table and implement a generateReportLink mutation (separate from the trip shareLink) that creates a new random slug stored as Trips.reportShareLink. Write a getTripReportByShareLink public query (no auth required) that looks up by reportShareLink and returns the same data as getTripReport — this is deliberately public since it's a static audit report the owner chose to share. Write revokeReportLink mutation that nullifies Trips.reportShareLink. Load /nextjs-best-practices to set up src/app/report/[reportShareLink]/page.tsx as a public page (no auth check) that renders the trip report UI from US-077 in read-only mode without the CreatorLayout sidebar. Load /tailwind-design-system to add a 'Share Report' button on the trip report page (btn-primary) that calls generateReportLink, shows the link in a copy-able Input, and a 'Revoke link' text button (text-danger) to remove access.",
       "dependsOn": ["US-077"]
     }
   ]

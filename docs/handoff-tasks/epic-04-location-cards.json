@@ -1,7 +1,7 @@
 {
   "name": "Epic 4: Location Cards",
-  "branchName": "ralph/epic-04-location-cards",
   "description": "Photo/video attachment system — the product's signature UX.",
+  "branchName": "ralph/epic-04-location-cards",
   "userStories": [
     {
       "id": "US-037",
@@ -20,9 +20,12 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
-      "dependsOn": ["US-025"]
+      "passes": true,
+      "notes": "Load /convex-best-practices to implement the photo upload flow: generateUploadUrl action returns a one-time upload URL, client POSTs the image blob directly, then createLocationCard mutation stores the resulting storageId with parentId, parentType, caption, and roomTag. Load /frontend-design to build the photo input component: use an <input type='file' accept='image/*' capture='environment'> for mobile camera capture, run canvas-based resize to max 1920px wide before upload, and show an object URL thumbnail preview immediately after file selection. Load /tailwind-design-system to style the caption field using font-handwritten (Caveat) per the design system spec, the room tag selector as rounded-pill chips using bg-bg-sunken + text-text-secondary, and the upload button with the btn utility and btn-primary. Use /dev-browser to verify: selecting a photo shows a thumbnail preview, the caption field renders in Caveat font, a room tag can be selected or typed as custom, and the saved location card appears attached to its parent instruction.",
+      "dependsOn": [
+        "US-025"
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-038",
@@ -42,8 +45,10 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
-      "dependsOn": ["US-025"]
+      "notes": "Load /convex-best-practices to reuse the generateUploadUrl + storageId pattern from US-037 for video, storing videoUrl on the LocationCards record alongside photoUrl. Load /frontend-design to build the video upload component: use <input type='file' accept='video/*' capture='environment'>, load the selected file into an <video> element to read duration and reject if > 30 seconds with a user-facing error, generate a poster thumbnail by seeking to 0s and drawing to canvas, then upload the blob. Use the same caption and roomTag fields as photo cards. Load /tailwind-design-system to render the video thumbnail as a polaroid-style card (shadow-polaroid, 8px inset padding) with a centered play icon overlay using a semi-transparent rounded-round bg-black/40 circle and white play icon, matching the LocationCard component design. Use /dev-browser to verify: selecting a video > 30s shows a rejection message, a valid video shows a thumbnail with play overlay, caption and room tag inputs work, the card renders in the sitter view with the play icon.",
+      "dependsOn": [
+        "US-025"
+      ]
     },
     {
       "id": "US-039",
@@ -63,8 +68,15 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
-      "dependsOn": ["US-007", "US-037", "US-038"]
+      "notes": "Load /tailwind-design-system to implement the LocationCard polaroid display per the design system spec: 8px padding around the inset image, shadow-polaroid, slight rotation, font-handwritten (Caveat) for caption below the image, rounded-pill room tag badge using bg-bg-sunken. For multiple cards, wrap in an overflow-x-auto horizontal scroll container with flex gap-3 and snap-x snap-mandatory for tactile swiping. Load /frontend-design to build the full-screen viewer modal: use a fixed inset-0 overlay (bg-black/90 z-50), render <img> with touch-action: pinch-zoom and CSS zoom for photo pinch-to-zoom, render <video controls autoPlay> for video with native play controls, and a close button (X) in the top-right corner. Load /nextjs-best-practices to ensure the service worker in public/sw.js caches all Convex storage image URLs on first fetch (cache-first strategy) for offline access — exclude video URLs from pre-cache per the Epic 12 strategy. Use /dev-browser to verify: a location card renders inline below its instruction in polaroid style with Caveat caption, tapping opens the full-screen viewer, pinch-to-zoom works on photo, multiple cards scroll horizontally, and the image loads after toggling airplane mode.",
+      "dependsOn": [
+        "US-007",
+        "US-037",
+        "US-038"
+      ]
     }
-  ]
+  ],
+  "metadata": {
+    "updatedAt": "2026-02-19T19:45:10.794Z"
+  }
 }

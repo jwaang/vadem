@@ -18,7 +18,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "Security-sensitive story — verify access control thoroughly",
+      "notes": "Security-sensitive story — verify access control thoroughly. Load /convex-best-practices to define the VaultItems table in convex/schema.ts with encryptedValue as v.string() (stores AES-256-GCM ciphertext + IV as a base64 JSON string), itemType as v.union of 7 literals, and an internalMutation for decryption that is only callable from internal Convex functions (not public API). Implement encryption/decryption in a Convex action (convex/vaultActions.ts, 'use node') using Node.js crypto.subtle AES-256-GCM with a VAULT_ENCRYPTION_KEY env var. Document the key strategy: one symmetric key per deployment stored as a Convex env var — document rotation procedure in a code comment. Write a createVaultItem action that encrypts the value before calling the internal mutation, and a getDecryptedVaultItem action that verifies trip-active + sitter-phone-verified before decrypting.",
       "dependsOn": ["US-002"]
     },
     {
@@ -38,7 +38,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to wire the createVaultItem and updateVaultItem actions from US-048 (re-encrypt on value change by calling the action again), and deleteVaultItem mutation. Use useQuery(api.vault.getVaultItemLabels) to show labels-only list (never returns encryptedValue to the client). Load /tailwind-design-system to reuse the VaultItem component from src/components/ui: vault color tokens (bg-vault, text-vault, border-vault), monospace font for the masked value (font-mono), an eye icon toggle using text-text-muted for reveal/hide, and a copy-to-clipboard button. Load /frontend-design to build the vault item form: type selector icon grid (door, alarm, WiFi, gate, garage, safe, custom) that pre-fills the label, a type=password input for value with show/hide toggle, instructions textarea, and optional location card attach. Render delete as an inline confirmation within the vault item card (bg-danger-light text-danger). Use /dev-browser to verify: the value field masks input, reveal toggle shows/hides value, saved items show only the label in the list (not the value), delete requires confirmation.",
       "dependsOn": ["US-048", "US-010"]
     },
     {
@@ -62,7 +62,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "Security-sensitive: verify PIN expiration and attempt limiting",
+      "notes": "Security-sensitive: verify PIN expiration and attempt limiting. Load /convex-best-practices to implement the PIN flow: create a VaultPins table (tripId, sitterPhone, hashedPin, expiresAt, attemptCount) with an internal mutation for creation and validation. Write a sendSmsPin Convex action (convex/vaultActions.ts, 'use node') that generates a 6-digit random PIN, hashes it with SHA-256 + salt, stores in VaultPins with expiresAt = now + 10min, and sends via Twilio SMS using TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_PHONE_NUMBER env vars. Write a verifyPin action that checks: PIN not expired, attemptCount < 3, hash matches — increment attemptCount on failure, delete record on success. Store verification status in a short-lived Convex session record or signed cookie. Load /frontend-design to build the PIN entry UI: a 6-digit OTP input (6 separate single-digit inputs that auto-advance focus), a 'Send PIN' button, attempt counter ('2 attempts remaining'), and a 'Resend PIN' link after first send. Load /tailwind-design-system to render the verification gate using bg-bg-raised rounded-xl shadow-md, vault color for the lock icon, and danger-light for attempt limit errors. Use /dev-browser to verify: tapping vault tab shows the verification gate, SMS sends (check Twilio logs), entering a wrong PIN shows remaining attempts, 3 wrong attempts requires a new PIN, correct PIN reveals vault items for the session.",
       "dependsOn": ["US-043", "US-048"]
     },
     {
@@ -83,7 +83,7 @@
       ],
       "priority": 4,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement the getDecryptedVaultItems action with a three-layer access check: (1) trip status === 'active', (2) sitter phone exists in Sitters table for this trip with vaultAccess === true, (3) PIN verification session is valid. If any check fails, return a typed error enum (TRIP_INACTIVE, NOT_REGISTERED, NOT_VERIFIED) — never throw generic errors that leak information. Call the logVaultAccess mutation after each successful item view. Load /tailwind-design-system to render the vault page using the VaultItem component in revealed state: monospace font (font-mono) for the code value, bg-vault text-on-vault for the code block, a copy-to-clipboard button using the Clipboard icon, instructions text below in font-body text-text-secondary, and the inline LocationCard if present. Show the correct access-denied empty states ('This handoff is not currently active', 'You don't have access to secure items') using bg-bg-raised rounded-xl p-8 text-center with vault lock icon. Use /dev-browser to verify: a verified sitter sees decrypted codes in monospace, copy-to-clipboard works, the location card renders with the code, an unverified sitter sees the gate message, and accessing with an expired trip shows the inactive message.",
       "dependsOn": ["US-050", "US-010"]
     },
     {
@@ -102,7 +102,7 @@
       ],
       "priority": 5,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to define the VaultAccessLog table in convex/schema.ts with an index on tripId+accessedAt for the owner audit view. Write an internal logVaultAccess mutation that is called from: (1) the getDecryptedVaultItems action on each successful decryption (verified: true), (2) the verifyPin action on each failed attempt (verified: false, vaultItemId: null). Make logVaultAccess an internalMutation so it cannot be called directly from the client. Confirm the accessedAt field uses Date.now() server-side (not client-provided) to prevent timestamp spoofing. Write a getVaultAccessLog query restricted to the property owner (verify ctx.auth userId matches property ownerId) for the trip report and activity feed.",
       "dependsOn": ["US-050"]
     },
     {
@@ -119,7 +119,7 @@
       ],
       "priority": 6,
       "passes": false,
-      "notes": "Depends on notification infrastructure from Epic 10",
+      "notes": "Depends on notification infrastructure from Epic 10. Load /convex-best-practices to extend the logVaultAccess internalMutation (US-052) to also call sendPushNotification (from US-070) with the message '[sitterName] accessed your [itemLabel] at [time]' and logActivityEvent to create an ActivityLog entry with eventType='vault_accessed' and metadata including vaultItemId and sitterName. The activity feed event should use the slate color dot (bg-vault/text-vault per design system) matching the 'vault_accessed' event type defined in US-069. The push notification payload should include a deep-link URL to the trip activity feed page.",
       "dependsOn": ["US-052", "US-070"]
     },
     {
@@ -137,7 +137,7 @@
       ],
       "priority": 7,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement expiration as a query-level guard rather than a delete: the getDecryptedVaultItems action (US-051) already checks trip.status === 'active' as step 1 of its access control — verify this check catches expiration immediately after the cron runs (US-045). Also add an inline expiration check: if trip.endDate < Date.now() and status is still 'active', call expireTrip mutation lazily before returning the error. This ensures expiration works even if the daily cron hasn't run yet. Test the expiration boundary: a trip expiring at midnight should deny access at 12:01 AM and show 'This trip has ended' (TRIP_INACTIVE error enum from US-051).",
       "dependsOn": ["US-045", "US-048"]
     },
     {
@@ -158,7 +158,7 @@
       ],
       "priority": 8,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement the revokeSitterVaultAccess mutation that sets Sitters.vaultAccess = false for the given sitterId and immediately invalidates any active VaultPins for this sitter (delete from VaultPins table). Verify the mutation checks that the caller is the property owner (ctx.auth userId === property.ownerId) before allowing revocation. The getDecryptedVaultItems access check (US-051) already reads vaultAccess at query time, so revocation takes effect on the next vault request without any caching concern. Load /tailwind-design-system to render the revoke button on the trip management page as a small btn-danger (or outlined danger variant) next to each sitter entry, with an inline confirmation using bg-danger-light text-danger rounded-lg before firing the mutation. Show a toast (success variant, bg-secondary-light) on successful revocation. Use /dev-browser to verify: clicking Revoke shows confirmation, confirming sets vaultAccess=false, the sitter's vault attempt immediately shows 'Your access has been revoked', and the owner sees a success toast.",
       "dependsOn": ["US-043", "US-004"]
     },
     {
@@ -178,7 +178,7 @@
       ],
       "priority": 9,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to ensure the vault queries return zero data (not even item count or labels) for unregistered phones — the getVaultForSitter query should check sitter registration first and return { status: 'NOT_REGISTERED' } before touching the VaultItems table. Never return item labels or counts to unregistered users. Load /tailwind-design-system to render the not-registered empty state: a centered vault lock icon in text-vault, the message '[Owner name] shared secure info with you — verify your phone number to view' in font-body text-text-primary, a 'Verify Phone Number' CTA button (btn-primary) that triggers the SMS PIN flow (US-050), all within a bg-bg-raised rounded-xl p-8 container. The Vault tab in the bottom nav should show a lock badge icon (not a count) regardless of registration status to indicate content exists without revealing how much. Use /dev-browser to verify: accessing the vault tab with an unregistered phone shows only the lock message and CTA with no item labels or blurred content, the vault tab badge shows a lock icon, and a registered-but-unverified sitter sees the PIN prompt instead.",
       "dependsOn": ["US-010", "US-050"]
     }
   ]

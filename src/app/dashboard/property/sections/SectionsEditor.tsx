@@ -9,6 +9,7 @@ import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
+import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -197,6 +198,7 @@ function InstructionRow({
 }: InstructionRowProps) {
   const updateInstruction = useMutation(api.instructions.update);
   const [text, setText] = useState(instruction.text);
+  const [showUploader, setShowUploader] = useState(false);
 
   const handleTextBlur = () => {
     const trimmed = text.trim();
@@ -289,18 +291,24 @@ function InstructionRow({
           📷 {instruction.proofRequired ? "Proof required" : "No proof"}
         </button>
 
-        {/* Location card — placeholder for epic-04 */}
+        {/* Location card upload */}
         <button
           type="button"
-          className="ml-auto font-body text-xs text-text-muted hover:text-text-secondary transition-colors duration-150"
-          title="Location cards coming in a future update"
-          onClick={() => {
-            /* Location card attachment — epic-04 */
-          }}
+          className="ml-auto font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+          onClick={() => setShowUploader(true)}
         >
           + Photo card
         </button>
       </div>
+
+      {showUploader && (
+        <LocationCardUploader
+          parentId={instruction._id as string}
+          parentType="instruction"
+          onSuccess={() => setShowUploader(false)}
+          onClose={() => setShowUploader(false)}
+        />
+      )}
     </div>
   );
 }

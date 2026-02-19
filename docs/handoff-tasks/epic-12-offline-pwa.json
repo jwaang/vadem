@@ -18,7 +18,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "",
+      "notes": "Load /nextjs-best-practices to extend the existing public/sw.js service worker (already set up in US-019) with a multi-bucket caching strategy: (1) app-shell cache (cache-first) for Next.js static assets (_next/static/); (2) content cache (network-first with cache fallback) for all Convex query responses that the sitter fetches on first load — cache the JSON responses by URL; (3) photo cache (cache-first) for Convex storage image URLs (matching /api/storage/ or the Convex CDN domain); (4) explicitly skip video URLs from pre-caching — add a service worker 'fetch' listener that caches video responses only when fetch is triggered by a <video> play event (check the 'Destination: video' header). Implement version-based cache invalidation: store a manual_version field on the Property record, send it as a header in all sitter API responses, and have the service worker compare it against a cached version — on mismatch, clear the content cache and re-fetch.",
       "dependsOn": ["US-019", "US-025"]
     },
     {
@@ -37,7 +37,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /nextjs-best-practices to implement the offline task queue using IndexedDB (via the idb npm package or raw indexedDB API): create a pending_completions store with entries { id, tripId, taskRef, taskType, completedAt, sitterName, retryCount }. On checkbox tap, always write to IndexedDB first, then attempt the Convex completeTask mutation — if the mutation fails (offline), keep the entry in the queue and show the optimistic checked state from local state. Add a navigator.onLine event listener and a Convex reactivity check: when online status is restored, drain the queue by calling completeTask for each pending entry using the stored completedAt timestamp (not Date.now()). Deduplicate by checking if a TaskCompletion already exists for tripId+taskRef+date before inserting. Load /tailwind-design-system to render the 'offline — will sync' badge as a subtle fixed-bottom bar (bg-warning-light text-warning font-body text-xs rounded-t-lg px-4 py-2) that appears when navigator.onLine is false.",
       "dependsOn": ["US-060", "US-019"]
     },
     {
@@ -56,7 +56,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /nextjs-best-practices to extend the IndexedDB store from US-081 with a pending_uploads store for photo blobs: entries { id, tripId, taskRef, blob, completedAt, sitterName, retryCount, lastAttemptAt }. When the proof photo is selected offline, store the full File/Blob in IndexedDB (IndexedDB supports binary data natively). On reconnect, process the upload queue in order: call generateUploadUrl, POST the blob, then call completeTask with the storageId and original completedAt timestamp. Implement exponential backoff: on upload failure, increment retryCount, set lastAttemptAt, and schedule retry at 2^retryCount seconds later (up to 3 attempts). After 3 failures, mark as permanently_failed and show a 'Some photos failed to upload' error badge. Load /tailwind-design-system to render the pending upload count as a badge on the Today View header: a rounded-pill chip (bg-accent-light text-accent) showing '2 photos waiting to upload', visible only when the queue is non-empty.",
       "dependsOn": ["US-061", "US-019"]
     },
     {
@@ -71,11 +71,11 @@
         "pnpm typecheck passes",
         "pnpm lint passes",
         "pnpm build passes",
-        "Access control verification — no vault data persists on device"
+        "Access control verification — no vault data leaks into any cache"
       ],
       "priority": 4,
       "passes": false,
-      "notes": "Security-critical: verify no vault data leaks into any cache",
+      "notes": "Security-critical: verify no vault data leaks into any cache. Load /nextjs-best-practices to add a fetch listener in public/sw.js that explicitly calls return (without caching) for any request matching the Convex API calls to vault-related functions (match by URL containing 'getDecryptedVaultItems' or 'vault'). Also add Cache-Control: no-store, no-cache, must-revalidate headers to vault API responses in convex/vaultActions.ts by including them in the HTTP response where possible. Load /convex-best-practices to verify that no vault query results are stored in any client-side Convex cache — Convex's client cache is in-memory only and does not persist to IndexedDB, but confirm by auditing that vault queries are not accidentally included in any offline content snapshot. Load /tailwind-design-system to render the offline vault state: when navigator.onLine is false, replace the vault tab content with a centered lock icon message 'Connect to the internet to access secure items' (bg-bg-raised rounded-xl p-8 text-center, text-vault lock icon, font-body text-text-muted) — never show a cached or stale vault state. Use /dev-browser to verify by toggling airplane mode: the vault tab shows the offline message, DevTools → Application → Cache Storage shows no vault-related entries.",
       "dependsOn": ["US-019", "US-048"]
     }
   ]

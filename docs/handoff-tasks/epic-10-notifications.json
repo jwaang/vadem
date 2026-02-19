@@ -17,7 +17,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to define the ActivityLog table in convex/schema.ts. Use v.union of all event type literals for eventType, v.any() for metadata (typed as a discriminated union in TypeScript but stored as v.any() for flexibility), and add an index on [tripId, timestamp] for chronological queries. Write an internalMutation logEvent that is called from other mutations/actions (never directly from client) — make it internal to prevent client-side injection of fake events. Write a getActivityForTrip query (public, for the owner's feed view) that filters by tripId and optional eventType, with pagination support via Convex's paginateQuery for long feeds.",
       "dependsOn": ["US-002", "US-040"]
     },
     {
@@ -38,7 +38,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to wire useQuery(api.activity.getActivityForTrip, { tripId, eventType }) — Convex's reactive subscriptions provide real-time updates automatically when new logEvent mutations fire. Load /tailwind-design-system to render each event using the ActivityFeedItem component (src/components/ui, US-018): terracotta dot (bg-primary) for link_opened, sage (bg-secondary) for task_completed, amber (bg-accent) for proof_uploaded, slate (bg-vault) for vault_accessed. Render filter chips above the feed using rounded-pill chips (All / Tasks / Proof / Vault) that pass eventType to the query. Embed a compact feed on the dashboard card for the active trip (last 5 events), and a full paginated feed on the trip detail page. Use /dev-browser to verify: a new task completion appears in the feed in real-time without page reload, dots match the correct colors per event type, filter chips correctly narrow results, and the feed is accessible on the completed trip page.",
       "dependsOn": ["US-018", "US-068"]
     },
     {
@@ -57,7 +57,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /nextjs-best-practices to configure Web Push: generate VAPID keys (store VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY as Convex + Next.js env vars), add push event handler to public/sw.js that calls self.registration.showNotification with the notification data, and expose NEXT_PUBLIC_VAPID_PUBLIC_KEY for the client-side subscription. Load /convex-best-practices to: (1) add pushSubscription field to the users table in convex/schema.ts to store the PushSubscription JSON, (2) write storePushSubscription mutation called after Notification.requestPermission resolves to 'granted', (3) write a sendPushNotification internalAction (convex/notificationsActions.ts, 'use node') that uses the web-push npm package with the stored subscription to send notifications. Trigger the permission prompt in the creator dashboard after first login using a useEffect that checks Notification.permission and only fires for authenticated creators (not sitter routes).",
       "dependsOn": ["US-019"]
     },
     {
@@ -74,7 +74,7 @@
       ],
       "priority": 4,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement a recordFirstOpen Convex action (callable without auth from the sitter route) that: (1) checks the ActivityLog for any existing link_opened event with the same tripId + sitterPhone — if one exists, skip (deduplication); (2) calls logEvent internalMutation with eventType='link_opened'; (3) calls sendPushNotification internalAction with message 'Sarah opened your Handoff' to the property owner's stored push subscription. Call recordFirstOpen from the sitter route (src/app/t/[shareLink]/page.tsx) in a useEffect on first render, passing the sitterName from the registered Sitters table (looked up by tripId) if available, or 'Someone' as fallback. Deduplicate using a flag in session storage to avoid firing multiple times across page navigations.",
       "dependsOn": ["US-068", "US-070"]
     },
     {
@@ -91,7 +91,7 @@
       ],
       "priority": 5,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to extend the completeTask mutation (US-060) and uploadProofPhoto action (US-061) to call sendTaskNotification internalAction after logging the ActivityLog event. The sendTaskNotification action reads the owner's notification preferences (US-075) from the users table: if 'all', send immediately; if 'proof-only', send only when proofPhotoUrl is present; if 'digest', schedule a Convex scheduled function (ctx.scheduler.runAt) for the top of the next hour that batches all completions since the last digest into one notification ('X tasks completed since [time]'); if 'off', skip entirely. Format the notification message: 'Sarah completed morning feeding' for no photo, 'Sarah completed morning feeding with photo' when proof is attached. Include a timestamp in 12-hour format.",
       "dependsOn": ["US-060", "US-068", "US-070"]
     },
     {
@@ -108,7 +108,7 @@
       ],
       "priority": 6,
       "passes": false,
-      "notes": "Security event — always sent regardless of notification preferences",
+      "notes": "Security event — always sent regardless of notification preferences. Load /convex-best-practices to extend the logVaultAccess internalMutation (US-052) to always call sendPushNotification internalAction regardless of the owner's notification preferences — vault access is a security event that must always surface. Format the message: '[sitterName] accessed your [vaultItemLabel] at [time in 12-hour format]'. The notification payload should include a deep-link URL to the trip activity feed filtered to vault_accessed events. Confirm this notification is sent even when the owner has set task notifications to 'off' — test this edge case explicitly by setting preferences to off and verifying the vault notification still fires.",
       "dependsOn": ["US-052", "US-070"]
     },
     {
@@ -125,7 +125,7 @@
       ],
       "priority": 7,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to schedule the trip-ending notification at trip creation time: in the createTrip mutation, call ctx.scheduler.runAt(tripEndDate - 24*60*60*1000, internal.notifications.sendTripEndingSoonNotification, { tripId }) to schedule a Convex scheduled function exactly 24 hours before endDate. The sendTripEndingSoonNotification internalAction verifies the trip is still active (not cancelled), then calls sendPushNotification with the message 'Your trip ends tomorrow. Vault access will expire automatically.' If the trip end date is changed, the old scheduled function must be cancelled (store the scheduled function ID on the Trips record) and a new one scheduled — handle this in the updateTripDates mutation.",
       "dependsOn": ["US-045", "US-070"]
     },
     {
@@ -143,7 +143,7 @@
       ],
       "priority": 8,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to add a notificationPreferences object to the users table schema: { taskCompletions: 'all'|'proof-only'|'digest'|'off', vaultAccess: 'always' (hardcoded, not user-settable), linkOpened: boolean, tripEnding: boolean }. Write updateNotificationPreferences mutation and provide defaults (proof-only for tasks, all others on) in the createUser mutation. Load /tailwind-design-system to build the settings page at src/app/dashboard/settings/notifications/page.tsx within CreatorLayout: task completions as a 4-option segmented control (All / Proof-only / Digest / Off) using rounded-pill chips, vault access as a disabled toggle with 'Security events cannot be disabled' label in text-text-muted, and link opened / trip ending as standard toggles using the secondary color for on-state. Use /dev-browser to verify: the vault access toggle is visually disabled and non-interactive, selecting 'Digest' for tasks saves correctly, toggling link opened off saves and the useMutation fires, preferences persist after page reload.",
       "dependsOn": ["US-024", "US-070"]
     }
   ]

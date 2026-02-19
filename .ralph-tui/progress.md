@@ -686,3 +686,20 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **LocationCard width override**: Pass `className="shrink-0 w-[200px]"` to override the default `w-[280px]` — tailwind-merge in `cn()` resolves the width conflict and the last class wins.
   - **`ctx.storage.getUrl()` in queries**: Available in Convex queries (not just actions). Safe to call in parallel with `Promise.all()` for batch photo URL resolution.
 ---
+
+## 2026-02-19 - US-037
+- Implemented photo upload for location cards: file picker with mobile camera capture, canvas-based image compression (max 1920px wide), preview thumbnail, Convex file storage upload flow, caption field (Caveat font), room tag selector
+- **Files changed:**
+  - `convex/schema.ts` — Added `storageId: v.optional(v.id("_storage"))` to `locationCards` table
+  - `convex/locationCards.ts` — Added `generateUploadUrl` mutation (`ctx.storage.generateUploadUrl()`), added `storageId` to `create`/`update`/`listByParent`
+  - `convex/manualView.ts` — Added storageId → URL resolution for location cards using `ctx.storage.getUrl()` in parallel via `Promise.all()`; resolvedUrlByCardId map overrides `photoUrl` for display
+  - `src/components/ui/LocationCardUploader.tsx` (new) — Modal component: `<input type='file' accept='image/*' capture='environment'>`, canvas resize to max 1920px wide, object URL thumbnail preview, caption input (font-handwritten), room tag chips (rounded-pill), Convex upload flow (generateUploadUrl → fetch POST → storageId → createLocationCard)
+  - `src/app/wizard/[step]/Step5Sections.tsx` — Replaced placeholder "photo card" button with `LocationCardUploader` state + modal render
+  - `src/app/dashboard/property/sections/SectionsEditor.tsx` — Same as above
+- **Learnings:**
+  - **Convex file upload flow**: `generateUploadUrl` is a `mutation` (not an action) that returns a one-time upload URL. Client does `fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: blob })`. Response JSON has `{ storageId }`. Then call `createLocationCard` mutation with the storageId.
+  - **Canvas image compression**: `new Image()` + `URL.createObjectURL(file)` → canvas `drawImage` → `canvas.toBlob(...)` with `image/jpeg` + quality 0.85. Remember to `URL.revokeObjectURL()` after img loads to avoid memory leaks.
+  - **`capture="environment"` attribute**: On mobile browsers, `<input type='file' accept='image/*' capture='environment'>` opens the rear-facing camera directly. Supports both camera capture and photo library fallback on iOS/Android.
+  - **sr-only file input pattern**: Use `className="sr-only"` on `<input type='file'>` and trigger it via `ref.current.click()` on a styled button — provides full design control while maintaining native file picker behavior.
+  - **Convex storageId type casting**: When passing `storageId` from a JSON response to a Convex mutation expecting `v.id("_storage")`, cast as `Parameters<typeof mutation>[0]["storageId"]` to satisfy TypeScript without hardcoding the string literal type.
+---

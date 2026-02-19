@@ -1,205 +1,40 @@
 {
   "version": 1,
-  "sessionId": "0c7bb654-853b-4159-9ea9-3142ded8a22b",
+  "sessionId": "7c2de5ae-f923-46d4-8f87-cfc19cd11d70",
   "status": "running",
-  "startedAt": "2026-02-19T01:38:40.613Z",
-  "updatedAt": "2026-02-19T04:25:16.254Z",
-  "currentIteration": 11,
+  "startedAt": "2026-02-19T19:36:13.046Z",
+  "updatedAt": "2026-02-19T19:45:10.799Z",
+  "currentIteration": 0,
   "maxIterations": 10,
-  "tasksCompleted": 11,
+  "tasksCompleted": 0,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./docs/handoff-tasks/epic-03-manual-wizard.json",
-    "totalTasks": 12,
+    "prdPath": "./docs/handoff-tasks/epic-04-location-cards.json",
+    "totalTasks": 3,
     "tasks": [
       {
-        "id": "US-025",
-        "title": "Property data model in Convex",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-037",
+        "title": "Upload photo for location card",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-026",
-        "title": "Wizard step 1 — Add your home",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-038",
+        "title": "Upload video for location card",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-030",
-        "title": "Pet profile data model in Convex",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-027",
-        "title": "Wizard step 2 — Add your pets",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-028",
-        "title": "Wizard step 3 — Add access info (vault items)",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-029",
-        "title": "Wizard step 4 — Emergency contacts",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-031",
-        "title": "Wizard step 5 — House instructions by section",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-032",
-        "title": "Wizard step 6 — Review & publish",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-033",
-        "title": "Edit manual sections after wizard",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-034",
-        "title": "Edit pet profiles after wizard",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-035",
-        "title": "Full-text search across manual (sitter-side)",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-036",
-        "title": "Manual sitter view with section navigation",
+        "id": "US-039",
+        "title": "Location card display (sitter view)",
         "status": "open",
         "completedInSession": false
       }
     ]
   },
-  "iterations": [
-    {
-      "iteration": 1,
-      "status": "completed",
-      "taskId": "US-025",
-      "taskTitle": "Property data model in Convex",
-      "taskCompleted": true,
-      "durationMs": 240840,
-      "startedAt": "2026-02-19T01:38:47.518Z",
-      "endedAt": "2026-02-19T01:42:48.358Z"
-    },
-    {
-      "iteration": 2,
-      "status": "completed",
-      "taskId": "US-026",
-      "taskTitle": "Wizard step 1 — Add your home",
-      "taskCompleted": true,
-      "durationMs": 452957,
-      "startedAt": "2026-02-19T01:42:48.481Z",
-      "endedAt": "2026-02-19T01:50:21.438Z"
-    },
-    {
-      "iteration": 3,
-      "status": "completed",
-      "taskId": "US-030",
-      "taskTitle": "Pet profile data model in Convex",
-      "taskCompleted": true,
-      "durationMs": 134934,
-      "startedAt": "2026-02-19T01:50:21.583Z",
-      "endedAt": "2026-02-19T01:52:36.517Z"
-    },
-    {
-      "iteration": 4,
-      "status": "completed",
-      "taskId": "US-027",
-      "taskTitle": "Wizard step 2 — Add your pets",
-      "taskCompleted": true,
-      "durationMs": 543413,
-      "startedAt": "2026-02-19T01:52:36.637Z",
-      "endedAt": "2026-02-19T02:01:40.050Z"
-    },
-    {
-      "iteration": 5,
-      "status": "completed",
-      "taskId": "US-028",
-      "taskTitle": "Wizard step 3 — Add access info (vault items)",
-      "taskCompleted": true,
-      "durationMs": 555301,
-      "startedAt": "2026-02-19T02:01:40.181Z",
-      "endedAt": "2026-02-19T02:10:55.482Z"
-    },
-    {
-      "iteration": 6,
-      "status": "completed",
-      "taskId": "US-029",
-      "taskTitle": "Wizard step 4 — Emergency contacts",
-      "taskCompleted": true,
-      "durationMs": 751452,
-      "startedAt": "2026-02-19T02:10:55.610Z",
-      "endedAt": "2026-02-19T02:23:27.062Z"
-    },
-    {
-      "iteration": 7,
-      "status": "completed",
-      "taskId": "US-031",
-      "taskTitle": "Wizard step 5 — House instructions by section",
-      "taskCompleted": true,
-      "durationMs": 865306,
-      "startedAt": "2026-02-19T02:23:27.217Z",
-      "endedAt": "2026-02-19T02:37:52.523Z"
-    },
-    {
-      "iteration": 8,
-      "status": "completed",
-      "taskId": "US-032",
-      "taskTitle": "Wizard step 6 — Review & publish",
-      "taskCompleted": true,
-      "durationMs": 1659295,
-      "startedAt": "2026-02-19T02:37:52.665Z",
-      "endedAt": "2026-02-19T03:05:31.960Z"
-    },
-    {
-      "iteration": 9,
-      "status": "completed",
-      "taskId": "US-033",
-      "taskTitle": "Edit manual sections after wizard",
-      "taskCompleted": true,
-      "durationMs": 920074,
-      "startedAt": "2026-02-19T03:05:32.090Z",
-      "endedAt": "2026-02-19T03:20:52.164Z"
-    },
-    {
-      "iteration": 10,
-      "status": "completed",
-      "taskId": "US-034",
-      "taskTitle": "Edit pet profiles after wizard",
-      "taskCompleted": true,
-      "durationMs": 647516,
-      "startedAt": "2026-02-19T03:20:52.303Z",
-      "endedAt": "2026-02-19T03:31:39.819Z"
-    },
-    {
-      "iteration": 11,
-      "status": "completed",
-      "taskId": "US-035",
-      "taskTitle": "Full-text search across manual (sitter-side)",
-      "taskCompleted": true,
-      "durationMs": 1522672,
-      "startedAt": "2026-02-19T03:34:42.881Z",
-      "endedAt": "2026-02-19T04:00:05.553Z"
-    }
-  ],
+  "iterations": [],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

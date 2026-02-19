@@ -8,10 +8,20 @@ const parentTypeValidator = v.union(
   v.literal("vault"),
 );
 
+/** Returns a one-time URL the client can POST an image blob to. */
+export const generateUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 export const create = mutation({
   args: {
     parentId: v.string(),
     parentType: parentTypeValidator,
+    storageId: v.optional(v.id("_storage")),
     photoUrl: v.optional(v.string()),
     videoUrl: v.optional(v.string()),
     caption: v.optional(v.string()),
@@ -22,6 +32,7 @@ export const create = mutation({
     return await ctx.db.insert("locationCards", {
       parentId: args.parentId,
       parentType: args.parentType,
+      storageId: args.storageId,
       photoUrl: args.photoUrl,
       videoUrl: args.videoUrl,
       caption: args.caption,
@@ -41,6 +52,7 @@ export const listByParent = query({
       _creationTime: v.number(),
       parentId: v.string(),
       parentType: parentTypeValidator,
+      storageId: v.optional(v.id("_storage")),
       photoUrl: v.optional(v.string()),
       videoUrl: v.optional(v.string()),
       caption: v.optional(v.string()),
@@ -60,6 +72,7 @@ export const listByParent = query({
 export const update = mutation({
   args: {
     cardId: v.id("locationCards"),
+    storageId: v.optional(v.id("_storage")),
     photoUrl: v.optional(v.string()),
     videoUrl: v.optional(v.string()),
     caption: v.optional(v.string()),

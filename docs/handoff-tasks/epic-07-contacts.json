@@ -18,7 +18,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to define the EmergencyContacts table in convex/schema.ts with role as v.union of v.literal('owner'), v.literal('partner'), v.literal('veterinarian'), v.literal('neighbor'), v.literal('emergency'), v.literal('custom'), an isLocked boolean for the ASPCA pre-seed slot, and an index on propertyId+sortOrder. Write getContactsByPropertyId query that returns contacts ordered by sortOrder. Write createContact, updateContact, deleteContact (blocked if isLocked=true), and reorderContacts (accepts [{id, sortOrder}] array for batch update) mutations in convex/contacts.ts. Add a createDefaultContacts internalMutation called during property creation to seed the ASPCA Poison Control contact (isLocked: true, sortOrder: 0).",
       "dependsOn": ["US-002"]
     },
     {
@@ -39,7 +39,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to wire useMutation(api.contacts.create/update/delete/reorder) and useQuery(api.contacts.getByPropertyId) with propertyId from context. Load /frontend-design to build the contacts management UI: a list of existing contacts as inline-editable cards (click to expand form fields), an 'Add contact' button that appends a blank card, a role dropdown using the 6 predefined roles, up/down arrow buttons for manual reorder (calling reorderContacts), and delete button hidden on the isLocked ASPCA card. Load /tailwind-design-system to style each contact card using bg-bg-raised rounded-lg border-border-default, a role color-coded icon (owner=primary, vet=secondary, emergency=danger, etc.) in a rounded-round 32px avatar, the phone as font-body text-secondary (matching the tap-to-call style from US-059), and a lock icon badge on the ASPCA card. Show delete confirmation inline within the card using bg-danger-light. Use /dev-browser to verify: ASPCA contact is present by default and cannot be deleted (no delete button), adding a new contact saves inline, role dropdown shows all 6 options, arrows reorder and persist on reload.",
       "dependsOn": ["US-057", "US-005"]
     },
     {
@@ -59,7 +59,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to use useQuery(api.contacts.getByPropertyId) in both the compact bar and full-page views, ordered by sortOrder. Load /tailwind-design-system to implement two presentations: (1) the compact Emergency Contact Bar for Today View (US-011 component) — horizontal scroll of rounded-round avatar icons with role color-coding (primary=owner, secondary=vet, danger=emergency, accent=neighbor) and name below, each wrapping an <a href='tel:[phone]'>; (2) the full-page Contacts tab view — vertical list of bg-bg-raised rounded-lg cards each showing name, role badge, phone as a tappable tel: link (text-secondary font-body font-medium), and optional notes in text-text-muted. Set the Contacts tab as active in the SitterLayout bottom nav when on this route. Use /dev-browser to verify: contacts appear in the bar on Today View, tapping a contact icon in the bar initiates a call (tel: href), the Contacts tab nav item opens the full-page view, notes are visible on the full-page view, role icons are color-coded correctly.",
       "dependsOn": ["US-011", "US-057"]
     }
   ]

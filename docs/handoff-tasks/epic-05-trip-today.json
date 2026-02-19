@@ -20,7 +20,7 @@
       ],
       "priority": 1,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to define all four tables in convex/schema.ts. Use v.union(v.literal('draft'), v.literal('active'), v.literal('completed'), v.literal('expired')) for trip status, v.union(v.literal('recurring'), v.literal('overlay')) for taskType, and v.union(v.literal('morning'), v.literal('afternoon'), v.literal('evening'), v.literal('anytime')) for timeSlot. Add indexes: Trips by propertyId+status, Sitters by tripId, OverlayItems by tripId+date, TaskCompletions by tripId+taskRef for deduplication. Write getActiveTripForProperty query that returns the single 'active' trip for a propertyId, and typed CRUD mutations for each table in convex/trips.ts, convex/sitters.ts, convex/overlayItems.ts, convex/taskCompletions.ts.",
       "dependsOn": ["US-002", "US-025"]
     },
     {
@@ -40,7 +40,7 @@
       ],
       "priority": 2,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to write createTrip mutation that first checks for any existing active/draft trip for the propertyId (throw error if found), then creates a new trip record with 'draft' status. Write a getExistingTrip query for the client-side conflict check before submitting the form. Load /nextjs-best-practices to handle router.push('/trip/[tripId]/overlay') after successful trip creation, scaffolding the trip setup as a multi-step flow at src/app/trip/[tripId]/. Load /tailwind-design-system to style the 'New Trip' button using btn-primary on the dashboard, and the date picker form using the Input component from src/components/ui with bg-bg-raised rounded-xl shadow-md card container. Validate that end date is after start date client-side with an inline error in text-danger font-body. Use /dev-browser to verify: 'New Trip' button is visible on dashboard, selecting dates with end before start shows a validation error, submitting redirects to the overlay items step, and attempting to create a second trip while one exists shows a blocking error.",
       "dependsOn": ["US-024", "US-040"]
     },
     {
@@ -61,7 +61,7 @@
       ],
       "priority": 3,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to wire useMutation(api.overlayItems.create) for each saved item, with tripId from the URL param. Load /frontend-design to build the overlay items step: render the 3 suggestion prompts as tappable chips that pre-fill the text input, an 'Add item' form with text input, optional date picker (defaults to empty = applies all days), time slot dropdown, proof toggle, and 'Attach location card' button. Show saved items as a list above the add form. Load /tailwind-design-system to render overlay items with the accent amber color (bg-accent-light text-accent) badge to distinguish them from recurring instructions, matching the 'trip overlay badge' spec. Use /dev-browser to verify: suggestion chips pre-fill the text input, an item saves and appears in the list, the date field is optional, Skip navigates to the sitters step without creating any overlay items.",
       "dependsOn": ["US-040", "US-041"]
     },
     {
@@ -81,7 +81,7 @@
       ],
       "priority": 4,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement createSitter, updateSitter, deleteSitter mutations and getSittersByTripId query. Validate the phone field in the mutation using a regex for US format (e.g. /^\\+?1?[\\s.-]?\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}$/) and throw a ConvexError with a user-facing message on invalid format. Load /frontend-design to build the sitter list UI: name + phone inputs with vault access toggle (default on), an 'Add sitter' button that appends a new form row, and existing sitters shown as cards with edit/remove actions. Load /tailwind-design-system to render sitter cards using bg-bg-raised rounded-lg border-border-default, a vault lock icon in text-vault when vaultAccess is on, and the secondary color for the toggle active state. Use /dev-browser to verify: entering an invalid phone format shows an inline error, a saved sitter appears as a card, the vault toggle defaults to on, removing a sitter shows a confirm prompt.",
       "dependsOn": ["US-040", "US-041"]
     },
     {
@@ -101,7 +101,7 @@
       ],
       "priority": 5,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to write a getTasksForTrip query that combines recurring Instructions (from the property's ManualSections) and OverlayItems for this trip into a unified list, and to implement updateInstruction/updateOverlayItem mutations for toggling proofRequired. Load /tailwind-design-system to render the task list as grouped rows by time slot (Morning, Afternoon, Evening, Anytime), each row with the task text and a toggle switch using the secondary color for on-state. Show the running count of proof-required tasks and the 'We suggest 1-3 proof items per day' hint text in text-text-muted font-body below the list. Highlight overlay items with the accent badge. Use /dev-browser to verify: all toggles default to off, toggling a task increments the count, the recommendation text is visible, saving navigates to the share step.",
       "dependsOn": ["US-040", "US-042"]
     },
     {
@@ -120,7 +120,7 @@
       ],
       "priority": 6,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement two expiration mechanisms: (1) a Convex scheduled function (crons.daily) in convex/crons.ts that queries for all trips where status='active' AND endDate < Date.now() and calls expireTrip mutation on each; (2) an on-access check in the getActiveTripForProperty query that detects expired trips and triggers expiration lazily. The expireTrip mutation updates status to 'expired', sets all Sitters.vaultAccess to false for this trip (revocation), and calls logEvent(ActivityLog, 'trip_expired'). Write a test for the expiration logic by creating a trip with a past endDate and asserting the query returns null for active trip.",
       "dependsOn": ["US-040"]
     },
     {
@@ -144,7 +144,7 @@
       ],
       "priority": 7,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to write a getTodayTasks query that accepts tripId + today's date and returns: (1) recurring Instructions with timeSlot from ManualSections, (2) OverlayItems where date matches today or date is null (applies every day), merged and sorted by timeSlot. Also return TaskCompletions for today to drive checked state. Load /nextjs-best-practices to set up src/app/t/[tripId]/page.tsx as the sitter landing using SitterLayout from src/components/layouts — this is the default route for shared links. Load /tailwind-design-system to render: the greeting header using font-display italic, day X of Y counter in text-text-muted, task summary stats (X of Y done) in font-body; Time Slot Divider component (US-017) between Morning/Afternoon/Evening/Anytime sections; TaskItem component (US-009) for each task row; the overlay badge using bg-accent-light text-accent rounded-pill for trip-specific tasks; a collapsed 'Tomorrow' section at the bottom using bg-bg-sunken rounded-lg. Include the Emergency Contact Bar (US-011) below the header. Use /dev-browser to verify: sitter name appears in greeting if pre-registered, tasks are grouped by time slot with dividers, overlay items show amber badge, a completed task shows checkmark, the Tomorrow preview section is collapsed and expandable.",
       "dependsOn": ["US-009", "US-011", "US-012", "US-017", "US-040", "US-025"]
     },
     {
@@ -163,7 +163,7 @@
       ],
       "priority": 8,
       "passes": false,
-      "notes": "",
+      "notes": "Load /convex-best-practices to implement the reset logic purely through query design: store TaskCompletions with a date string (YYYY-MM-DD) alongside completedAt timestamp. The getTodayTasks query only joins completions where completion.date === today's date string, so a new calendar day automatically yields no completions (reset is implicit). OverlayItems with a specific date are filtered by item.date === today, so past-dated items disappear without any delete. Verify the schema uses a date string field (not just a timestamp) on TaskCompletions so per-day grouping works correctly in the trip report query (US-076). Write a unit test covering: a completion from yesterday does not appear in today's task list, an overlay item dated yesterday does not appear, today's completions are returned.",
       "dependsOn": ["US-040", "US-046"]
     }
   ]

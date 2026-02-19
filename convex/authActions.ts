@@ -3,7 +3,7 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { randomBytes, pbkdf2Sync, createSign } from "node:crypto";
+import { randomBytes, pbkdf2Sync, sign as cryptoSign } from "node:crypto";
 import type { Id } from "./_generated/dataModel";
 
 function generateSalt(): string {
@@ -185,12 +185,16 @@ export const exchangeOAuthCode = action({
         }),
       ).toString("base64url");
 
-      const signer = createSign("SHA256");
-      signer.update(`${jwtHeader}.${jwtPayload}`);
-      // Apple private keys are PEM-encoded PKCS8 EC keys
-      const appleClientSecret =
-        `${jwtHeader}.${jwtPayload}.` +
-        signer.sign(privateKeyPem.replace(/\\n/g, "\n"), "base64url");
+      // Apple requires ES256 = ECDSA-SHA256 in IEEE P1363 format (raw R+S bytes).
+      // Node's createSign returns DER-encoded signatures — use crypto.sign() with
+      // dsaEncoding: 'ieee-p1363' to get the correct format for JWT.
+      const signingInput = `${jwtHeader}.${jwtPayload}`;
+      const sig = cryptoSign(
+        "SHA256",
+        Buffer.from(signingInput),
+        { key: privateKeyPem.replace(/\\n/g, "\n"), dsaEncoding: "ieee-p1363" },
+      ).toString("base64url");
+      const appleClientSecret = `${signingInput}.${sig}`;
 
       // Exchange authorization code for tokens
       const tokenRes = await fetch("https://appleid.apple.com/auth/token", {

@@ -3,10 +3,10 @@
   "sessionId": "25017497-f030-4ff8-9ae5-b49f0449d85e",
   "status": "running",
   "startedAt": "2026-02-19T22:18:59.153Z",
-  "updatedAt": "2026-02-19T23:10:12.367Z",
-  "currentIteration": 4,
+  "updatedAt": "2026-02-19T23:17:34.356Z",
+  "currentIteration": 5,
   "maxIterations": 10,
-  "tasksCompleted": 4,
+  "tasksCompleted": 5,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -53,8 +53,8 @@
       {
         "id": "US-046",
         "title": "Today View — sitter landing page",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-047",
@@ -104,6 +104,16 @@
       "durationMs": 306662,
       "startedAt": "2026-02-19T22:49:38.139Z",
       "endedAt": "2026-02-19T22:54:44.801Z"
+    },
+    {
+      "iteration": 5,
+      "status": "completed",
+      "taskId": "US-046",
+      "taskTitle": "Today View — sitter landing page",
+      "taskCompleted": true,
+      "durationMs": 927450,
+      "startedAt": "2026-02-19T22:54:44.912Z",
+      "endedAt": "2026-02-19T23:10:12.362Z"
     }
   ],
   "skippedTaskIds": [],

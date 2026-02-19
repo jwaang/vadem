@@ -45,10 +45,10 @@ export const getTodayTasks = query({
           .query("overlayItems")
           .withIndex("by_trip_date", (q) => q.eq("tripId", tripId))
           .collect(),
-        // Fetch all completions; client filters by taskRef which encodes date
+        // Fetch only today's completions — new day = implicit reset (no deletes needed)
         ctx.db
           .query("taskCompletions")
-          .withIndex("by_trip_taskref", (q) => q.eq("tripId", tripId))
+          .withIndex("by_trip_date", (q) => q.eq("tripId", tripId).eq("date", today))
           .collect(),
       ]);
 

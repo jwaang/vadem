@@ -15,6 +15,7 @@ const taskCompletionObject = v.object({
   taskType: taskTypeValidator,
   sitterName: v.string(),
   completedAt: v.number(),
+  date: v.string(),
   proofPhotoUrl: v.optional(v.string()),
 });
 
@@ -25,6 +26,7 @@ export const create = mutation({
     taskType: taskTypeValidator,
     sitterName: v.string(),
     completedAt: v.number(),
+    date: v.string(), // YYYY-MM-DD
     proofPhotoUrl: v.optional(v.string()),
   },
   returns: v.id("taskCompletions"),

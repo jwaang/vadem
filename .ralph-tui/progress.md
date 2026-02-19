@@ -831,3 +831,18 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Loading skeleton outside SitterLayout**: The loading skeleton (`data === undefined`) renders without `SitterLayout` so the page can fill full screen during load without nav flicker. Once data loads, `SitterLayout` renders with bottom nav.
   - **`Date.UTC` for trip day calculations**: Split YYYY-MM-DD strings into `[year, month-1, day]` and use `Date.UTC(y, m-1, d)` for date arithmetic — avoids timezone-dependent `new Date("YYYY-MM-DD")` parsing which treats the string as UTC midnight but local `new Date()` as local time.
 ---
+
+## 2026-02-19 - US-047
+- Added `date: v.string()` field (YYYY-MM-DD) to `taskCompletions` schema for per-day grouping
+- Added `by_trip_date` index on `["tripId", "date"]` for efficient per-day completion queries
+- Updated `taskCompletions.ts`: added `date` field to `taskCompletionObject` validator and `create` mutation args
+- Updated `todayView.ts`: changed completions query to use `by_trip_date` index filtering by `date === today` (implicit daily reset — no delete logic needed)
+- Updated `TodayPageInner.tsx`: passes `date: today` when calling `createCompletion`; added `today` to `useCallback` dependency array
+- Added `src/__tests__/taskReset.test.ts`: plain TypeScript unit tests covering the three key scenarios
+- Files changed: `convex/schema.ts`, `convex/taskCompletions.ts`, `convex/todayView.ts`, `src/app/t/[tripId]/TodayPageInner.tsx`, `src/__tests__/taskReset.test.ts`
+- **Learnings:**
+  - **Implicit daily reset via query design**: No cron job or delete mutation needed — storing `date: YYYY-MM-DD` on completions and querying by `date === today` naturally yields an empty checklist each morning. The `by_trip_date` index makes this O(1) per trip per day.
+  - **Dual date-scoping for recurring tasks**: Recurring tasks are already scoped by date in the `taskRef` (`recurring:{id}:{date}`), so a daily reset would work even without the `date` field. But the `date` field is needed for trip reports (US-076) to group completions by day efficiently.
+  - **Overlay item date filtering is lossless**: Past-dated overlay items are still stored in the DB (for trip reports), they just don't appear in the filtered Today View query. No data is deleted.
+  - **`useCallback` + stable computed values**: `today` is a stable string computed once per render, but ESLint's `react-hooks/exhaustive-deps` still requires it in the dependency array. Always add computed stable values that are used inside callbacks to the dep array.
+---

@@ -192,15 +192,16 @@
         "pnpm build passes"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement the reset logic purely through query design: store TaskCompletions with a date string (YYYY-MM-DD) alongside completedAt timestamp. The getTodayTasks query only joins completions where completion.date === today's date string, so a new calendar day automatically yields no completions (reset is implicit). OverlayItems with a specific date are filtered by item.date === today, so past-dated items disappear without any delete. Verify the schema uses a date string field (not just a timestamp) on TaskCompletions so per-day grouping works correctly in the trip report query (US-076). Write a unit test covering: a completion from yesterday does not appear in today's task list, an overlay item dated yesterday does not appear, today's completions are returned.",
       "dependsOn": [
         "US-040",
         "US-046"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T23:10:12.365Z"
+    "updatedAt": "2026-02-19T23:17:34.354Z"
   }
 }

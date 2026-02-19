@@ -321,10 +321,11 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
           taskType: task.taskType,
           sitterName,
           completedAt: Date.now(),
+          date: today,
         });
       }
     },
-    [data, tripId, createCompletion, removeCompletion],
+    [data, today, tripId, createCompletion, removeCompletion],
   );
 
   if (data === undefined) return <LoadingSkeleton />;

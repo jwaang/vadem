@@ -183,8 +183,11 @@ export default defineSchema({
     taskType: v.union(v.literal("recurring"), v.literal("overlay")),
     sitterName: v.string(),
     completedAt: v.number(),
+    date: v.string(), // YYYY-MM-DD — enables per-day grouping and implicit daily reset
     proofPhotoUrl: v.optional(v.string()),
-  }).index("by_trip_taskref", ["tripId", "taskRef"]),
+  })
+    .index("by_trip_taskref", ["tripId", "taskRef"])
+    .index("by_trip_date", ["tripId", "date"]),
 
   activityLog: defineTable({
     tripId: v.id("trips"),

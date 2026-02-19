@@ -185,4 +185,13 @@ export default defineSchema({
     completedAt: v.number(),
     proofPhotoUrl: v.optional(v.string()),
   }).index("by_trip_taskref", ["tripId", "taskRef"]),
+
+  activityLog: defineTable({
+    tripId: v.id("trips"),
+    propertyId: v.id("properties"),
+    event: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_trip", ["tripId"])
+    .index("by_property", ["propertyId"]),
 });

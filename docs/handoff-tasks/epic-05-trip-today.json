@@ -138,11 +138,12 @@
         "pnpm build passes"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement two expiration mechanisms: (1) a Convex scheduled function (crons.daily) in convex/crons.ts that queries for all trips where status='active' AND endDate < Date.now() and calls expireTrip mutation on each; (2) an on-access check in the getActiveTripForProperty query that detects expired trips and triggers expiration lazily. The expireTrip mutation updates status to 'expired', sets all Sitters.vaultAccess to false for this trip (revocation), and calls logEvent(ActivityLog, 'trip_expired'). Write a test for the expiration logic by creating a trip with a past endDate and asserting the query returns null for active trip.",
       "dependsOn": [
         "US-040"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-046",
@@ -199,6 +200,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T22:49:38.016Z"
+    "updatedAt": "2026-02-19T22:54:44.802Z"
   }
 }

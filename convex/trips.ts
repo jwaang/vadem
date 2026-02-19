@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 
 const tripStatusValidator = v.union(
@@ -110,12 +110,19 @@ export const getActiveTripForProperty = query({
   args: { propertyId: v.id("properties") },
   returns: v.union(tripObject, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const trip = await ctx.db
       .query("trips")
       .withIndex("by_property_status", (q) =>
         q.eq("propertyId", args.propertyId).eq("status", "active"),
       )
       .first();
+    if (!trip) return null;
+    // Lazy expiration check: treat trip as expired if endDate has passed.
+    // The cron handles the actual DB status update; this makes the query
+    // return null immediately without waiting for the next cron run.
+    const today = new Date().toISOString().split("T")[0];
+    if (trip.endDate < today) return null;
+    return trip;
   },
 });
 
@@ -151,6 +158,67 @@ export const remove = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
     }
     await ctx.db.delete(args.tripId);
+    return null;
+  },
+});
+
+// Internal: expire a single trip — update status, revoke vault access, log event.
+export const expireTripInternal = internalMutation({
+  args: { tripId: v.id("trips") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const trip = await ctx.db.get(args.tripId);
+    if (!trip || trip.status !== "active") return null;
+    await ctx.db.patch(args.tripId, { status: "expired" });
+    const sitters = await ctx.db
+      .query("sitters")
+      .withIndex("by_trip", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const sitter of sitters) {
+      await ctx.db.patch(sitter._id, { vaultAccess: false });
+    }
+    await ctx.db.insert("activityLog", {
+      tripId: args.tripId,
+      propertyId: trip.propertyId,
+      event: "trip_expired",
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+// Internal: daily batch job — find all active trips whose endDate is in the past
+// and expire each one. Called by the cron in convex/crons.ts.
+export const expireTripsDaily = internalMutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+    const expiredTrips = await ctx.db
+      .query("trips")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "active"),
+          q.lt(q.field("endDate"), today),
+        ),
+      )
+      .collect();
+    for (const trip of expiredTrips) {
+      await ctx.db.patch(trip._id, { status: "expired" });
+      const sitters = await ctx.db
+        .query("sitters")
+        .withIndex("by_trip", (q) => q.eq("tripId", trip._id))
+        .collect();
+      for (const sitter of sitters) {
+        await ctx.db.patch(sitter._id, { vaultAccess: false });
+      }
+      await ctx.db.insert("activityLog", {
+        tripId: trip._id,
+        propertyId: trip.propertyId,
+        event: "trip_expired",
+        createdAt: Date.now(),
+      });
+    }
     return null;
   },
 });

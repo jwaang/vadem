@@ -797,3 +797,19 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Proof toggle color**: Uses `bg-secondary` (sage green) for on-state per design system — same as vault toggle, consistent pattern for all boolean toggles
   - **`sectionTitle: v.optional(v.string())`**: Convex requires `v.optional()` for fields that may be undefined; can't use TypeScript `undefined` directly in return validator
 ---
+
+## 2026-02-19 - US-045
+- Implemented trip auto-expiration via scheduled Convex cron + lazy query check
+- **Files changed:**
+  - `convex/schema.ts` — Added `activityLog` table with `tripId`, `propertyId`, `event` (string), `createdAt`; indexes `by_trip` and `by_property`
+  - `convex/trips.ts` — Added `internalMutation` import; updated `getActiveTripForProperty` with lazy expiration check (returns null if `trip.endDate < today` even before cron updates DB); added `expireTripInternal` internal mutation (single-trip expiration: patch status to 'expired', revoke sitters' vaultAccess, insert activityLog event); added `expireTripsDaily` internal mutation (full table scan for active trips with endDate < today, expires each)
+  - `convex/crons.ts` (new) — Daily cron at midnight UTC calling `internal.trips.expireTripsDaily`
+  - `convex/_generated/*` — Re-run codegen
+- **Learnings:**
+  - **Convex crons setup**: Create `convex/crons.ts` exporting a default `cronJobs()` instance. Use `crons.daily("name", { hourUTC, minuteUTC }, internal.module.functionName)`. The referenced function must be an `internalMutation` (or action) exported from its module.
+  - **`internalMutation` import**: Import from `./_generated/server` alongside `mutation` and `query`. Internal mutations are callable from crons and actions but NOT from client-side code or other mutations directly.
+  - **Lazy expiration in queries**: Convex queries are read-only — they cannot call mutations. For "on-access expiration", return null when `trip.endDate < today` in the query. The cron handles the actual DB update. This gives clients immediate correct behavior without waiting for the cron.
+  - **Full table scan in batch cron**: No index on just `status` — must use `.filter()` on the full `trips` table. Acceptable for a daily batch job; the table won't be large at this scale.
+  - **Shared expiration logic**: Chose to duplicate the ~12-line expiration logic between `expireTripInternal` (single-trip) and `expireTripsDaily` (batch) rather than using a helper, because Convex mutations can't call other mutations via `ctx.runMutation` (that's only for actions). Mutations can't share logic through a helper without importing `MutationCtx` from generated types.
+  - **`activityLog` event pattern**: Minimal schema — just `tripId`, `propertyId`, `event` string, `createdAt` timestamp. Future activity feed UI (epic-10) will query by `by_property` index to show owner's activity timeline.
+---

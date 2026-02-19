@@ -7,6 +7,7 @@ import Step2Pets from "./Step2Pets";
 import Step3Access from "./Step3Access";
 import Step4Contacts from "./Step4Contacts";
 import Step5Sections from "./Step5Sections";
+import Step6Review from "./Step6Review";
 
 interface WizardStepInnerProps {
   step: number;
@@ -90,6 +91,8 @@ export default function WizardStepInner({ step }: WizardStepInnerProps) {
         <Step4Contacts />
       ) : step === 5 ? (
         <Step5Sections />
+      ) : step === 6 ? (
+        <Step6Review />
       ) : (
         <ComingSoon step={step} />
       )}

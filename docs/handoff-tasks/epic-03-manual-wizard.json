@@ -188,7 +188,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to write a getManualSummary query that returns counts for pets, vault items, contacts, sections, and instructions alongside completeness flags (e.g. hasPropertyName, hasAtLeastOneInstruction). Write a publishManual mutation that sets Property.status from 'draft' to 'published'. Load /nextjs-best-practices to handle router.push('/dashboard') after publish resolves, and embed the read-only sitter preview using the same components built in US-036 inside a scrollable preview pane. Load /tailwind-design-system to render the summary checklist: use bg-warning-light + text-warning + rounded-pill badge for incomplete items, bg-secondary-light + text-secondary for complete items, and a prominent btn-primary Publish button with btn-no-shadow for the ghost Edit links. Use /dev-browser to verify: summary counts match actual data, incomplete sections show warning badge with a working Edit link that navigates to the correct wizard step, Publish button transitions the manual to published status and redirects to dashboard.",
       "dependsOn": [
         "US-026",
@@ -196,7 +196,8 @@
         "US-028",
         "US-029",
         "US-031"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-033",
@@ -299,6 +300,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T02:37:52.526Z"
+    "updatedAt": "2026-02-19T03:05:31.962Z"
   }
 }

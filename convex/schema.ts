@@ -25,6 +25,7 @@ export default defineSchema({
     address: v.optional(v.string()),
     photo: v.optional(v.id("_storage")),
     ownerId: v.id("users"),
+    status: v.optional(v.union(v.literal("draft"), v.literal("published"))),
   }).index("by_owner", ["ownerId"]),
 
   manualSections: defineTable({

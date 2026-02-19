@@ -3,10 +3,10 @@
   "sessionId": "0c7bb654-853b-4159-9ea9-3142ded8a22b",
   "status": "running",
   "startedAt": "2026-02-19T01:38:40.613Z",
-  "updatedAt": "2026-02-19T02:37:52.529Z",
-  "currentIteration": 6,
+  "updatedAt": "2026-02-19T03:05:31.967Z",
+  "currentIteration": 7,
   "maxIterations": 10,
-  "tasksCompleted": 6,
+  "tasksCompleted": 7,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -53,8 +53,8 @@
       {
         "id": "US-031",
         "title": "Wizard step 5 — House instructions by section",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-032",
@@ -148,6 +148,16 @@
       "durationMs": 751452,
       "startedAt": "2026-02-19T02:10:55.610Z",
       "endedAt": "2026-02-19T02:23:27.062Z"
+    },
+    {
+      "iteration": 7,
+      "status": "completed",
+      "taskId": "US-031",
+      "taskTitle": "Wizard step 5 — House instructions by section",
+      "taskCompleted": true,
+      "durationMs": 865306,
+      "startedAt": "2026-02-19T02:23:27.217Z",
+      "endedAt": "2026-02-19T02:37:52.523Z"
     }
   ],
   "skippedTaskIds": [],

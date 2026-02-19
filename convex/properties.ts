@@ -2,6 +2,10 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
+const statusValidator = v.optional(
+  v.union(v.literal("draft"), v.literal("published")),
+);
+
 const propertyObject = v.object({
   _id: v.id("properties"),
   _creationTime: v.number(),
@@ -9,6 +13,7 @@ const propertyObject = v.object({
   address: v.optional(v.string()),
   photo: v.optional(v.id("_storage")),
   ownerId: v.id("users"),
+  status: statusValidator,
 });
 
 export const create = mutation({
@@ -116,6 +121,90 @@ export const remove = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Property not found" });
     }
     await ctx.db.delete(args.propertyId);
+    return null;
+  },
+});
+
+// Returns aggregated counts + completeness flags for the wizard review step.
+export const getManualSummary = query({
+  args: { propertyId: v.id("properties") },
+  returns: v.object({
+    propertyName: v.optional(v.string()),
+    propertyAddress: v.optional(v.string()),
+    status: statusValidator,
+    petCount: v.number(),
+    vaultItemCount: v.number(),
+    contactCount: v.number(),
+    sectionCount: v.number(),
+    instructionCount: v.number(),
+    hasPropertyName: v.boolean(),
+    hasAtLeastOnePet: v.boolean(),
+    hasAtLeastOneVaultItem: v.boolean(),
+    hasAtLeastOneContact: v.boolean(),
+    hasAtLeastOneSection: v.boolean(),
+    hasAtLeastOneInstruction: v.boolean(),
+  }),
+  handler: async (ctx, { propertyId }) => {
+    const property = await ctx.db.get(propertyId);
+
+    const pets = await ctx.db
+      .query("pets")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .collect();
+
+    const vaultItems = await ctx.db
+      .query("vaultItems")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .collect();
+
+    const contacts = await ctx.db
+      .query("emergencyContacts")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .collect();
+
+    const sections = await ctx.db
+      .query("manualSections")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .collect();
+
+    let instructionCount = 0;
+    for (const section of sections) {
+      const instructions = await ctx.db
+        .query("instructions")
+        .withIndex("by_section_sort", (q) => q.eq("sectionId", section._id))
+        .collect();
+      instructionCount += instructions.length;
+    }
+
+    return {
+      propertyName: property?.name,
+      propertyAddress: property?.address,
+      status: property?.status,
+      petCount: pets.length,
+      vaultItemCount: vaultItems.length,
+      contactCount: contacts.length,
+      sectionCount: sections.length,
+      instructionCount,
+      hasPropertyName: Boolean(property?.name && property.name.trim().length > 0),
+      hasAtLeastOnePet: pets.length > 0,
+      hasAtLeastOneVaultItem: vaultItems.length > 0,
+      hasAtLeastOneContact: contacts.length > 0,
+      hasAtLeastOneSection: sections.length > 0,
+      hasAtLeastOneInstruction: instructionCount > 0,
+    };
+  },
+});
+
+// Sets property status to 'published', finalizing the manual.
+export const publishManual = mutation({
+  args: { propertyId: v.id("properties") },
+  returns: v.null(),
+  handler: async (ctx, { propertyId }) => {
+    const property = await ctx.db.get(propertyId);
+    if (!property) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Property not found" });
+    }
+    await ctx.db.patch(propertyId, { status: "published" });
     return null;
   },
 });

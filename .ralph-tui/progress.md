@@ -598,3 +598,18 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Section panels per-query pattern**: Each `SectionPanel` independently calls `useQuery(api.instructions.listBySection, { sectionId })` — 0-8 concurrent Convex queries is fine and gives per-section real-time updates without a parent-level join.
   - **Custom section sortOrder**: Use `Math.max(maxExistingSortOrder + 1, 100)` to place custom sections after all pre-built sections (0-7) in the sort order.
 ---
+
+## 2026-02-18 - US-032
+- Implemented wizard step 6 "Review & publish" at `/wizard/6`
+- **Files changed:**
+  - `convex/schema.ts` — Added `status: v.optional(v.union(v.literal("draft"), v.literal("published")))` to `properties` table
+  - `convex/properties.ts` — Added `statusValidator` const; updated `propertyObject` to include `status`; added `getManualSummary` query (counts pets/vault/contacts/sections/instructions + completeness flags) and `publishManual` mutation (patches status to `"published"`)
+  - `convex/_generated/*` — Re-run codegen
+  - `src/app/wizard/[step]/Step6Review.tsx` (new) — Summary checklist with 5 rows (property, pets, access, contacts, instructions), each with status badge (`bg-secondary-light text-secondary` for complete, `bg-warning-light text-warning` for incomplete) and ghost Edit link to the relevant wizard step; scrollable read-only sitter preview pane (`ManualPreview` + `PreviewSectionInstructions` sub-components); disabled Publish button until property name set; `publishManual` mutation then `router.push("/dashboard")`
+  - `src/app/wizard/[step]/WizardStepInner.tsx` — Added `Step6Review` import and `step === 6` routing
+- **Learnings:**
+  - **Cross-table aggregation in Convex query**: `getManualSummary` sequentially queries 4 tables + loops sections to count instructions — totally fine for Convex, no N+1 penalty concern at this scale. Pattern: `for (const section of sections) { const insts = await ctx.db.query(...).collect(); count += insts.length; }`
+  - **Optional status field on existing table**: Adding `v.optional(v.union(v.literal("draft"), v.literal("published")))` to the schema is backward-compatible — existing documents without the field still pass validation; `undefined` = implicitly draft
+  - **Shared validator constant for union types**: Define `const statusValidator = v.optional(v.union(...))` once and reference it in both `propertyObject` (returns validator) and `getManualSummary` return type — keeps shape in sync without duplication
+  - **Read-only preview sub-components**: Each sub-component (`PreviewSectionInstructions`) independently calls `useQuery` — same per-query pattern as `SectionPanel` in Step5. The component tree still renders correctly when parent has no data yet.
+---

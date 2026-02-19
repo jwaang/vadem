@@ -218,6 +218,7 @@ function LocationCard({
               src={src}
               alt={alt}
               className="max-w-[90vw] max-h-[90vh] object-contain rounded-md"
+              style={{ touchAction: "pinch-zoom" }}
               onClick={(e) => e.stopPropagation()}
             />
           )}

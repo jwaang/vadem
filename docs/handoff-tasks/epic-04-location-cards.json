@@ -68,16 +68,17 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /tailwind-design-system to implement the LocationCard polaroid display per the design system spec: 8px padding around the inset image, shadow-polaroid, slight rotation, font-handwritten (Caveat) for caption below the image, rounded-pill room tag badge using bg-bg-sunken. For multiple cards, wrap in an overflow-x-auto horizontal scroll container with flex gap-3 and snap-x snap-mandatory for tactile swiping. Load /frontend-design to build the full-screen viewer modal: use a fixed inset-0 overlay (bg-black/90 z-50), render <img> with touch-action: pinch-zoom and CSS zoom for photo pinch-to-zoom, render <video controls autoPlay> for video with native play controls, and a close button (X) in the top-right corner. Load /nextjs-best-practices to ensure the service worker in public/sw.js caches all Convex storage image URLs on first fetch (cache-first strategy) for offline access — exclude video URLs from pre-cache per the Epic 12 strategy. Use /dev-browser to verify: a location card renders inline below its instruction in polaroid style with Caveat caption, tapping opens the full-screen viewer, pinch-to-zoom works on photo, multiple cards scroll horizontally, and the image loads after toggling airplane mode.",
       "dependsOn": [
         "US-007",
         "US-037",
         "US-038"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T20:00:59.305Z"
+    "updatedAt": "2026-02-19T20:07:21.437Z"
   }
 }

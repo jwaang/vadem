@@ -723,3 +723,17 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Unused ESLint disable comment**: `/* eslint-disable-next-line jsx-a11y/media-has-caption */` before `<video>` causes a lint error ("unused directive") if the `jsx-a11y/media-has-caption` rule isn't active in the project's ESLint config. Simply omit the comment — the `<video>` element with `controls` is acceptable without captions for this use case.
   - **Write tool for large file rewrites**: When an Edit introduces duplicate code (e.g., duplicate function definition from an imprecise `old_string` match), use the Write tool to rewrite the entire file cleanly rather than trying to surgically fix the duplication with another Edit — faster and eliminates cascading issues.
 ---
+
+## 2026-02-19 - US-039
+- Location card sitter view was mostly already implemented by US-036/037/038. Added two missing pieces:
+  - `style={{ touchAction: "pinch-zoom" }}` on the full-screen `<img>` in `LocationCard.tsx` to enable native pinch-to-zoom on mobile
+  - Updated `public/sw.js` with cache-first strategy for Convex storage image URLs (`*.convex.cloud/api/storage/*`), falling back to network; video requests bypass cache-first and use network-first per Epic 12 strategy
+- Files changed:
+  - `src/components/ui/LocationCard.tsx` — added `touch-action: pinch-zoom` inline style to full-screen photo img
+  - `public/sw.js` — added `isConvexStorageRequest()` helper + cache-first branch for Convex storage image URLs
+- **Learnings:**
+  - **Pre-existing work check**: Always audit what prior stories already built before implementing. US-036, 037, 038 had already done: inline card rendering, polaroid style, full-screen expand, video controls, horizontal scroll. US-039 only needed the two incremental additions.
+  - **`touch-action: pinch-zoom` for mobile pinch-zoom**: Adding `style={{ touchAction: "pinch-zoom" }}` as an inline React style enables native browser pinch-to-zoom on the img inside a fullscreen overlay. Without it, touch events may be consumed by the scroll container.
+  - **Service worker cache-first for images**: `isConvexStorageRequest()` checks `url.hostname.endsWith(".convex.cloud")` + `url.pathname.startsWith("/api/storage/")`. The `Accept` header differentiates image vs video fetches (`video/*` bypasses cache-first). Cache-first: check `caches.match()` first, only `fetch()` if miss, then `cache.put()` the response.
+  - **Confirmed `touch-action` via `window.getComputedStyle(img).touchAction`** in browser: returns `"pinch-zoom"` confirming the style applies correctly.
+---

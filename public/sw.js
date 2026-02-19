@@ -23,6 +23,17 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+/** Returns true if this request is for a Convex storage file (not a video fetch). */
+function isConvexStorageRequest(url, request) {
+  // Convex storage URLs: https://<deployment>.convex.cloud/api/storage/<id>
+  if (!url.hostname.endsWith(".convex.cloud")) return false;
+  if (!url.pathname.startsWith("/api/storage/")) return false;
+  // Skip cache-first for video requests (large files per Epic 12 strategy)
+  const accept = request.headers.get("accept") ?? "";
+  if (accept.startsWith("video/")) return false;
+  return true;
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -31,6 +42,23 @@ self.addEventListener("fetch", (event) => {
   // Never intercept auth callbacks — OAuth redirects must reach the app directly
   if (url.pathname.startsWith("/auth/callback")) return;
 
+  // Cache-first strategy for Convex storage image URLs (offline support for location cards)
+  if (isConvexStorageRequest(url, event.request)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+        const response = await fetch(event.request);
+        if (response.ok) {
+          cache.put(event.request, response.clone());
+        }
+        return response;
+      }),
+    );
+    return;
+  }
+
+  // Network-first for all other requests
   event.respondWith(
     fetch(event.request)
       .then((response) => {

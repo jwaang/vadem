@@ -782,3 +782,18 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - Inline confirm prompt (state-based "Remove? Yes No") is cleaner than `window.confirm` for mobile UX
   - Client-side phone validation runs before Convex mutation to give immediate feedback; server also validates as defense-in-depth
 ---
+
+## 2026-02-19 - US-044
+- Implemented proof settings step at `/trip/[tripId]/proof`
+- **Files changed:**
+  - `convex/proof.ts` (new) — `getTasksForTrip` query: traverses trip → property → manualSections → recurring instructions + overlayItems; returns unified task list with `{id, text, timeSlot, proofRequired, type, sectionTitle?}`
+  - `convex/_generated/*` — Re-run codegen
+  - `src/app/trip/[tripId]/proof/page.tsx` (new) — server component with metadata
+  - `src/app/trip/[tripId]/proof/ProofPageClient.tsx` (new) — `"use client"` wrapper with `dynamic(ssr:false)`
+  - `src/app/trip/[tripId]/proof/ProofStepInner.tsx` (new) — full proof UI: tasks grouped by time slot (Morning/Afternoon/Evening/Anytime), toggle per task (secondary green on-state), running proof count + "We suggest 1–3 proof items per day" hint, accent badge for overlay items, Continue → `/trip/[tripId]/share`
+- **Learnings:**
+  - **Cross-table join query in Convex**: `getTasksForTrip` does trip → property → sections → instructions traversal using sequential `for` loops — same cross-table aggregation pattern as `getManualSummary`. No performance concern at scale for Convex.
+  - **Unified task list discriminant**: Use `type: "recurring" | "overlay"` field with corresponding `id: v.string()` (not `v.id("tableName")`) for polymorphic task references — then cast back to specific ID type when calling update mutations
+  - **Proof toggle color**: Uses `bg-secondary` (sage green) for on-state per design system — same as vault toggle, consistent pattern for all boolean toggles
+  - **`sectionTitle: v.optional(v.string())`**: Convex requires `v.optional()` for fields that may be undefined; can't use TypeScript `undefined` directly in return validator
+---

@@ -3,10 +3,10 @@
   "sessionId": "25017497-f030-4ff8-9ae5-b49f0449d85e",
   "status": "running",
   "startedAt": "2026-02-19T22:18:59.153Z",
-  "updatedAt": "2026-02-19T22:41:16.794Z",
-  "currentIteration": 1,
+  "updatedAt": "2026-02-19T22:49:38.018Z",
+  "currentIteration": 2,
   "maxIterations": 10,
-  "tasksCompleted": 1,
+  "tasksCompleted": 2,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -35,8 +35,8 @@
       {
         "id": "US-043",
         "title": "Add sitters to trip",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-044",
@@ -74,6 +74,16 @@
       "durationMs": 733798,
       "startedAt": "2026-02-19T22:19:14.963Z",
       "endedAt": "2026-02-19T22:31:28.761Z"
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "taskId": "US-043",
+      "taskTitle": "Add sitters to trip",
+      "taskCompleted": true,
+      "durationMs": 587877,
+      "startedAt": "2026-02-19T22:31:28.911Z",
+      "endedAt": "2026-02-19T22:41:16.788Z"
     }
   ],
   "skippedTaskIds": [],

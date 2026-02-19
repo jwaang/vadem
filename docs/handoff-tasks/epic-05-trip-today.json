@@ -115,12 +115,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to write a getTasksForTrip query that combines recurring Instructions (from the property's ManualSections) and OverlayItems for this trip into a unified list, and to implement updateInstruction/updateOverlayItem mutations for toggling proofRequired. Load /tailwind-design-system to render the task list as grouped rows by time slot (Morning, Afternoon, Evening, Anytime), each row with the task text and a toggle switch using the secondary color for on-state. Show the running count of proof-required tasks and the 'We suggest 1-3 proof items per day' hint text in text-text-muted font-body below the list. Highlight overlay items with the accent badge. Use /dev-browser to verify: all toggles default to off, toggling a task increments the count, the recommendation text is visible, saving navigates to the share step.",
       "dependsOn": [
         "US-040",
         "US-042"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-045",
@@ -198,6 +199,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-19T22:41:16.791Z"
+    "updatedAt": "2026-02-19T22:49:38.016Z"
   }
 }

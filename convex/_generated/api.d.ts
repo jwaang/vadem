@@ -22,6 +22,7 @@ import type * as locationCards from "../locationCards.js";
 import type * as manualView from "../manualView.js";
 import type * as overlayItems from "../overlayItems.js";
 import type * as pets from "../pets.js";
+import type * as proof from "../proof.js";
 import type * as properties from "../properties.js";
 import type * as search from "../search.js";
 import type * as sections from "../sections.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   manualView: typeof manualView;
   overlayItems: typeof overlayItems;
   pets: typeof pets;
+  proof: typeof proof;
   properties: typeof properties;
   search: typeof search;
   sections: typeof sections;

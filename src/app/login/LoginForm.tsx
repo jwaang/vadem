@@ -7,7 +7,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { OAuthButtons } from "@/components/ui/OAuthButtons";
+import { OAuthButtons, hasOAuthProviders } from "@/components/ui/OAuthButtons";
 
 export function LoginForm() {
   const router = useRouter();
@@ -42,10 +42,12 @@ export function LoginForm() {
   return (
     <div className="flex flex-col gap-5">
       {/* OAuth sign-in buttons */}
-      <OAuthButtons className="flex flex-col gap-3" />
-
-      {/* Divider */}
-      <div className="oauth-divider">or</div>
+      {hasOAuthProviders && (
+        <>
+          <OAuthButtons className="flex flex-col gap-3" />
+          <div className="oauth-divider">or</div>
+        </>
+      )}
 
       {/* Email/password form */}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">

@@ -7,7 +7,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { OAuthButtons } from "@/components/ui/OAuthButtons";
+import { OAuthButtons, hasOAuthProviders } from "@/components/ui/OAuthButtons";
 
 interface FormErrors {
   email?: string;
@@ -84,10 +84,12 @@ function SignupFormInner() {
   return (
     <div className="bg-bg-raised rounded-xl shadow-md p-8">
       {/* OAuth sign-up buttons */}
-      <OAuthButtons className="flex flex-col gap-3 mb-6" />
-
-      {/* Divider */}
-      <div className="oauth-divider mb-6">or</div>
+      {hasOAuthProviders && (
+        <>
+          <OAuthButtons className="flex flex-col gap-3 mb-6" />
+          <div className="oauth-divider mb-6">or</div>
+        </>
+      )}
 
       {/* Email/password form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>

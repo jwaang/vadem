@@ -85,7 +85,14 @@ function AppleLogo() {
   );
 }
 
+export const hasOAuthProviders =
+  Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ||
+  Boolean(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID);
+
 export function OAuthButtons({ className }: OAuthButtonsProps) {
+  const googleConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+  const appleConfigured = Boolean(process.env.NEXT_PUBLIC_APPLE_CLIENT_ID);
+
   const handleGoogle = () => {
     if (typeof window === "undefined") return;
     const redirectUri = `${window.location.origin}/auth/callback/google`;
@@ -98,32 +105,36 @@ export function OAuthButtons({ className }: OAuthButtonsProps) {
     window.location.href = buildAppleUrl(redirectUri);
   };
 
+  if (!googleConfigured && !appleConfigured) return null;
+
   const baseBtn =
     "btn flex items-center justify-center gap-[10px] w-full py-[11px] px-5 rounded-md font-body text-sm font-medium leading-none cursor-pointer border-[1.5px] border-solid transition-[translate,box-shadow,background-color,border-color] duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className={className}>
-      {/* Google button */}
-      <button
-        type="button"
-        onClick={handleGoogle}
-        className={`${baseBtn} oauth-google`}
-        aria-label="Continue with Google"
-      >
-        <GoogleLogo />
-        <span>Continue with Google</span>
-      </button>
+      {googleConfigured && (
+        <button
+          type="button"
+          onClick={handleGoogle}
+          className={`${baseBtn} oauth-google`}
+          aria-label="Continue with Google"
+        >
+          <GoogleLogo />
+          <span>Continue with Google</span>
+        </button>
+      )}
 
-      {/* Apple button */}
-      <button
-        type="button"
-        onClick={handleApple}
-        className={`${baseBtn} oauth-apple`}
-        aria-label="Continue with Apple"
-      >
-        <AppleLogo />
-        <span>Continue with Apple</span>
-      </button>
+      {appleConfigured && (
+        <button
+          type="button"
+          onClick={handleApple}
+          className={`${baseBtn} oauth-apple`}
+          aria-label="Continue with Apple"
+        >
+          <AppleLogo />
+          <span>Continue with Apple</span>
+        </button>
+      )}
     </div>
   );
 }

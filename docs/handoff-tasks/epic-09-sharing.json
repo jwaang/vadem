@@ -1,7 +1,7 @@
 {
   "name": "Epic 9: Sharing & Link Management",
-  "branchName": "ralph/epic-09-sharing",
   "description": "Link generation, password protection, expiration, and the sitter routing experience.",
+  "branchName": "ralph/epic-09-sharing",
   "userStories": [
     {
       "id": "US-063",
@@ -19,9 +19,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement generateShareLink mutation that creates a cryptographically random 12-char URL-safe slug (using crypto.randomBytes in a Convex action), stores it as shareLink in the Trips table, and returns the full URL. The sitter link route is /t/[shareLink] (already added to schema in US-040). Load /nextjs-best-practices to set up src/app/t/[shareLink]/page.tsx as the sitter entry point. Load /tailwind-design-system to build the share UI panel on the final trip setup step and dashboard: display the full URL in a read-only Input component (rounded-md border-border-default font-mono text-sm), a 'Copy link' button (btn-primary) that writes to clipboard and shows a success toast (bg-secondary-light text-secondary, bottom-right, 2s), and a 'Share' button that calls navigator.share({ url, text: 'Here is your Handoff!' }) on supported browsers with a fallback to copy-only. Use /dev-browser to verify: Share button generates and displays the link, Copy link writes to clipboard and shows the toast, the Web Share API is called on mobile (check via DevTools mobile emulation).",
-      "dependsOn": ["US-040", "US-041"]
+      "dependsOn": [
+        "US-040",
+        "US-041"
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-064",
@@ -42,7 +46,9 @@
       "priority": 2,
       "passes": false,
       "notes": "Load /convex-best-practices to implement setLinkPassword mutation that hashes the password with bcrypt (or pbkdf2Sync from Node.js crypto, matching the authActions.ts pattern already in the codebase) and stores the hash in Trips.linkPassword. Write a verifyLinkPassword Convex action that compares the submitted password against the hash and returns a short-lived session token (store in a TripSessions table with tripId + sessionToken + expiresAt). Load /nextjs-best-practices to implement the password gate in the sitter route src/app/t/[shareLink]/page.tsx: check for a valid session token in a cookie, show the password prompt if missing or invalid. Load /tailwind-design-system to render the password prompt page using bg-bg, a centered bg-bg-raised rounded-xl shadow-md card with the Handoff wordmark in font-display, a password Input component, and a btn-primary 'Enter' button. Show incorrect password errors inline below the input in text-danger font-body. Use /dev-browser to verify: a password-protected link shows the prompt before any content, entering wrong password shows an error and allows retry, correct password reveals the Today View, and accessing the URL directly without a session shows the prompt again.",
-      "dependsOn": ["US-063"]
+      "dependsOn": [
+        "US-063"
+      ]
     },
     {
       "id": "US-065",
@@ -61,7 +67,10 @@
       "priority": 3,
       "passes": false,
       "notes": "Load /convex-best-practices to implement expiry as a query-level guard in the getTripByShareLink query: if Trips.linkExpiry < Date.now() or trip.status === 'expired', return { status: 'EXPIRED' } instead of trip data. Store linkExpiry defaulting to the trip endDate in createTrip mutation; add a setLinkExpiry mutation that validates the new expiry is ≤ trip.endDate. The sitter route src/app/t/[shareLink]/page.tsx reads the status field and renders the appropriate expired state. Load /tailwind-design-system to style the expired state: centered card (bg-bg-raised rounded-xl shadow-md p-8) with a muted clock icon, 'This handoff has expired' in font-display, and a brief message in font-body text-text-muted — matching the brand aesthetic without leaking trip details. The creator UI should show the current expiry date on the share panel with an 'Adjust expiry' date picker capped at trip.endDate.",
-      "dependsOn": ["US-063", "US-045"]
+      "dependsOn": [
+        "US-063",
+        "US-045"
+      ]
     },
     {
       "id": "US-066",
@@ -80,7 +89,9 @@
       "priority": 4,
       "passes": false,
       "notes": "Load /convex-best-practices to implement regenerateShareLink mutation that calls the same slug generation action from US-063 to produce a new shareLink, overwrites Trips.shareLink, and also invalidates all active TripSessions for this trip (delete from TripSessions table where tripId matches). The old slug is no longer in the database so getTripByShareLink returns null for the old URL. Load /tailwind-design-system to render the 'Reset Link' action on the trip management page as a text button using btn-no-shadow text-danger font-body text-sm with a refresh icon, with an inline confirmation card (bg-warning-light text-warning rounded-lg p-4) showing 'This will revoke access for anyone with the current link' and Confirm/Cancel buttons before firing the mutation. After regeneration, display the new link immediately in the share panel with a prompt to re-share. Use /dev-browser to verify: clicking Reset Link shows the warning confirmation, confirming generates a new URL (verify the old URL returns 'no longer valid'), and the new URL is displayed in the share panel.",
-      "dependsOn": ["US-063"]
+      "dependsOn": [
+        "US-063"
+      ]
     },
     {
       "id": "US-067",
@@ -102,7 +113,15 @@
       "priority": 5,
       "passes": false,
       "notes": "Load /convex-best-practices to implement getTripByShareLink query as a state machine returning one of: { status: 'PASSWORD_REQUIRED' }, { status: 'NOT_STARTED', startDate, propertyName, petNames[] }, { status: 'ACTIVE', tripId, propertyId }, { status: 'EXPIRED' } — never returning trip data before authorization. Load /nextjs-best-practices to implement src/app/t/[shareLink]/page.tsx as a client component that reads the query status and renders the appropriate state: password gate, not-yet-started preview, Today View, or expired message. Ensure no smart-app-banner meta tags are added and there is no 'Add to Home Screen' prompt visible on first load. Load /tailwind-design-system to render the not-yet-started state as a warm preview card (bg-bg-raised rounded-xl shadow-md) showing the property name in font-display, pet names as secondary badges, and 'Your stay starts [date]' in font-body text-text-muted — a welcoming preview without any sensitive data. The SitterLayout bottom nav (Today, Manual, Vault, Contacts) should be present on all active trip screens. Use /dev-browser to verify: opening the link without a session shows the correct state, a future-dated trip shows the preview card, an active trip lands on Today View, an expired link shows the ended message, and all four bottom nav tabs are present and navigable.",
-      "dependsOn": ["US-046", "US-064", "US-065", "US-016"]
+      "dependsOn": [
+        "US-046",
+        "US-064",
+        "US-065",
+        "US-016"
+      ]
     }
-  ]
+  ],
+  "metadata": {
+    "updatedAt": "2026-02-20T14:14:53.243Z"
+  }
 }

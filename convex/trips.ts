@@ -144,6 +144,18 @@ export const getActiveTripForProperty = query({
   },
 });
 
+// Look up a trip by its shareLink slug (used by the sitter view).
+export const getByShareLink = query({
+  args: { shareLink: v.string() },
+  returns: v.union(tripObject, v.null()),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("trips")
+      .withIndex("by_share_link", (q) => q.eq("shareLink", args.shareLink))
+      .first();
+  },
+});
+
 export const update = mutation({
   args: {
     tripId: v.id("trips"),

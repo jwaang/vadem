@@ -156,7 +156,9 @@ export default defineSchema({
     shareLink: v.optional(v.string()),
     linkPassword: v.optional(v.string()),
     linkExpiry: v.optional(v.number()),
-  }).index("by_property_status", ["propertyId", "status"]),
+  })
+    .index("by_property_status", ["propertyId", "status"])
+    .index("by_share_link", ["shareLink"]),
 
   sitters: defineTable({
     tripId: v.id("trips"),

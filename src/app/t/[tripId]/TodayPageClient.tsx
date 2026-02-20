@@ -2,6 +2,8 @@
 
 import { Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 const TodayPageInner = dynamic(() => import("./TodayPageInner"), { ssr: false });
 
@@ -38,6 +40,29 @@ class TodayErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 }
 
+// ── ShareLink resolver — looks up trip by shareLink slug, falls back to tripId ──
+
+function TodayPageResolver({ shareLink }: { shareLink: string }) {
+  const trip = useQuery(api.trips.getByShareLink, { shareLink });
+
+  // Still loading
+  if (trip === undefined) {
+    return (
+      <div className="min-h-dvh bg-bg flex items-center justify-center">
+        <p className="font-body text-sm text-text-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  // Found by shareLink — pass the actual Convex trip ID to the inner component
+  if (trip !== null) {
+    return <TodayPageInner tripId={trip._id} />;
+  }
+
+  // Not a shareLink — treat the param as a direct Convex trip ID (backward compat)
+  return <TodayPageInner tripId={shareLink} />;
+}
+
 // ── Client shell ──────────────────────────────────────────────────────
 
 export function TodayPageClient({ tripId }: { tripId: string }) {
@@ -53,7 +78,7 @@ export function TodayPageClient({ tripId }: { tripId: string }) {
   }
   return (
     <TodayErrorBoundary>
-      <TodayPageInner tripId={tripId} />
+      <TodayPageResolver shareLink={tripId} />
     </TodayErrorBoundary>
   );
 }

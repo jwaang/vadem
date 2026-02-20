@@ -24,6 +24,7 @@ import type * as phoneUtils from "../phoneUtils.js";
 import type * as proof from "../proof.js";
 import type * as properties from "../properties.js";
 import type * as search from "../search.js";
+import type * as shareActions from "../shareActions.js";
 import type * as sections from "../sections.js";
 import type * as sitters from "../sitters.js";
 import type * as storage from "../storage.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   proof: typeof proof;
   properties: typeof properties;
   search: typeof search;
+  shareActions: typeof shareActions;
   sections: typeof sections;
   sitters: typeof sitters;
   storage: typeof storage;

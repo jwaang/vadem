@@ -1094,3 +1094,22 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **New Convex functions require deployment before browser testing**: New Convex functions added to existing modules aren't automatically available until `convex dev --once` or `convex deploy` is run. The browser will show "Could not find public function" errors until then. Run `node_modules/.bin/convex dev --once` to push changes to the dev deployment for browser verification.
   - **`getTodayTaskSummary` scan for everyday overlay items**: Overlay items with no `date` field are excluded from `by_trip_date` index when filtering `.eq("date", someValue)`. To include them, query all overlay items for the trip via the index prefix `q.eq("tripId", ...)` then filter client-side with `.filter(i => !i.date || i.date === args.date)`.
 ---
+
+## 2026-02-20 - US-063
+- Implemented shareable link generation for trips
+- **Files changed:**
+  - `convex/schema.ts` — Added `.index("by_share_link", ["shareLink"])` to `trips` table
+  - `convex/trips.ts` — Added `getByShareLink` query (looks up trip by shareLink slug using the new index)
+  - `convex/shareActions.ts` — New `"use node"` action file with `generateShareLink` (uses `crypto.randomBytes(9).toString("base64url")` for a 12-char URL-safe slug, patches trip via `ctx.runMutation(api.trips.update, ...)`, returns slug)
+  - `convex/_generated/api.d.ts` — Added `shareActions` import and `fullApi` entry
+  - `src/app/t/[tripId]/TodayPageClient.tsx` — Added `TodayPageResolver` component: uses `useQuery(api.trips.getByShareLink, ...)` to resolve URL param as a shareLink slug; if found passes `trip._id` to `TodayPageInner`; if not found falls back to treating param as direct tripId (backward compat)
+  - `src/app/trip/[tripId]/share/page.tsx` — New server component (metadata + params extraction)
+  - `src/app/trip/[tripId]/share/SharePageClient.tsx` — New `"use client"` wrapper with `dynamic(ssr:false)`
+  - `src/app/trip/[tripId]/share/ShareStepInner.tsx` — New share step UI: step 4 indicator (active=Share), "Generate link" button calls `generateShareLink` action, read-only monospace input shows full URL, "Copy link" button + success toast, "Share" button via Web Share API with `canShare` guard, "Activate trip →" button calls `api.trips.update({ status: "active" })` + redirects to dashboard
+  - `src/app/dashboard/page.tsx` — Added `useAction` import, `NotificationToast` import; added `CopyIcon`/`ShareNetworkIcon`/`CheckSmallIcon` inline SVGs; added `ShareLinkPanel` component (generate/copy/share); updated `NewTripFormInner` existing trip display — active trips now show `ShareLinkPanel` instead of "Continue Trip Setup", plus a "Manage trip setup →" ghost button
+- **Learnings:**
+  - **`"use node"` action split pattern**: Any action needing `crypto.randomBytes` must be in a separate file with `"use node"` directive (per codebase pattern). Don't add it to `convex/trips.ts` which has no node directive. Named the file `convex/shareActions.ts`.
+  - **Sitter view resolver pattern**: Instead of renaming `/t/[tripId]/` folder (cosmetic), added a resolver wrapper in `TodayPageClient` that does `useQuery(api.trips.getByShareLink, ...)`. This keeps backward compatibility — old direct tripId links still work, new shareLink URLs resolve to the correct trip.
+  - **`base64url` for URL-safe slugs**: `crypto.randomBytes(9).toString("base64url")` produces exactly 12 chars (9 bytes → 12 base64url chars) with only URL-safe characters (A-Z, a-z, 0-9, -, _). No padding needed.
+  - **`canShare` state for Web Share API**: Use `useState(false)` + `useEffect` to detect `navigator.share` availability. This avoids SSR mismatch since `navigator` doesn't exist server-side.
+---

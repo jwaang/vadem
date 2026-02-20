@@ -195,6 +195,9 @@ export default defineSchema({
     tripId: v.id("trips"),
     propertyId: v.id("properties"),
     event: v.string(),
+    sitterName: v.optional(v.string()),
+    vaultItemId: v.optional(v.id("vaultItems")),
+    vaultItemLabel: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_trip", ["tripId"])

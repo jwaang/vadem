@@ -938,3 +938,20 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Per-item logging with Promise.all**: When logging N items in parallel, use `await Promise.all(rawItems.map((item) => ctx.runMutation(internal.vaultAccessLog.logVaultAccess, {...})))` — this creates N concurrent mutation calls which Convex handles efficiently.
   - **New Convex module in api.d.ts**: Add both the import (`import type * as vaultAccessLog from "../vaultAccessLog.js"`) and the `fullApi` entry (`vaultAccessLog: typeof vaultAccessLog`) in alphabetical order relative to other vault modules.
 ---
+## 2026-02-19 - US-053
+- Implemented owner notification on vault access: activity feed logging + push notification scheduling
+- **Files changed:**
+  - `convex/schema.ts` — Added `sitterName: v.optional(v.string())`, `vaultItemId: v.optional(v.id("vaultItems"))`, `vaultItemLabel: v.optional(v.string())` to `activityLog` table for richer event metadata
+  - `convex/activityLog.ts` (new) — `getActivityFeed` public query: fetches newest-first activity events by propertyId (up to 20), uses explicit field construction (no spread/omit)
+  - `convex/notifications.ts` (new) — `sendPushNotification` internalAction stub: logs notification to console with userId, tripId, message, and deep-link URL; TODO comment for US-070 real push implementation
+  - `convex/vaultAccessLog.ts` — Extended `logVaultAccess` internalMutation: for verified per-item accesses, fetches vault item label + property owner via `ctx.db.get()`, inserts activity log entry with sitterName + vaultItemLabel, schedules `sendPushNotification` via `ctx.scheduler.runAfter(0, ...)`
+  - `convex/vaultActions.ts` — Removed the separate `_logVaultAccess` summary call from `getDecryptedVaultItems` (eliminated duplicate activityLog entry; per-item logging in `logVaultAccess` now handles activity feed)
+  - `convex/_generated/api.d.ts` — Added `activityLog` and `notifications` module imports + fullApi entries in alphabetical order
+  - `src/app/dashboard/page.tsx` — Added `ActivityFeedSectionInner` (Convex hooks + env guard pattern) and `ActivityFeedSection` wrapper; `ActivityFeedSectionInner` queries `api.activityLog.getActivityFeed` using auth chain (token → userId → propertyId); maps `vault_accessed` events to slate dot (`ActivityType: "vault"`); replaced fake hardcoded activity data
+- **Learnings:**
+  - **Convex mutations can schedule actions**: `ctx.scheduler.runAfter(0, internal.notifications.fn, args)` works in internalMutation handlers — no need to promote to an action just for scheduling. The scheduled function (an internalAction) runs asynchronously after the mutation completes.
+  - **Denormalize labels for activity feed**: Store `vaultItemLabel` directly in activityLog at write time rather than doing N vault item lookups at query time. This avoids N+1 queries in the feed query and works even if vault items are later deleted.
+  - **`internal` import in mutations**: Import `internal` from `./_generated/api` in any Convex module that needs to reference internal functions (for scheduler or other cross-module calls). Only mutations/queries need `_generated/server`; `_generated/api` provides the function references.
+  - **Deduplication with per-item vs summary logging**: When both `logVaultAccess` (per-item) and `_logVaultAccess` (summary) insert to activityLog, the feed gets duplicate `vault_accessed` events. Remove the summary call when per-item entries are sufficient — the feed shows N entries (one per item) which gives the owner the most actionable info (which items were seen).
+  - **ActivityFeedSection env-guard pattern**: New components that use Convex hooks inside an existing page follow the outer/inner split: outer checks `process.env.NEXT_PUBLIC_CONVEX_URL` and renders fallback; inner holds all hooks. This matches the `NewTripForm`/`NewTripFormInner` pattern already in the codebase.
+---

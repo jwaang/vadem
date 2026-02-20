@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/authContext";
 import { CreatorLayout, type CreatorNavId } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ActivityFeedItem } from "@/components/ui/ActivityFeedItem";
+import { ActivityFeedItem, type ActivityType } from "@/components/ui/ActivityFeedItem";
 import { Badge } from "@/components/ui/Badge";
 
 // ── Icons ────────────────────────────────────────────────────────────
@@ -345,6 +345,108 @@ function NewTripForm({ onCancel }: { onCancel: () => void }) {
   return <NewTripFormInner onCancel={onCancel} />;
 }
 
+// ── Activity Feed Helpers ─────────────────────────────────────────────
+
+function formatActivityTimestamp(createdAt: number): string {
+  const now = Date.now();
+  const diffMs = now - createdAt;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return new Date(createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function eventToActivityType(event: string): ActivityType {
+  if (event === "vault_accessed") return "vault";
+  if (event === "task_completed") return "task";
+  if (event === "proof_submitted") return "proof";
+  return "view";
+}
+
+function eventToAction(event: string, vaultItemLabel?: string): string {
+  if (event === "vault_accessed") {
+    return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
+  }
+  if (event === "task_completed") return "completed a task";
+  if (event === "proof_submitted") return "submitted a proof photo";
+  if (event === "trip_expired") return "trip expired";
+  return event.replace(/_/g, " ");
+}
+
+// ── Activity Feed (inner — uses Convex hooks) ──────────────────────────
+
+function ActivityFeedSectionInner() {
+  const { user } = useAuth();
+  const sessionData = useQuery(
+    api.auth.validateSession,
+    user?.token ? { token: user.token } : "skip",
+  );
+  const userId = sessionData?.userId;
+  const properties = useQuery(
+    api.properties.listByOwner,
+    userId ? { ownerId: userId } : "skip",
+  );
+  const propertyId = properties?.[0]?._id;
+  const events = useQuery(
+    api.activityLog.getActivityFeed,
+    propertyId ? { propertyId, limit: 10 } : "skip",
+  );
+
+  if (events === undefined) {
+    return (
+      <p className="font-body text-xs text-text-muted px-5 py-4">Loading activity…</p>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="px-5 py-4 flex items-center gap-2">
+        <ClockIcon className="text-text-muted" />
+        <p className="font-body text-xs text-text-muted">
+          Sitter activity will appear here once your first trip is active
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-5 pt-1 pb-1">
+      {events.map((event, index) => (
+        <ActivityFeedItem
+          key={event._id}
+          type={eventToActivityType(event.event)}
+          name={event.sitterName ?? "Sitter"}
+          action={eventToAction(event.event, event.vaultItemLabel)}
+          timestamp={formatActivityTimestamp(event.createdAt)}
+          hideBorder={index === events.length - 1}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Activity Feed (outer — env guard) ──────────────────────────────────
+
+function ActivityFeedSection() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) {
+    return (
+      <div className="px-5 py-4 flex items-center gap-2">
+        <ClockIcon className="text-text-muted" />
+        <p className="font-body text-xs text-text-muted">
+          Sitter activity will appear here once your first trip is active
+        </p>
+      </div>
+    );
+  }
+  return <ActivityFeedSectionInner />;
+}
+
 // ── Dashboard Overview ───────────────────────────────────────────────
 
 interface DashboardOverviewProps {
@@ -441,22 +543,7 @@ function DashboardOverview({ email, onNavigateToTrips }: DashboardOverviewProps)
           className="bg-bg-raised rounded-xl border border-border-default"
           style={{ boxShadow: "var(--shadow-sm)" }}
         >
-          {/* Sample activity for demo (will be real data in a later story) */}
-          <div className="px-5 pt-1 pb-1">
-            <ActivityFeedItem
-              type="view"
-              name="You"
-              action="created your account"
-              timestamp="Just now"
-              hideBorder
-            />
-          </div>
-          <div className="px-5 py-4 border-t border-border-default flex items-center gap-2">
-            <ClockIcon className="text-text-muted" />
-            <p className="font-body text-xs text-text-muted">
-              Sitter activity will appear here once your first trip is active
-            </p>
-          </div>
+          <ActivityFeedSection />
         </div>
       </section>
     </div>

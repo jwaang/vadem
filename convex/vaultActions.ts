@@ -478,7 +478,8 @@ export const getDecryptedVaultItems = action({
       }),
     );
 
-    // 5. Log each item access to the vault access log (one entry per item viewed)
+    // 5. Log each item access to the vault access log (one entry per item viewed).
+    // logVaultAccess also inserts to the activity feed and schedules owner notifications.
     await Promise.all(
       rawItems.map((item) =>
         ctx.runMutation(internal.vaultAccessLog.logVaultAccess, {
@@ -490,12 +491,6 @@ export const getDecryptedVaultItems = action({
         }),
       ),
     );
-
-    // Also log a summary event to the general activity log
-    await ctx.runMutation(internal.vaultItems._logVaultAccess, {
-      tripId: args.tripId,
-      propertyId: args.propertyId,
-    });
 
     return { success: true as const, items };
   },

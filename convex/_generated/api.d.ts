@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as activityLog from "../activityLog.js";
 import type * as auth from "../auth.js";
 import type * as authActions from "../authActions.js";
 import type * as crons from "../crons.js";
@@ -21,6 +22,7 @@ import type * as healthCheck from "../healthCheck.js";
 import type * as instructions from "../instructions.js";
 import type * as locationCards from "../locationCards.js";
 import type * as manualView from "../manualView.js";
+import type * as notifications from "../notifications.js";
 import type * as overlayItems from "../overlayItems.js";
 import type * as pets from "../pets.js";
 import type * as proof from "../proof.js";
@@ -47,6 +49,7 @@ import type * as vaultPins from "../vaultPins.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  activityLog: typeof activityLog;
   auth: typeof auth;
   authActions: typeof authActions;
   crons: typeof crons;
@@ -55,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   instructions: typeof instructions;
   locationCards: typeof locationCards;
   manualView: typeof manualView;
+  notifications: typeof notifications;
   overlayItems: typeof overlayItems;
   pets: typeof pets;
   proof: typeof proof;

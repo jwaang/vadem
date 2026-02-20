@@ -17,7 +17,20 @@ export default defineSchema({
         v.literal("digest"),
         v.literal("off"),
       ),
-    ), // Task completion notification preference; defaults to 'all' when absent
+    ), // Legacy: task completion preference; superseded by notificationPreferences
+    notificationPreferences: v.optional(
+      v.object({
+        taskCompletions: v.union(
+          v.literal("all"),
+          v.literal("proof-only"),
+          v.literal("digest"),
+          v.literal("off"),
+        ),
+        linkOpened: v.boolean(),
+        tripEnding: v.boolean(),
+        // vaultAccess is always on; not user-configurable
+      }),
+    ), // Full notification preferences; defaults applied server-side when absent
   })
     .index("by_email", ["email"])
     .index("by_google_id", ["googleId"])
@@ -215,13 +228,18 @@ export default defineSchema({
   activityLog: defineTable({
     tripId: v.id("trips"),
     propertyId: v.id("properties"),
-    eventType: v.union(
-      v.literal("link_opened"),
-      v.literal("task_completed"),
-      v.literal("proof_uploaded"),
-      v.literal("vault_accessed"),
-      v.literal("trip_started"),
-      v.literal("trip_expired"),
+    // Legacy field name — one test document used 'event' instead of 'eventType'
+    event: v.optional(v.string()),
+    // optional to allow legacy documents that used 'event' field name
+    eventType: v.optional(
+      v.union(
+        v.literal("link_opened"),
+        v.literal("task_completed"),
+        v.literal("proof_uploaded"),
+        v.literal("vault_accessed"),
+        v.literal("trip_started"),
+        v.literal("trip_expired"),
+      ),
     ),
     sitterName: v.optional(v.string()),
     sitterPhone: v.optional(v.string()),

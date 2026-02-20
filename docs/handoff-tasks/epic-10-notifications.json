@@ -170,15 +170,16 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to add a notificationPreferences object to the users table schema: { taskCompletions: 'all'|'proof-only'|'digest'|'off', vaultAccess: 'always' (hardcoded, not user-settable), linkOpened: boolean, tripEnding: boolean }. Write updateNotificationPreferences mutation and provide defaults (proof-only for tasks, all others on) in the createUser mutation. Load /tailwind-design-system to build the settings page at src/app/dashboard/settings/notifications/page.tsx within CreatorLayout: task completions as a 4-option segmented control (All / Proof-only / Digest / Off) using rounded-pill chips, vault access as a disabled toggle with 'Security events cannot be disabled' label in text-text-muted, and link opened / trip ending as standard toggles using the secondary color for on-state. Use /dev-browser to verify: the vault access toggle is visually disabled and non-interactive, selecting 'Digest' for tasks saves correctly, toggling link opened off saves and the useMutation fires, preferences persist after page reload.",
       "dependsOn": [
         "US-024",
         "US-070"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T17:17:44.277Z"
+    "updatedAt": "2026-02-20T18:09:30.122Z"
   }
 }

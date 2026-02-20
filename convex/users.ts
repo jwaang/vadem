@@ -27,6 +27,7 @@ export const create = internalMutation({
       passwordHash: args.passwordHash,
       salt: args.salt,
       createdAt: Date.now(),
+      notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
     });
   },
 });
@@ -76,17 +77,52 @@ const notificationPreferenceValidator = v.union(
   v.literal("off"),
 );
 
-// Internal: get notification preference for a user (defaults to 'all')
+const notificationPreferencesObjectValidator = v.object({
+  taskCompletions: v.union(
+    v.literal("all"),
+    v.literal("proof-only"),
+    v.literal("digest"),
+    v.literal("off"),
+  ),
+  linkOpened: v.boolean(),
+  tripEnding: v.boolean(),
+});
+
+const DEFAULT_NOTIFICATION_PREFERENCES = {
+  taskCompletions: "proof-only" as const,
+  linkOpened: true,
+  tripEnding: true,
+};
+
+// Internal: get task completion notification preference for a user
+// Checks notificationPreferences.taskCompletions first, falls back to legacy
+// notificationPreference field, then defaults to 'proof-only'.
 export const getNotificationPreference = internalQuery({
   args: { userId: v.id("users") },
   returns: notificationPreferenceValidator,
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
-    return user?.notificationPreference ?? "all";
+    if (user?.notificationPreferences?.taskCompletions) {
+      return user.notificationPreferences.taskCompletions;
+    }
+    return user?.notificationPreference ?? "proof-only";
   },
 });
 
-// Public: update the authenticated user's notification preference
+// Internal: get all notification preferences for a user (with defaults applied)
+export const getNotificationPreferences = internalQuery({
+  args: { userId: v.id("users") },
+  returns: notificationPreferencesObjectValidator,
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (user?.notificationPreferences) {
+      return user.notificationPreferences;
+    }
+    return DEFAULT_NOTIFICATION_PREFERENCES;
+  },
+});
+
+// Public: update the authenticated user's notification preference (legacy single-field)
 export const updateNotificationPreference = mutation({
   args: {
     token: v.string(),
@@ -106,7 +142,27 @@ export const updateNotificationPreference = mutation({
   },
 });
 
-// Public: get the authenticated user's notification preference
+// Public: update all notification preferences for the authenticated user
+export const updateNotificationPreferences = mutation({
+  args: {
+    token: v.string(),
+    preferences: notificationPreferencesObjectValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return null;
+    await ctx.db.patch(session.userId, {
+      notificationPreferences: args.preferences,
+    });
+    return null;
+  },
+});
+
+// Public: get the authenticated user's notification preference (legacy)
 export const getMyNotificationPreference = query({
   args: { token: v.string() },
   returns: v.union(notificationPreferenceValidator, v.null()),
@@ -117,6 +173,27 @@ export const getMyNotificationPreference = query({
       .unique();
     if (!session || session.expiresAt < Date.now()) return null;
     const user = await ctx.db.get(session.userId);
-    return user?.notificationPreference ?? "all";
+    if (user?.notificationPreferences?.taskCompletions) {
+      return user.notificationPreferences.taskCompletions;
+    }
+    return user?.notificationPreference ?? "proof-only";
+  },
+});
+
+// Public: get all notification preferences for the authenticated user
+export const getMyNotificationPreferences = query({
+  args: { token: v.string() },
+  returns: v.union(notificationPreferencesObjectValidator, v.null()),
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return null;
+    const user = await ctx.db.get(session.userId);
+    if (user?.notificationPreferences) {
+      return user.notificationPreferences;
+    }
+    return DEFAULT_NOTIFICATION_PREFERENCES;
   },
 });

@@ -1150,7 +1150,35 @@ function SettingsSection({ email, onSignOut }: SettingsSectionProps) {
         </div>
       </div>
 
-      {/* Danger zone */}
+      {/* Notifications */}
+      <div
+        className="bg-bg-raised rounded-xl border border-border-default overflow-hidden"
+        style={{ boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="px-5 py-3 border-b border-border-default">
+          <p className="font-body text-xs font-semibold text-text-muted uppercase tracking-wide">
+            Notifications
+          </p>
+        </div>
+        <div className="px-5 py-4 flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-0.5">
+            <p className="font-body text-sm font-semibold text-text-primary">
+              Notification preferences
+            </p>
+            <p className="font-body text-xs text-text-muted">
+              Configure which events send you push notifications
+            </p>
+          </div>
+          <Link
+            href="/dashboard/settings/notifications"
+            className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 shrink-0"
+          >
+            Manage →
+          </Link>
+        </div>
+      </div>
+
+      {/* Session */}
       <div
         className="bg-bg-raised rounded-xl border border-border-default overflow-hidden"
         style={{ boxShadow: "var(--shadow-sm)" }}

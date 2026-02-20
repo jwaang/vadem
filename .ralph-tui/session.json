@@ -3,10 +3,10 @@
   "sessionId": "9070c191-048a-4b6a-a247-cfe20585c46e",
   "status": "running",
   "startedAt": "2026-02-20T15:57:01.355Z",
-  "updatedAt": "2026-02-20T17:17:44.279Z",
-  "currentIteration": 6,
+  "updatedAt": "2026-02-20T18:09:30.124Z",
+  "currentIteration": 7,
   "maxIterations": 10,
-  "tasksCompleted": 6,
+  "tasksCompleted": 7,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -53,8 +53,8 @@
       {
         "id": "US-074",
         "title": "Push notification — trip ending soon",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-075",
@@ -124,6 +124,16 @@
       "durationMs": 1165805,
       "startedAt": "2026-02-20T16:54:24.727Z",
       "endedAt": "2026-02-20T17:13:50.532Z"
+    },
+    {
+      "iteration": 7,
+      "status": "completed",
+      "taskId": "US-074",
+      "taskTitle": "Push notification — trip ending soon",
+      "taskCompleted": true,
+      "durationMs": 233483,
+      "startedAt": "2026-02-20T17:13:50.792Z",
+      "endedAt": "2026-02-20T17:17:44.275Z"
     }
   ],
   "skippedTaskIds": [],

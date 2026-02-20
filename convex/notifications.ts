@@ -220,6 +220,12 @@ export const sendTripEndingSoonNotification = internalAction({
 
     const userId = property.ownerId;
 
+    // Check if owner has tripEnding notifications enabled (default: true)
+    const prefs = await ctx.runQuery(internal.users.getNotificationPreferences, {
+      userId,
+    });
+    if (!prefs.tripEnding) return null;
+
     await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
       userId,
       tripId: args.tripId,

@@ -90,16 +90,18 @@ export const getActivityForTrip = query({
 
     const page = await q.paginate({ numItems, cursor: args.paginationOpts?.cursor ?? null });
 
+    // Filter out legacy docs missing eventType before applying optional filter
+    const validPage = page.page.filter((e) => e.eventType !== undefined);
     const items = (
       args.eventType
-        ? page.page.filter((e) => e.eventType === args.eventType)
-        : page.page
+        ? validPage.filter((e) => e.eventType === args.eventType)
+        : validPage
     ).map((e) => ({
       _id: e._id,
       _creationTime: e._creationTime,
       tripId: e.tripId,
       propertyId: e.propertyId,
-      eventType: e.eventType,
+      eventType: e.eventType!,
       sitterName: e.sitterName,
       sitterPhone: e.sitterPhone,
       metadata: e.metadata,
@@ -138,16 +140,18 @@ export const getActivityFeed = query({
       .order("desc")
       .take(Math.min(fetchLimit, 200));
 
+    // Filter out legacy docs missing eventType before applying optional filter
+    const validEvents = events.filter((e) => e.eventType !== undefined);
     const filtered = args.eventType
-      ? events.filter((e) => e.eventType === args.eventType)
-      : events;
+      ? validEvents.filter((e) => e.eventType === args.eventType)
+      : validEvents;
 
     return filtered.slice(0, args.limit ?? 20).map((e) => ({
       _id: e._id,
       _creationTime: e._creationTime,
       tripId: e.tripId,
       propertyId: e.propertyId,
-      eventType: e.eventType,
+      eventType: e.eventType!,
       sitterName: e.sitterName,
       sitterPhone: e.sitterPhone,
       metadata: e.metadata,

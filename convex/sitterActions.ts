@@ -60,13 +60,23 @@ export const recordFirstOpen = action({
       });
       if (!property) return null;
 
-      // 6. Schedule push notification to the property owner
-      await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
-        userId: property.ownerId,
-        tripId: args.tripId,
-        message: `${sitterName} opened your Handoff`,
-        deepLinkUrl: "/dashboard",
-      });
+      // 6. Schedule push notification to the property owner (if linkOpened enabled)
+      const prefs = await ctx.runQuery(
+        internal.users.getNotificationPreferences,
+        { userId: property.ownerId },
+      );
+      if (prefs.linkOpened) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.notifications.sendPushNotification,
+          {
+            userId: property.ownerId,
+            tripId: args.tripId,
+            message: `${sitterName} opened your Handoff`,
+            deepLinkUrl: "/dashboard",
+          },
+        );
+      }
     } catch (err) {
       console.error("[sitterActions] recordFirstOpen error:", err);
     }

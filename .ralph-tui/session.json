@@ -1,157 +1,40 @@
 {
   "version": 1,
-  "sessionId": "913330bb-95b7-486e-abb8-ad70e88a5dbf",
+  "sessionId": "6be38768-cd0d-4b97-b1b6-11cbef2d6369",
   "status": "running",
-  "startedAt": "2026-02-19T23:44:47.854Z",
-  "updatedAt": "2026-02-20T01:34:15.648Z",
-  "currentIteration": 8,
+  "startedAt": "2026-02-20T02:49:32.189Z",
+  "updatedAt": "2026-02-20T02:55:47.252Z",
+  "currentIteration": 0,
   "maxIterations": 10,
-  "tasksCompleted": 8,
+  "tasksCompleted": 0,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./docs/handoff-tasks/epic-06-vault.json",
-    "totalTasks": 9,
+    "prdPath": "./docs/handoff-tasks/epic-07-contacts.json",
+    "totalTasks": 3,
     "tasks": [
       {
-        "id": "US-048",
-        "title": "Vault data model and encryption",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-057",
+        "title": "Emergency contact data model",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-049",
-        "title": "Create and manage vault items",
-        "status": "completed",
-        "completedInSession": true
+        "id": "US-058",
+        "title": "Add and manage emergency contacts",
+        "status": "open",
+        "completedInSession": false
       },
       {
-        "id": "US-050",
-        "title": "SMS PIN verification flow",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-051",
-        "title": "Vault access for verified sitters",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-052",
-        "title": "Vault access logging",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-053",
-        "title": "Owner notification on vault access",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-054",
-        "title": "Vault auto-expiration on trip end",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-055",
-        "title": "One-click vault access revocation",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-056",
-        "title": "Vault hidden state for unregistered viewers",
+        "id": "US-059",
+        "title": "Emergency contact display (sitter view)",
         "status": "open",
         "completedInSession": false
       }
     ]
   },
-  "iterations": [
-    {
-      "iteration": 1,
-      "status": "completed",
-      "taskId": "US-048",
-      "taskTitle": "Vault data model and encryption",
-      "taskCompleted": true,
-      "durationMs": 1071810,
-      "startedAt": "2026-02-19T23:44:49.052Z",
-      "endedAt": "2026-02-20T00:02:40.862Z"
-    },
-    {
-      "iteration": 2,
-      "status": "completed",
-      "taskId": "US-049",
-      "taskTitle": "Create and manage vault items",
-      "taskCompleted": true,
-      "durationMs": 1050206,
-      "startedAt": "2026-02-20T00:02:40.988Z",
-      "endedAt": "2026-02-20T00:20:11.194Z"
-    },
-    {
-      "iteration": 3,
-      "status": "completed",
-      "taskId": "US-050",
-      "taskTitle": "SMS PIN verification flow",
-      "taskCompleted": true,
-      "durationMs": 1514807,
-      "startedAt": "2026-02-20T00:20:11.336Z",
-      "endedAt": "2026-02-20T00:45:26.143Z"
-    },
-    {
-      "iteration": 4,
-      "status": "completed",
-      "taskId": "US-051",
-      "taskTitle": "Vault access for verified sitters",
-      "taskCompleted": true,
-      "durationMs": 764759,
-      "startedAt": "2026-02-20T00:45:26.278Z",
-      "endedAt": "2026-02-20T00:58:11.037Z"
-    },
-    {
-      "iteration": 5,
-      "status": "completed",
-      "taskId": "US-052",
-      "taskTitle": "Vault access logging",
-      "taskCompleted": true,
-      "durationMs": 364248,
-      "startedAt": "2026-02-20T00:58:11.172Z",
-      "endedAt": "2026-02-20T01:04:15.420Z"
-    },
-    {
-      "iteration": 6,
-      "status": "completed",
-      "taskId": "US-053",
-      "taskTitle": "Owner notification on vault access",
-      "taskCompleted": true,
-      "durationMs": 696588,
-      "startedAt": "2026-02-20T01:04:15.548Z",
-      "endedAt": "2026-02-20T01:15:52.136Z"
-    },
-    {
-      "iteration": 7,
-      "status": "completed",
-      "taskId": "US-054",
-      "taskTitle": "Vault auto-expiration on trip end",
-      "taskCompleted": true,
-      "durationMs": 212941,
-      "startedAt": "2026-02-20T01:15:52.283Z",
-      "endedAt": "2026-02-20T01:19:25.224Z"
-    },
-    {
-      "iteration": 8,
-      "status": "completed",
-      "taskId": "US-055",
-      "taskTitle": "One-click vault access revocation",
-      "taskCompleted": true,
-      "durationMs": 355411,
-      "startedAt": "2026-02-20T01:19:25.378Z",
-      "endedAt": "2026-02-20T01:25:20.789Z"
-    }
-  ],
+  "iterations": [],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 
 const statusValidator = v.optional(
   v.union(v.literal("draft"), v.literal("published")),
@@ -25,12 +26,18 @@ export const create = mutation({
   },
   returns: v.id("properties"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("properties", {
+    const propertyId = await ctx.db.insert("properties", {
       name: args.name,
       address: args.address,
       photo: args.photo,
       ownerId: args.ownerId,
     });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.emergencyContacts.createDefaultContacts,
+      { propertyId },
+    );
+    return propertyId;
   },
 });
 
@@ -103,12 +110,18 @@ export const createOrUpdate = mutation({
       return existing._id;
     }
 
-    return await ctx.db.insert("properties", {
+    const propertyId = await ctx.db.insert("properties", {
       name: args.name,
       address: args.address,
       photo: args.photo,
       ownerId: args.ownerId,
     });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.emergencyContacts.createDefaultContacts,
+      { propertyId },
+    );
+    return propertyId;
   },
 });
 

@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
@@ -103,16 +103,44 @@ export const reorderContacts = mutation({
   },
 });
 
+// Internal mutation called during property creation to pre-seed ASPCA Poison Control.
+export const createDefaultContacts = internalMutation({
+  args: { propertyId: v.id("properties") },
+  returns: v.null(),
+  handler: async (ctx, { propertyId }) => {
+    const locked = await ctx.db
+      .query("emergencyContacts")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .filter((q) => q.eq(q.field("isLocked"), true))
+      .first();
+
+    if (locked) return null;
+
+    await ctx.db.insert("emergencyContacts", {
+      propertyId,
+      name: "ASPCA Animal Poison Control",
+      role: "Animal Poison Control",
+      phone: "888-426-4435",
+      isLocked: true,
+      sortOrder: 0,
+    });
+
+    return null;
+  },
+});
+
 export const seedDefaults = mutation({
   args: { propertyId: v.id("properties") },
   returns: v.null(),
   handler: async (ctx, { propertyId }) => {
-    const existing = await ctx.db
+    // Only seed if ASPCA (the locked slot) is not yet present
+    const locked = await ctx.db
       .query("emergencyContacts")
       .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+      .filter((q) => q.eq(q.field("isLocked"), true))
       .first();
 
-    if (existing) return null;
+    if (locked) return null;
 
     const defaults = [
       {

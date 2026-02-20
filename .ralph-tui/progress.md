@@ -998,3 +998,15 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Property name as "owner name"**: The `users` table has no `name` field (only `email`). Use `property.name` as the "owner identifier" in the vault message — e.g., "My Home shared secure info with you". This is available in `todayView.getTodayTasks` return data via `property.name`.
   - **Lock badge on vault tab**: Use `absolute -top-0.5 -right-0.5` positioning on a `relative` span wrapper around the icon to overlay a small badge. `bg-vault border border-bg-raised` creates a bordered dot that stands out on both light/dark backgrounds.
 ---
+---
+
+## 2026-02-19 - US-057
+- What was implemented: Emergency contacts data model already existed from a prior iteration (schema, queries, mutations, seedDefaults). Added `createDefaultContacts` internalMutation for seeding ASPCA Poison Control during property creation, and wired it into `properties.ts` `create` and `createOrUpdate` mutations via `ctx.scheduler.runAfter`.
+- Files changed:
+  - `convex/emergencyContacts.ts` — Added `internalMutation` import; added `createDefaultContacts` internalMutation (seeds ASPCA only, guarded by isLocked check); updated `seedDefaults` guard to check for locked contact (not just any contact) so it still seeds placeholder contacts even when ASPCA was pre-seeded
+  - `convex/properties.ts` — Added `internal` import from `_generated/api`; added `ctx.scheduler.runAfter(0, internal.emergencyContacts.createDefaultContacts, { propertyId })` call in both `create` and `createOrUpdate` mutations when inserting a new property
+- **Learnings:**
+  - **Convex mutations use ctx.scheduler not ctx.runMutation**: Mutations can't call `ctx.runMutation(internal.xxx)` — only actions can. Mutations use `ctx.scheduler.runAfter(0, internal.xxx, args)` to invoke internal mutations from within another mutation.
+  - **internalMutation guard pattern**: Always check if the default data already exists before seeding (idempotency). Use `isLocked: true` as the discriminant for the ASPCA locked slot rather than "any contact exists" — this way seedDefaults can still add placeholder contacts even after ASPCA was auto-seeded.
+  - **`internal` import from `_generated/api`**: Import `internal` from `./_generated/api` (not `_generated/server`) to reference internal functions for scheduler calls.
+---

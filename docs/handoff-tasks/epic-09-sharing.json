@@ -114,17 +114,18 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement getTripByShareLink query as a state machine returning one of: { status: 'PASSWORD_REQUIRED' }, { status: 'NOT_STARTED', startDate, propertyName, petNames[] }, { status: 'ACTIVE', tripId, propertyId }, { status: 'EXPIRED' } — never returning trip data before authorization. Load /nextjs-best-practices to implement src/app/t/[shareLink]/page.tsx as a client component that reads the query status and renders the appropriate state: password gate, not-yet-started preview, Today View, or expired message. Ensure no smart-app-banner meta tags are added and there is no 'Add to Home Screen' prompt visible on first load. Load /tailwind-design-system to render the not-yet-started state as a warm preview card (bg-bg-raised rounded-xl shadow-md) showing the property name in font-display, pet names as secondary badges, and 'Your stay starts [date]' in font-body text-text-muted — a welcoming preview without any sensitive data. The SitterLayout bottom nav (Today, Manual, Vault, Contacts) should be present on all active trip screens. Use /dev-browser to verify: opening the link without a session shows the correct state, a future-dated trip shows the preview card, an active trip lands on Today View, an expired link shows the ended message, and all four bottom nav tabs are present and navigable.",
       "dependsOn": [
         "US-046",
         "US-064",
         "US-065",
         "US-016"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T15:42:16.654Z"
+    "updatedAt": "2026-02-20T15:56:14.659Z"
   }
 }

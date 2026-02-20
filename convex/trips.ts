@@ -273,6 +273,129 @@ export const _getById = internalQuery({
   },
 });
 
+// Public state-machine query for the sitter view router.
+// Returns the appropriate state without ever exposing sensitive fields like linkPassword.
+export const getTripByShareLink = query({
+  args: { shareLink: v.string() },
+  returns: v.union(
+    v.null(), // Not found / revoked
+    v.object({ status: v.literal("EXPIRED") }),
+    v.object({ status: v.literal("PASSWORD_REQUIRED"), tripId: v.id("trips") }),
+    v.object({
+      status: v.literal("NOT_STARTED"),
+      startDate: v.string(),
+      propertyName: v.string(),
+      petNames: v.array(v.string()),
+    }),
+    v.object({
+      status: v.literal("ACTIVE"),
+      tripId: v.id("trips"),
+      propertyId: v.id("properties"),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const trip = await ctx.db
+      .query("trips")
+      .withIndex("by_share_link", (q) => q.eq("shareLink", args.shareLink))
+      .first();
+    if (!trip) return null;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Expired: explicit status, completed, past linkExpiry, or endDate passed
+    if (
+      trip.status === "expired" ||
+      trip.status === "completed" ||
+      (trip.linkExpiry !== undefined && trip.linkExpiry < Date.now()) ||
+      trip.endDate < today
+    ) {
+      return { status: "EXPIRED" as const };
+    }
+
+    // Password-protected: gate before revealing any trip details
+    if (trip.linkPassword) {
+      return { status: "PASSWORD_REQUIRED" as const, tripId: trip._id };
+    }
+
+    // Not yet started
+    if (trip.startDate > today) {
+      const property = await ctx.db.get(trip.propertyId);
+      const pets = await ctx.db
+        .query("pets")
+        .withIndex("by_property_sort", (q) => q.eq("propertyId", trip.propertyId))
+        .collect();
+      return {
+        status: "NOT_STARTED" as const,
+        startDate: trip.startDate,
+        propertyName: property?.name ?? "Your stay",
+        petNames: pets.map((p) => p.name),
+      };
+    }
+
+    return {
+      status: "ACTIVE" as const,
+      tripId: trip._id,
+      propertyId: trip.propertyId,
+    };
+  },
+});
+
+// Called after password / session verification to determine trip state.
+// Assumes the caller has already authenticated; never checks linkPassword.
+export const getSitterTripState = query({
+  args: { tripId: v.id("trips") },
+  returns: v.union(
+    v.null(),
+    v.object({ status: v.literal("EXPIRED") }),
+    v.object({
+      status: v.literal("NOT_STARTED"),
+      startDate: v.string(),
+      propertyName: v.string(),
+      petNames: v.array(v.string()),
+    }),
+    v.object({
+      status: v.literal("ACTIVE"),
+      tripId: v.id("trips"),
+      propertyId: v.id("properties"),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const trip = await ctx.db.get(args.tripId);
+    if (!trip) return null;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    if (
+      trip.status === "expired" ||
+      trip.status === "completed" ||
+      (trip.linkExpiry !== undefined && trip.linkExpiry < Date.now()) ||
+      trip.endDate < today
+    ) {
+      return { status: "EXPIRED" as const };
+    }
+
+    if (trip.startDate > today) {
+      const property = await ctx.db.get(trip.propertyId);
+      const pets = await ctx.db
+        .query("pets")
+        .withIndex("by_property_sort", (q) => q.eq("propertyId", trip.propertyId))
+        .collect();
+      return {
+        status: "NOT_STARTED" as const,
+        startDate: trip.startDate,
+        propertyName: property?.name ?? "Your stay",
+        petNames: pets.map((p) => p.name),
+      };
+    }
+
+    return {
+      status: "ACTIVE" as const,
+      tripId: trip._id,
+      propertyId: trip.propertyId,
+    };
+  },
+});
+
 // Internal: clear the linkPassword field on a trip.
 export const _clearLinkPassword = internalMutation({
   args: { tripId: v.id("trips") },

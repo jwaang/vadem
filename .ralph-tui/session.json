@@ -3,10 +3,10 @@
   "sessionId": "85c90de5-9eff-48e1-a9da-ba95574f6700",
   "status": "running",
   "startedAt": "2026-02-20T14:02:53.729Z",
-  "updatedAt": "2026-02-20T15:42:16.656Z",
-  "currentIteration": 3,
+  "updatedAt": "2026-02-20T15:56:14.661Z",
+  "currentIteration": 4,
   "maxIterations": 10,
-  "tasksCompleted": 3,
+  "tasksCompleted": 4,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -35,8 +35,8 @@
       {
         "id": "US-066",
         "title": "Regenerate/revoke link",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-067",
@@ -76,6 +76,16 @@
       "durationMs": 3754583,
       "startedAt": "2026-02-20T14:31:00.237Z",
       "endedAt": "2026-02-20T15:33:34.820Z"
+    },
+    {
+      "iteration": 4,
+      "status": "completed",
+      "taskId": "US-066",
+      "taskTitle": "Regenerate/revoke link",
+      "taskCompleted": true,
+      "durationMs": 521691,
+      "startedAt": "2026-02-20T15:33:34.960Z",
+      "endedAt": "2026-02-20T15:42:16.651Z"
     }
   ],
   "skippedTaskIds": [],

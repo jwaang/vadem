@@ -1167,3 +1167,17 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Re-share prompt after regeneration**: Set `showResharePrompt = true` after successful reset to show a `text-secondary font-semibold` hint that the new link needs to be shared again. Reset it when user enters the confirmation flow.
   - **Null case in TodayPageResolver**: The backward-compat fallback `<TodayPageInner tripId={shareLink} />` was replaced with a proper "no longer valid" state. When `getByShareLink` returns null (old slug no longer in DB), sitters now see a clean "This link is no longer valid" message instead of hitting the error boundary via an invalid trip ID.
 ---
+
+## 2026-02-20 - US-067
+- Implemented sitter view routing as a proper state machine
+- **Files changed:**
+  - `convex/trips.ts` — Added `getTripByShareLink` public query (state machine returning `null | EXPIRED | PASSWORD_REQUIRED | NOT_STARTED | ACTIVE`) and `getSitterTripState` query (same states minus PASSWORD_REQUIRED, called after password auth). Both join pets (`by_property_sort` index) and properties tables to include `propertyName` and `petNames[]` in NOT_STARTED state.
+  - `src/app/t/[tripId]/TodayPageClient.tsx` — Replaced `getByShareLink` with `getTripByShareLink`; added `NotStartedState` component (warm preview card: property name in `font-display`, pet names as `bg-secondary-light rounded-pill` badges, start date in `font-body text-text-muted`); added `PostAuthTripView` component (calls `getSitterTripState`, routes to `NotStartedState` or `TodayPageInner`); updated `PasswordProtectedResolver` to use `PostAuthTripView` after verification; renamed `ExpiredState` message to "This handoff has ended".
+- **Learnings:**
+  - **State machine query pattern for public sitter routes**: Use a single `getTripByShareLink` discriminated union query that never exposes sensitive fields (linkPassword hash, etc). Gate behind `PASSWORD_REQUIRED` before revealing `NOT_STARTED` preview data.
+  - **Post-auth state check with getSitterTripState**: After password/session verification, call a separate `getSitterTripState(tripId)` to determine NOT_STARTED vs ACTIVE — avoids re-checking password and keeps concerns separated.
+  - **Pets index for property lookup**: Pets table uses `by_property_sort` index on `["propertyId", "sortOrder"]` (not a plain `by_property` index). Use this for property-scoped pet queries.
+  - **formatStartDate with explicit parts**: Parse "YYYY-MM-DD" string as `new Date(year, month-1, day)` (local time) rather than `new Date(dateStr)` (UTC) to avoid off-by-one timezone issues when formatting for display.
+  - **Service worker already in place**: `public/sw.js` + `ServiceWorkerRegistrar` component registered at root layout handle offline caching. No additional setup needed for this story.
+  - **No smart-app-banner**: `appleWebApp: { capable: true }` in layout metadata does NOT add `apple-itunes-app` meta tag (which is the actual Smart App Banner). Only `apple-mobile-web-app-title` and `apple-mobile-web-app-status-bar-style` tags are added.
+---

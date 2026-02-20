@@ -364,7 +364,7 @@ function formatActivityTimestamp(createdAt: number): string {
 function eventToActivityType(event: string): ActivityType {
   if (event === "vault_accessed") return "vault";
   if (event === "task_completed") return "task";
-  if (event === "proof_submitted") return "proof";
+  if (event === "proof_uploaded") return "proof";
   return "view";
 }
 
@@ -373,15 +373,19 @@ function eventToAction(event: string, vaultItemLabel?: string): string {
     return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
   }
   if (event === "task_completed") return "completed a task";
-  if (event === "proof_submitted") return "submitted a proof photo";
+  if (event === "proof_uploaded") return "submitted a proof photo";
   if (event === "trip_expired") return "trip expired";
   return event.replace(/_/g, " ");
 }
 
 // ── Activity Feed (inner — uses Convex hooks) ──────────────────────────
 
+type FeedFilter = "all" | "task_completed" | "proof_uploaded";
+
 function ActivityFeedSectionInner() {
   const { user } = useAuth();
+  const [filter, setFilter] = useState<FeedFilter>("all");
+
   const sessionData = useQuery(
     api.auth.validateSession,
     user?.token ? { token: user.token } : "skip",
@@ -392,41 +396,86 @@ function ActivityFeedSectionInner() {
     userId ? { ownerId: userId } : "skip",
   );
   const propertyId = properties?.[0]?._id;
-  const events = useQuery(
-    api.activityLog.getActivityFeed,
-    propertyId ? { propertyId, limit: 10 } : "skip",
+
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local TZ
+  const summary = useQuery(
+    api.activityLog.getTodayTaskSummary,
+    propertyId ? { propertyId, date: today } : "skip",
   );
 
-  if (events === undefined) {
-    return (
-      <p className="font-body text-xs text-text-muted px-5 py-4">Loading activity…</p>
-    );
-  }
+  const events = useQuery(
+    api.activityLog.getActivityFeed,
+    propertyId
+      ? {
+          propertyId,
+          limit: 20,
+          eventType: filter === "all" ? undefined : filter,
+        }
+      : "skip",
+  );
 
-  if (events.length === 0) {
-    return (
-      <div className="px-5 py-4 flex items-center gap-2">
-        <ClockIcon className="text-text-muted" />
-        <p className="font-body text-xs text-text-muted">
-          Sitter activity will appear here once your first trip is active
-        </p>
-      </div>
-    );
-  }
+  const chips: { label: string; value: FeedFilter }[] = [
+    { label: "All", value: "all" },
+    { label: "Tasks", value: "task_completed" },
+    { label: "Proof", value: "proof_uploaded" },
+  ];
 
   return (
-    <div className="px-5 pt-1 pb-1">
-      {events.map((event, index) => (
-        <ActivityFeedItem
-          key={event._id}
-          type={eventToActivityType(event.event)}
-          name={event.sitterName ?? "Sitter"}
-          action={eventToAction(event.event, event.vaultItemLabel)}
-          timestamp={formatActivityTimestamp(event.createdAt)}
-          hideBorder={index === events.length - 1}
-        />
-      ))}
-    </div>
+    <>
+      {/* Filter chips row with today summary badge */}
+      <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {chips.map((chip) => (
+            <button
+              key={chip.value}
+              type="button"
+              onClick={() => setFilter(chip.value)}
+              className={[
+                "font-body text-xs font-semibold rounded-pill px-3 py-1 border transition-colors duration-150",
+                filter === chip.value
+                  ? "bg-primary text-text-on-primary border-primary"
+                  : "bg-bg text-text-secondary border-border-default hover:border-border-strong",
+              ].join(" ")}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+        {summary && (
+          <span className="font-body text-sm bg-secondary-light text-secondary rounded-pill px-3 py-0.5 shrink-0">
+            {summary.completed} of {summary.total} done
+          </span>
+        )}
+      </div>
+
+      {/* Feed items */}
+      {events === undefined ? (
+        <p className="font-body text-xs text-text-muted px-5 py-4">Loading activity…</p>
+      ) : events.length === 0 ? (
+        <div className="px-5 py-4 flex items-center gap-2">
+          <ClockIcon className="text-text-muted" />
+          <p className="font-body text-xs text-text-muted">
+            {filter === "all"
+              ? "Sitter activity will appear here once your first trip is active"
+              : `No ${filter === "task_completed" ? "task" : "proof"} events yet`}
+          </p>
+        </div>
+      ) : (
+        <div className="px-5 pt-1 pb-2">
+          {events.map((event, index) => (
+            <ActivityFeedItem
+              key={event._id}
+              type={eventToActivityType(event.event)}
+              name={event.sitterName ?? "Sitter"}
+              action={eventToAction(event.event, event.vaultItemLabel)}
+              timestamp={formatActivityTimestamp(event.createdAt)}
+              hideBorder={index === events.length - 1}
+              proofPhotoUrl={event.proofPhotoUrl}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 

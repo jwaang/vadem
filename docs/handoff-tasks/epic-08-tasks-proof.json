@@ -68,15 +68,16 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to write getActivityForTrip query with an optional eventType filter parameter ('task_completed', 'proof_uploaded', or undefined for all), using the ActivityLog index on tripId+timestamp. Write getTodayTaskSummary query returning { completed: number, total: number } for the dashboard badge. Load /tailwind-design-system to render using the ActivityFeedItem component (US-018) for each event: sage dot for task_completed, amber dot for proof_uploaded. Proof photo appears as a 64px rounded-md thumbnail below the event text, tappable to open the full-screen viewer from US-039. Render the dashboard summary as a pill badge (bg-secondary-light text-secondary rounded-pill font-body text-sm) showing 'X of Y done'. Add filter chips above the feed (All / Tasks / Proof) using rounded-pill chips that toggle the eventType param. Use /dev-browser to verify: activity feed shows task completion events with sitter name and relative timestamp, proof photos appear as thumbnails and expand on tap, the dashboard shows the accurate X/Y count, and filter chips correctly narrow the feed.",
       "dependsOn": [
         "US-018",
         "US-061"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T05:04:40.903Z"
+    "updatedAt": "2026-02-20T06:39:43.710Z"
   }
 }

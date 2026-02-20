@@ -3,10 +3,10 @@
   "sessionId": "b68c2acc-61f7-443a-976b-139211f9e42c",
   "status": "running",
   "startedAt": "2026-02-20T04:25:08.492Z",
-  "updatedAt": "2026-02-20T05:04:40.904Z",
-  "currentIteration": 1,
+  "updatedAt": "2026-02-20T06:39:43.713Z",
+  "currentIteration": 2,
   "maxIterations": 10,
-  "tasksCompleted": 1,
+  "tasksCompleted": 2,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -23,8 +23,8 @@
       {
         "id": "US-061",
         "title": "Photo proof upload",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-062",
@@ -44,6 +44,16 @@
       "durationMs": 837214,
       "startedAt": "2026-02-20T04:25:18.701Z",
       "endedAt": "2026-02-20T04:39:15.915Z"
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "taskId": "US-061",
+      "taskTitle": "Photo proof upload",
+      "taskCompleted": true,
+      "durationMs": 1524839,
+      "startedAt": "2026-02-20T04:39:16.062Z",
+      "endedAt": "2026-02-20T05:04:40.901Z"
     }
   ],
   "skippedTaskIds": [],

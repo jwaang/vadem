@@ -112,11 +112,23 @@ export const completeTask = mutation({
     const completedAt = Date.now();
     // YYYY-MM-DD in UTC — close enough for daily task grouping
     const date = new Date(completedAt).toISOString().split("T")[0];
-    return await ctx.db.insert("taskCompletions", {
+    const completionId = await ctx.db.insert("taskCompletions", {
       ...args,
       completedAt,
       date,
     });
+    // Log task_completed activity event
+    const trip = await ctx.db.get(args.tripId);
+    if (trip) {
+      await ctx.db.insert("activityLog", {
+        tripId: args.tripId,
+        propertyId: trip.propertyId,
+        event: "task_completed",
+        sitterName: args.sitterName || undefined,
+        createdAt: completedAt,
+      });
+    }
+    return completionId;
   },
 });
 
@@ -150,7 +162,7 @@ export const completeTaskWithProof = mutation({
       date,
       proofPhotoUrl,
     });
-    // Log proof_uploaded activity event
+    // Log proof_uploaded activity event (with proof URL for feed thumbnail)
     const trip = await ctx.db.get(args.tripId);
     if (trip) {
       await ctx.db.insert("activityLog", {
@@ -158,6 +170,7 @@ export const completeTaskWithProof = mutation({
         propertyId: trip.propertyId,
         event: "proof_uploaded",
         sitterName: args.sitterName || undefined,
+        proofPhotoUrl,
         createdAt: completedAt,
       });
     }

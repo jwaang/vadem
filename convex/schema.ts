@@ -198,6 +198,7 @@ export default defineSchema({
     sitterName: v.optional(v.string()),
     vaultItemId: v.optional(v.id("vaultItems")),
     vaultItemLabel: v.optional(v.string()),
+    proofPhotoUrl: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_trip", ["tripId"])

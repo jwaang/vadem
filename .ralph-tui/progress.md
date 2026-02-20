@@ -1079,3 +1079,18 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Activity log from mutation**: Mutations can directly `ctx.db.insert("activityLog", ...)` — no separate internal mutation needed. Just look up the trip first to get `propertyId`.
   - **File input not present before trip loads**: The hidden file input lives inside `SitterLayout`, after the `if (data === null) return <TripNotFound />` guard. This is correct — no file input on the "Trip not found" screen.
 ---
+
+## 2026-02-20 - US-062
+- Implemented owner task completion view and proof feed in dashboard
+- **Files changed:**
+  - `convex/schema.ts` — Added `proofPhotoUrl: v.optional(v.string())` to `activityLog` table for proof thumbnail storage
+  - `convex/taskCompletions.ts` — Updated `completeTask` mutation to log `task_completed` event to `activityLog` (was missing before); updated `completeTaskWithProof` to include `proofPhotoUrl` in the `proof_uploaded` log entry
+  - `convex/activityLog.ts` — Updated `getActivityFeed` with optional `eventType` filter param (fetches more, filters, slices); updated `activityLogEntryValidator` to include `proofPhotoUrl`; added `getTodayTaskSummary` query (takes `propertyId` + `date`, looks up active trip, counts completions via `by_trip_date` index, counts recurring instructions + today's overlay items, returns `{ completed, total } | null`)
+  - `src/components/ui/ActivityFeedItem.tsx` — Added `"use client"` directive; added optional `proofPhotoUrl` prop; renders 64px `rounded-md` thumbnail below event text; clicking opens full-screen overlay with pinch-to-zoom support and close button
+  - `src/app/dashboard/page.tsx` — Fixed `eventToActivityType`/`eventToAction` (`proof_submitted` → `proof_uploaded`); added `FeedFilter` type and filter chips (All/Tasks/Proof) inside `ActivityFeedSectionInner`; added `getTodayTaskSummary` inline in `ActivityFeedSectionInner` (already has `propertyId` from auth chain); renders "X of Y done" badge alongside filter chips when an active trip exists; passes `proofPhotoUrl` to `ActivityFeedItem`
+- **Learnings:**
+  - **Don't call prop callbacks during render**: Using `onPropertyId?.(propertyId)` inline during render to surface data to a parent causes "Cannot update a component while rendering" React errors. Instead, put the badge component that needs `propertyId` inside the child that already has it — no callback needed, no state lifting required.
+  - **`by_property` index for filtered queries**: When filtering by `eventType` in `getActivityFeed`, Convex can't use a compound index (by_property + event). Fetch more rows from `by_property` index and filter client-side in the handler. Fetch `limit * 5` to get enough after filtering, capped at 200.
+  - **New Convex functions require deployment before browser testing**: New Convex functions added to existing modules aren't automatically available until `convex dev --once` or `convex deploy` is run. The browser will show "Could not find public function" errors until then. Run `node_modules/.bin/convex dev --once` to push changes to the dev deployment for browser verification.
+  - **`getTodayTaskSummary` scan for everyday overlay items**: Overlay items with no `date` field are excluded from `by_trip_date` index when filtering `.eq("date", someValue)`. To include them, query all overlay items for the trip via the index prefix `q.eq("tripId", ...)` then filter client-side with `.filter(i => !i.date || i.date === args.date)`.
+---

@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Doc, Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
+import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
@@ -20,11 +21,28 @@ const CONTACT_ROLES = [
   "Custom",
 ] as const;
 
-// Shared styles matching Input component's fieldBase
 const selectBase =
   "w-full font-body text-base leading-normal text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md p-3 outline-none transition-[border-color,box-shadow,background-color] duration-150 ease-out hover:border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)] appearance-none";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
 
 function LockIcon({ size = 16 }: { size?: number }) {
   return (
@@ -242,7 +260,6 @@ function EditableContactCard({
   const [justSaved, setJustSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Only reset form when contact identity changes (not on every Convex update)
   useEffect(() => {
     setForm({
       name: contact.name,
@@ -333,7 +350,7 @@ function EditableContactCard({
               <button
                 type="button"
                 onClick={onRemove}
-                className="font-body text-xs font-semibold text-danger hover:text-danger bg-bg-raised border border-danger rounded-md px-3 py-1.5 transition-colors duration-150"
+                className="font-body text-xs font-semibold text-danger bg-bg-raised border border-danger rounded-md px-3 py-1.5 transition-colors duration-150"
               >
                 Yes, remove
               </button>
@@ -398,9 +415,9 @@ function EditableContactCard({
   );
 }
 
-// ── Main Step4Contacts ────────────────────────────────────────────────────────
+// ── Inner (requires Convex) ───────────────────────────────────────────────────
 
-export default function Step4Contacts() {
+function ContactsEditorInner() {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -429,7 +446,6 @@ export default function Step4Contacts() {
   const seededRef = useRef(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // Seed default contacts when the property has none
   useEffect(() => {
     if (
       contacts !== undefined &&
@@ -491,7 +507,7 @@ export default function Step4Contacts() {
     });
   };
 
-  const handleAddAnother = () => {
+  const handleAddContact = () => {
     if (!propertyId || !contacts) return;
     const maxSortOrder = contacts.reduce(
       (max, c) => Math.max(max, c.sortOrder),
@@ -512,90 +528,103 @@ export default function Step4Contacts() {
   const isLoading = contacts === undefined;
 
   return (
-    <div className="p-6 flex flex-col gap-6">
-      {/* Step heading */}
-      <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl text-text-primary leading-tight">
-          Emergency contacts
-        </h1>
-        <p className="font-body text-sm text-text-secondary">
-          Add contacts your sitter can reach quickly in an emergency.
-        </p>
-      </div>
-
-      {generalError && (
-        <div
-          role="alert"
-          className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
-        >
-          {generalError}
+    <CreatorLayout activeNav="property">
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="inline-flex items-center gap-1.5 font-body text-sm text-text-muted hover:text-text-primary transition-colors duration-150 self-start"
+          >
+            <ChevronLeftIcon />
+            My Property
+          </button>
+          <div className="flex flex-col gap-1">
+            <h1 className="font-display text-4xl text-text-primary leading-tight">
+              Emergency contacts
+            </h1>
+            <p className="font-body text-sm text-text-secondary">
+              Add contacts your sitter can reach quickly in an emergency.
+            </p>
+          </div>
         </div>
-      )}
 
-      {/* Contact list */}
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-16 rounded-lg bg-bg-sunken animate-pulse"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {contacts.map((contact, index) =>
-            contact.isLocked ? (
-              <LockedContactCard key={contact._id} contact={contact} />
-            ) : (
-              <EditableContactCard
-                key={contact._id}
-                contact={contact}
-                onUpdate={(data) => handleUpdate(contact._id, data)}
-                onRemove={() => handleRemove(contact._id)}
-                onMoveUp={() => handleMoveUp(index)}
-                onMoveDown={() => handleMoveDown(index)}
-                canMoveUp={index > 0 && !contacts[index - 1].isLocked}
-                canMoveDown={index < contacts.length - 1}
+        {generalError && (
+          <div
+            role="alert"
+            className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
+          >
+            {generalError}
+          </div>
+        )}
+
+        {/* Contact list */}
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-16 rounded-lg bg-bg-sunken animate-pulse"
               />
-            ),
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {contacts.map((contact, index) =>
+              contact.isLocked ? (
+                <LockedContactCard key={contact._id} contact={contact} />
+              ) : (
+                <EditableContactCard
+                  key={contact._id}
+                  contact={contact}
+                  onUpdate={(data) => handleUpdate(contact._id, data)}
+                  onRemove={() => handleRemove(contact._id)}
+                  onMoveUp={() => handleMoveUp(index)}
+                  onMoveDown={() => handleMoveDown(index)}
+                  canMoveUp={index > 0 && !contacts[index - 1].isLocked}
+                  canMoveDown={index < contacts.length - 1}
+                />
+              ),
+            )}
+          </div>
+        )}
 
-      {/* Add another */}
-      {!isLoading && (
-        <button
-          type="button"
-          onClick={handleAddAnother}
-          className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-secondary hover:bg-secondary-subtle transition-[border-color,background-color] duration-150 font-body text-sm font-semibold text-text-primary"
-        >
-          <PlusIcon />
-          Add another contact
-        </button>
-      )}
+        {/* Add contact */}
+        {!isLoading && (
+          <button
+            type="button"
+            onClick={handleAddContact}
+            className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-secondary hover:bg-secondary-subtle transition-[border-color,background-color] duration-150 font-body text-sm font-semibold text-text-primary"
+          >
+            <PlusIcon />
+            Add contact
+          </button>
+        )}
 
-      {/* ASPCA note */}
-      {!isLoading && (
-        <p className="font-body text-xs text-text-muted text-center">
-          🔒 ASPCA Animal Poison Control is always included and cannot be removed.
-        </p>
-      )}
-
-      {/* Navigation */}
-      <div className="flex flex-col gap-3 pt-2">
-        <Button size="lg" className="w-full" onClick={() => router.push("/wizard/5")}>
-          Next
-        </Button>
-        <Button
-          variant="ghost"
-          size="default"
-          className="w-full"
-          onClick={() => router.push("/wizard/5")}
-        >
-          Skip — add later
-        </Button>
+        {/* ASPCA note */}
+        {!isLoading && (
+          <p className="font-body text-xs text-text-muted text-center">
+            🔒 ASPCA Animal Poison Control is always included and cannot be removed.
+          </p>
+        )}
       </div>
-    </div>
+    </CreatorLayout>
   );
+}
+
+// ── Outer (env guard) ─────────────────────────────────────────────────────────
+
+export default function ContactsEditor() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) {
+    return (
+      <CreatorLayout activeNav="property">
+        <p className="font-body text-xs text-text-muted">
+          Convex not configured. Set up NEXT_PUBLIC_CONVEX_URL to manage contacts.
+        </p>
+      </CreatorLayout>
+    );
+  }
+  return <ContactsEditorInner />;
 }

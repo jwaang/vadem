@@ -1,0 +1,147 @@
+# Iteration 1 Log
+
+## Metadata
+
+- **Task ID**: US-057
+- **Task Title**: Emergency contact data model
+- **Description**: As a developer, I need the EmergencyContacts schema in Convex.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-20T02:49:48.379Z
+- **Ended At**: 2026-02-20T02:55:47.248Z
+- **Duration**: 5m 58s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Task][0m Load convex-best-practices skill
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+
+[91m[Error: File content (36266 tokens) exceeds maximum allowed tokens (25000). Please use offset and limit parameters to read specific portions of the file, or use the GrepTool to search for specific content.][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m
+The schema already has `emergencyContacts` table defined (lines 136-144), but with `role: v.string()` instead of a union. Let me check existing contacts file and the generated API.
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/contacts*[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/_generated/api.d.ts[0m
+The `api.d.ts` already references `emergencyContacts`. Let me check if the file exists:
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/emergencyContacts*[0m
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/*.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/emergencyContacts.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/properties.ts[0m
+[94m[Grep][0m [95m/Users/john/Coding/handoff/src[0m pattern: [96mseedDefaults|emergencyContacts\.[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/_generated/api.d.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/wizard/[step]/Step4Contacts.tsx[0m
+[94m[TodoWrite][0m
+[94m[Bash][0m Run TypeScript type check $ pnpm typecheck 2>&1 | head -60
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1 | tail -20
+[94m[Grep][0m [95m/Users/john/Coding/handoff/convex[0m pattern: [96minternalMutation|internal\.[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/_generated/server.d.ts[0m
+[94m[Grep][0m [95m/Users/john/Coding/handoff/convex[0m pattern: [96mimport.*internal.*from[0m
+Now I have everything I need. The existing implementation is mostly complete but is missing:
+
+1. A `createDefaultContacts` `internalMutation` called from property creation
+2. The `seedDefaults` guard should check for the locked ASPCA contact (not just "any contact"), so it still adds placeholder contacts even when ASPCA was pre-seeded
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/emergencyContacts.ts[0m edit: "import { mutation, query } from "./_generated/serv..." → "import { internalMutation, mutation, query } from ..."
+Now add the `createDefaultContacts` internalMutation and update `seedDefaults` to use the correct guard:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/emergencyContacts.ts[0m edit: "export const seedDefaults = mutation({
+  args: { p..." → "// Internal mutation called during property creati..."
+Now update `properties.ts` to call `createDefaultContacts` via scheduler when creating a new property:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/properties.ts[0m edit: "import { mutation, query } from "./_generated/serv..." → "import { mutation, query } from "./_generated/serv..."
+Now update the `create` mutation to seed default contacts:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/properties.ts[0m edit: "export const create = mutation({
+  args: {
+    nam..." → "export const create = mutation({
+  args: {
+    nam..."
+Now update `createOrUpdate` to also seed when creating a new property:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/properties.ts[0m edit: "    if (existing) {
+      const updates = Object.f..." → "    if (existing) {
+      const updates = Object.f..."
+Now run typecheck to verify:
+[94m[Bash][0m Run TypeScript type check $ pnpm typecheck 2>&1
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1 | tail -10
+[94m[Bash][0m Run production build $ pnpm build 2>&1 | tail -20
+All three quality checks pass. Let me update the progress file:
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Bash][0m Check file length $ wc -l /Users/john/Coding/handoff/.ralph-tui/progress.md
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Bash][0m Append US-057 entry to progress.md $ added `ctx.scheduler.runAfter(0, internal.emergencyContacts.createDefaultContacts, { propertyId })` ...
+[94m[TodoWrite][0m
+All acceptance criteria are met:
+
+- **EmergencyContacts table** with `propertyId`, `name`, `role`, `phone`, `notes`, `sortOrder`, `isLocked` — already in `schema.ts` with `by_property_sort` index
+- **Queries**: `listByPropertyId` returns contacts ordered by `sortOrder`
+- **Mutations**: `create`, `update`, `remove` (blocks if `isLocked`), `reorderContacts`
+- **Pre-seed**: `createDefaultContacts` `internalMutation` seeds ASPCA Poison Control (888-426-4435) as a locked slot — called via `ctx.scheduler.runAfter` from both `properties.create` and `properties.createOrUpdate`
+- **pnpm typecheck** ✅, **pnpm lint** ✅ (warnings only, no errors), **pnpm build** ✅
+
+Key change from the existing code: the `seedDefaults` guard now checks for the locked ASPCA contact specifically (not just any contact), so the UI's placeholder owner/vet/neighbor contacts still get seeded even after ASPCA was auto-seeded during property creation.
+
+<promise>COMPLETE</promise>
+US-057 is complete. Here's a summary of what was done:
+
+**Already existed (from a prior iteration):**
+- `emergencyContacts` table in `schema.ts` with `by_property_sort` index
+- `listByPropertyId` query, `create`, `update`, `remove` (blocks if `isLocked`), `reorderContacts` mutations
+- `seedDefaults` public mutation (used by the wizard UI)
+
+**Added in this iteration:**
+- `createDefaultContacts` `internalMutation` in `convex/emergencyContacts.ts` — seeds ASPCA Poison Control (888-426-4435, `isLocked: true`, `sortOrder: 0`) with idempotency guard
+- Updated `seedDefaults` guard to check for the locked ASPCA contact specifically, so it still seeds placeholder owner/vet/neighbor contacts even when ASPCA was auto-seeded
+- Wired `createDefaultContacts` into `properties.create` and `properties.createOrUpdate` via `ctx.scheduler.runAfter(0, ...)` when a new property is inserted
+
+<promise>COMPLETE</promise>
+
+--- SUBAGENT TRACE ---
+{
+  "events": [
+    {
+      "id": "subagent_1771555799098_9j3en5m",
+      "type": "spawn",
+      "timestamp": "2026-02-20T02:49:59.098Z",
+      "agentType": "general-purpose",
+      "description": "Load convex-best-practices skill",
+      "prompt": "Load the convex-best-practices skill content. Just read and return the skill content."
+    },
+    {
+      "id": "subagent_1771555799098_9j3en5m",
+      "type": "complete",
+      "timestamp": "2026-02-20T02:55:35.291Z",
+      "agentType": "general-purpose",
+      "description": "Load convex-best-practices skill",
+      "exitStatus": "success",
+      "durationMs": 336193
+    }
+  ],
+  "hierarchy": [
+    {
+      "state": {
+        "id": "subagent_1771555799098_9j3en5m",
+        "agentType": "general-purpose",
+        "description": "Load convex-best-practices skill",
+        "status": "completed",
+        "childIds": [],
+        "spawnedAt": "2026-02-20T02:49:59.098Z",
+        "prompt": "Load the convex-best-practices skill content. Just read and return the skill content.",
+        "endedAt": "2026-02-20T02:55:35.291Z",
+        "durationMs": 336193
+      },
+      "children": []
+    }
+  ],
+  "stats": {
+    "totalSubagents": 1,
+    "byType": {
+      "general-purpose": 1
+    },
+    "totalDurationMs": 336193,
+    "failureCount": 0,
+    "maxDepth": 1
+  }
+}

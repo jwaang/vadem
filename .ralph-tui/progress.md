@@ -1010,3 +1010,20 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **internalMutation guard pattern**: Always check if the default data already exists before seeding (idempotency). Use `isLocked: true` as the discriminant for the ASPCA locked slot rather than "any contact exists" — this way seedDefaults can still add placeholder contacts even after ASPCA was auto-seeded.
   - **`internal` import from `_generated/api`**: Import `internal` from `./_generated/api` (not `_generated/server`) to reference internal functions for scheduler calls.
 ---
+
+## 2026-02-19 - US-058
+- Added role dropdown (Owner, Partner, Veterinarian, Neighbor, Emergency, Custom) replacing free-text Input in Step4Contacts
+- Added inline delete confirmation UI within each editable card using `bg-danger-light` with Cancel/Yes buttons
+- Created `/dashboard/property/contacts/` page (3 files: `page.tsx`, `ContactsEditorPageClient.tsx`, `ContactsEditor.tsx`) following the vault/pets/sections pattern
+- Added "Contacts →" link in dashboard My Property section (`src/app/dashboard/page.tsx`)
+- Files changed:
+  - `src/app/wizard/[step]/Step4Contacts.tsx` — added `CONTACT_ROLES` constant, `RoleSelect` component, `showDeleteConfirm` state + inline confirmation UI
+  - `src/app/dashboard/property/contacts/ContactsEditor.tsx` — standalone dashboard editor with CreatorLayout, back nav, full contacts management
+  - `src/app/dashboard/property/contacts/ContactsEditorPageClient.tsx` — client wrapper with `dynamic(ssr:false)` 
+  - `src/app/dashboard/property/contacts/page.tsx` — server page with metadata
+  - `src/app/dashboard/page.tsx` — added Contacts link in My Property section
+- **Learnings:**
+  - **`<select>` styling with Tailwind**: Use `appearance-none` + the same `fieldBase` classes as `Input` component to get a consistent native select that matches the design system. No need for a custom Select component for simple dropdowns.
+  - **Delete confirmation inline pattern**: `showDeleteConfirm` boolean state in the card component; trash button sets it true; a `bg-danger-light` panel appears at top of the form body with Cancel/Yes buttons. The card stays open during confirmation — no modal needed.
+  - **Dashboard property page pattern**: 3-file structure — `page.tsx` (server + metadata), `<Name>PageClient.tsx` (client with `dynamic(ssr:false)`), `<Name>.tsx` (full editor with inner/outer env guard split). The inner component uses Convex hooks; outer guards with `process.env.NEXT_PUBLIC_CONVEX_URL` check.
+---

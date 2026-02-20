@@ -41,12 +41,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to wire useMutation(api.contacts.create/update/delete/reorder) and useQuery(api.contacts.getByPropertyId) with propertyId from context. Load /frontend-design to build the contacts management UI: a list of existing contacts as inline-editable cards (click to expand form fields), an 'Add contact' button that appends a blank card, a role dropdown using the 6 predefined roles, up/down arrow buttons for manual reorder (calling reorderContacts), and delete button hidden on the isLocked ASPCA card. Load /tailwind-design-system to style each contact card using bg-bg-raised rounded-lg border-border-default, a role color-coded icon (owner=primary, vet=secondary, emergency=danger, etc.) in a rounded-round 32px avatar, the phone as font-body text-secondary (matching the tap-to-call style from US-059), and a lock icon badge on the ASPCA card. Show delete confirmation inline within the card using bg-danger-light. Use /dev-browser to verify: ASPCA contact is present by default and cannot be deleted (no delete button), adding a new contact saves inline, role dropdown shows all 6 options, arrows reorder and persist on reload.",
       "dependsOn": [
         "US-057",
         "US-005"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-059",
@@ -73,6 +74,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T02:55:47.249Z"
+    "updatedAt": "2026-02-20T03:03:34.415Z"
   }
 }

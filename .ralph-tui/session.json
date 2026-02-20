@@ -3,10 +3,10 @@
   "sessionId": "6be38768-cd0d-4b97-b1b6-11cbef2d6369",
   "status": "running",
   "startedAt": "2026-02-20T02:49:32.189Z",
-  "updatedAt": "2026-02-20T02:55:47.252Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-20T03:03:34.418Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -17,8 +17,8 @@
       {
         "id": "US-057",
         "title": "Emergency contact data model",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-058",
@@ -34,7 +34,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-057",
+      "taskTitle": "Emergency contact data model",
+      "taskCompleted": true,
+      "durationMs": 358869,
+      "startedAt": "2026-02-20T02:49:48.379Z",
+      "endedAt": "2026-02-20T02:55:47.248Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

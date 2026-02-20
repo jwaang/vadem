@@ -495,6 +495,12 @@ function DashboardOverview({ email, onNavigateToTrips }: DashboardOverviewProps)
               Sections →
             </Link>
             <Link
+              href="/dashboard/property/contacts"
+              className="font-body text-xs font-semibold text-danger hover:text-text-primary transition-colors duration-150"
+            >
+              Contacts →
+            </Link>
+            <Link
               href="/dashboard/property/vault"
               className="font-body text-xs font-semibold text-vault hover:text-vault-hover transition-colors duration-150"
             >

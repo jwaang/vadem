@@ -3,10 +3,10 @@
   "sessionId": "b68c2acc-61f7-443a-976b-139211f9e42c",
   "status": "running",
   "startedAt": "2026-02-20T04:25:08.492Z",
-  "updatedAt": "2026-02-20T04:39:15.919Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-20T05:04:40.904Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -17,8 +17,8 @@
       {
         "id": "US-060",
         "title": "Task check-off (anonymous)",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-061",
@@ -34,7 +34,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-060",
+      "taskTitle": "Task check-off (anonymous)",
+      "taskCompleted": true,
+      "durationMs": 837214,
+      "startedAt": "2026-02-20T04:25:18.701Z",
+      "endedAt": "2026-02-20T04:39:15.915Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

@@ -45,12 +45,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to extend TaskCompletions to support proofPhotoUrl (a Convex storageId URL) — update the completeTask mutation to accept an optional storageId, and implement a Convex action uploadProofPhoto that calls generateUploadUrl then updates the TaskCompletion record with the storage URL. Also call logActivityEvent (US-068) inside the action with eventType='proof_uploaded'. Load /frontend-design to build the proof upload interaction on TaskItem: a camera icon button visible on tasks where proofRequired=true, which triggers a name input prompt (bottom sheet or inline) pre-filled from sessionStorage if the sitter name was previously entered, followed by an <input type='file' accept='image/*' capture='environment'>. Show an uploading spinner on the task row during upload. Load /tailwind-design-system to render the proof photo as a 48px thumbnail on the completed task row (rounded-md, object-cover), tappable to full-size. Use /dev-browser to verify: proof-required tasks show the camera icon, tapping prompts for name, selecting a photo shows upload progress, the task completion shows a thumbnail on the row, and the owner's activity feed shows the sitter name + proof photo.",
       "dependsOn": [
         "US-060",
         "US-040"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-062",
@@ -76,6 +77,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T04:39:15.917Z"
+    "updatedAt": "2026-02-20T05:04:40.903Z"
   }
 }

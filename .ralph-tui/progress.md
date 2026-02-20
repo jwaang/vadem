@@ -1051,3 +1051,31 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **React Compiler `preserve-manual-memoization`**: Wrapping functions returned from `.withOptimisticUpdate()` in `useCallback` triggers `react-hooks/preserve-manual-memoization` errors because the compiler can't prove the returned function is stable. Solution: drop `useCallback` and let the React Compiler handle memoization automatically.
   - **`completeTask` vs `create` naming**: The story specified `api.taskCompletions.completeTask` specifically. The existing `create` mutation still works but requires callers to pass `completedAt` and `date`. The new `completeTask` encapsulates those details, giving a simpler API for the toggle handler.
 ---
+
+## 2026-02-19 - US-061
+- Implemented photo proof upload for proof-required tasks in the sitter's Today View
+- **Backend** — `convex/taskCompletions.ts`:
+  - Added `completeTaskWithProof` mutation: takes `storageId`, calls `ctx.storage.getUrl()` to resolve to URL, inserts TaskCompletion with `proofPhotoUrl`, and inserts `activityLog` entry with `event: "proof_uploaded"` in a single transaction
+  - Added `_attachProof` internal mutation: patches an existing completion with proof photo URL + logs activity (for future use if task is already checked off separately)
+  - Added `internalMutation` import
+- **Frontend** — `src/components/ui/TaskItem.tsx`:
+  - Added `proofPhotoUrl?: string` prop — renders a 48px `rounded-md` thumbnail on completed task rows (tappable to full-size in new tab)
+  - Added `uploading?: boolean` prop — shows spinner icon, dims task row with `opacity-70 cursor-wait`, disables toggle while uploading
+- **Frontend** — `src/app/t/[tripId]/TodayPageInner.tsx`:
+  - Added `NamePrompt` bottom sheet — slides up from bottom, captures sitter name before first upload, pre-fills from `sessionStorage` on subsequent uploads
+  - Added hidden `<input type="file" accept="image/*" capture="environment">` via `useRef` for camera/file picker
+  - Added proof upload flow: `handleProofClick` → name prompt or direct file picker → `handleFileSelected` → `generateUploadUrl` action → `fetch` POST → `completeTaskWithProof` mutation
+  - Updated `completionMap` to `Map<string, CompletionInfo>` carrying `{ id, proofPhotoUrl }` for thumbnail display
+  - Added `uploadingTaskRef: string | null` state to show per-task spinner during upload
+  - Updated `SlotSection` to pass `proofPhotoUrl`, `uploading`, and `onProof` props through to `TaskItem`
+- Files changed:
+  - `convex/taskCompletions.ts`
+  - `src/components/ui/TaskItem.tsx`
+  - `src/app/t/[tripId]/TodayPageInner.tsx`
+- **Learnings:**
+  - **`ctx.storage.getUrl()` in mutations**: Available in mutations (not just actions/queries) — no need for a `"use node"` action just to resolve a storageId to a URL. Can do the whole flow (resolve URL + insert completion + log activity) in a single mutation.
+  - **Hidden file input via ref**: Use `useRef<HTMLInputElement>(null)` + `fileInputRef.current?.click()` to programmatically open the native camera/file picker. Reset `e.target.value = ""` after reading so the same file can be re-selected.
+  - **Proof name persistence**: `pendingProofNameRef` (a `useRef`) holds the name between the name prompt callback and the file-selected callback without triggering re-renders. Combined with `sessionStorage` for cross-session persistence.
+  - **Activity log from mutation**: Mutations can directly `ctx.db.insert("activityLog", ...)` — no separate internal mutation needed. Just look up the trip first to get `propertyId`.
+  - **File input not present before trip loads**: The hidden file input lives inside `SitterLayout`, after the `if (data === null) return <TripNotFound />` guard. This is correct — no file input on the "Trip not found" screen.
+---

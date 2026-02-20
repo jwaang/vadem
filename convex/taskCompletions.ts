@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
@@ -117,5 +117,84 @@ export const completeTask = mutation({
       completedAt,
       date,
     });
+  },
+});
+
+/**
+ * Complete a task and attach a proof photo in one step.
+ * Resolves the storageId to a public URL before storing.
+ * Also logs a proof_uploaded event to the activity feed.
+ */
+export const completeTaskWithProof = mutation({
+  args: {
+    tripId: v.id("trips"),
+    taskRef: v.string(),
+    taskType: taskTypeValidator,
+    sitterName: v.string(),
+    storageId: v.id("_storage"),
+  },
+  returns: v.id("taskCompletions"),
+  handler: async (ctx, args) => {
+    const proofPhotoUrl = await ctx.storage.getUrl(args.storageId);
+    if (!proofPhotoUrl) {
+      throw new ConvexError({ code: "STORAGE_ERROR", message: "Failed to resolve proof photo URL" });
+    }
+    const completedAt = Date.now();
+    const date = new Date(completedAt).toISOString().split("T")[0];
+    const completionId = await ctx.db.insert("taskCompletions", {
+      tripId: args.tripId,
+      taskRef: args.taskRef,
+      taskType: args.taskType,
+      sitterName: args.sitterName,
+      completedAt,
+      date,
+      proofPhotoUrl,
+    });
+    // Log proof_uploaded activity event
+    const trip = await ctx.db.get(args.tripId);
+    if (trip) {
+      await ctx.db.insert("activityLog", {
+        tripId: args.tripId,
+        propertyId: trip.propertyId,
+        event: "proof_uploaded",
+        sitterName: args.sitterName || undefined,
+        createdAt: completedAt,
+      });
+    }
+    return completionId;
+  },
+});
+
+/**
+ * Attach a proof photo to an already-completed task.
+ * Used when the sitter uploads proof after checking off the task.
+ * Internal mutation — called by the uploadProofPhoto action.
+ */
+export const _attachProof = internalMutation({
+  args: {
+    taskCompletionId: v.id("taskCompletions"),
+    storageId: v.id("_storage"),
+    tripId: v.id("trips"),
+    sitterName: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const proofPhotoUrl = await ctx.storage.getUrl(args.storageId);
+    if (!proofPhotoUrl) {
+      throw new ConvexError({ code: "STORAGE_ERROR", message: "Failed to resolve proof photo URL" });
+    }
+    await ctx.db.patch(args.taskCompletionId, { proofPhotoUrl });
+    // Log proof_uploaded activity event
+    const trip = await ctx.db.get(args.tripId);
+    if (trip) {
+      await ctx.db.insert("activityLog", {
+        tripId: args.tripId,
+        propertyId: trip.propertyId,
+        event: "proof_uploaded",
+        sitterName: args.sitterName,
+        createdAt: Date.now(),
+      });
+    }
+    return null;
   },
 });

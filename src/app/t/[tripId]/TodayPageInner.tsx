@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useRef, useState } from "react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { SitterLayout } from "@/components/layouts/SitterLayout";
@@ -27,6 +27,11 @@ interface TodayTask {
   proofRequired: boolean;
   taskRef: string;
   taskType: "recurring" | "overlay";
+}
+
+interface CompletionInfo {
+  id: Id<"taskCompletions">;
+  proofPhotoUrl?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -103,6 +108,17 @@ function getTripLength(startDate: string, endDate: string): number {
   return Math.max(1, Math.floor((end - start) / 86_400_000) + 1);
 }
 
+function getSitterName(): string {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem("handoff_sitter_name") ?? "";
+}
+
+function setSitterName(name: string): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem("handoff_sitter_name", name);
+  }
+}
+
 // ── Anytime divider (not in TimeSlotDivider component) ────────────────
 
 function AnytimeDivider() {
@@ -122,16 +138,79 @@ function AnytimeDivider() {
   );
 }
 
+// ── Name prompt modal ─────────────────────────────────────────────────
+
+interface NamePromptProps {
+  initialName: string;
+  onConfirm: (name: string) => void;
+  onCancel: () => void;
+}
+
+function NamePrompt({ initialName, onConfirm, onCancel }: NamePromptProps) {
+  const [name, setName] = useState(initialName);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(42,31,26,0.4)]"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 pb-8 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg text-text-primary">Your name</h2>
+          <button
+            type="button"
+            className="w-8 h-8 flex items-center justify-center text-text-muted rounded-round hover:bg-bg-sunken transition-colors duration-150"
+            onClick={onCancel}
+            aria-label="Cancel"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <p className="font-body text-sm text-text-secondary">
+          We&rsquo;ll attach your name to the proof photo so the owner knows who completed this task.
+        </p>
+        <input
+          type="text"
+          className="input-field"
+          placeholder="Your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onConfirm(name.trim());
+          }}
+        />
+        <button
+          type="button"
+          className="btn btn-primary w-full"
+          onClick={() => onConfirm(name.trim())}
+          disabled={name.trim().length === 0}
+        >
+          Continue to photo
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Slot section ──────────────────────────────────────────────────────
 
 interface SlotSectionProps {
   slot: SlotKey;
   tasks: TodayTask[];
-  completionMap: Map<string, Id<"taskCompletions">>;
+  completionMap: Map<string, CompletionInfo>;
+  uploadingTaskRef: string | null;
   onToggle: (task: TodayTask, currentlyCompleted: boolean, completionId?: Id<"taskCompletions">) => void;
+  onProof: (task: TodayTask) => void;
 }
 
-function SlotSection({ slot, tasks, completionMap, onToggle }: SlotSectionProps) {
+function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, onProof }: SlotSectionProps) {
   if (tasks.length === 0) return null;
 
   return (
@@ -143,16 +222,20 @@ function SlotSection({ slot, tasks, completionMap, onToggle }: SlotSectionProps)
       )}
       <div className="flex flex-col gap-2">
         {tasks.map((task) => {
-          const completionId = completionMap.get(task.taskRef);
-          const isCompleted = completionId !== undefined;
+          const completion = completionMap.get(task.taskRef);
+          const isCompleted = completion !== undefined;
+          const isUploading = uploadingTaskRef === task.taskRef;
           return (
             <TaskItem
               key={task.taskRef}
               text={task.text}
-              completed={isCompleted}
+              completed={isCompleted || isUploading}
               overlay={task.isOverlay}
-              showProof={task.proofRequired && !isCompleted}
-              onToggle={() => onToggle(task, isCompleted, completionId)}
+              showProof={task.proofRequired && !isCompleted && !isUploading}
+              proofPhotoUrl={completion?.proofPhotoUrl}
+              uploading={isUploading}
+              onToggle={() => onToggle(task, isCompleted, completion?.id)}
+              onProof={() => onProof(task)}
             />
           );
         })}
@@ -421,6 +504,13 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   // Compute today's date as YYYY-MM-DD in local timezone
   const today = new Date().toLocaleDateString("en-CA");
 
+  // Proof upload state
+  const [pendingProofTask, setPendingProofTask] = useState<TodayTask | null>(null);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [uploadingTaskRef, setUploadingTaskRef] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingProofNameRef = useRef<string>("");
+
   const data = useQuery(api.todayView.getTodayTasks, {
     tripId: tripId as Id<"trips">,
     today,
@@ -480,6 +570,9 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     },
   );
 
+  const completeTaskWithProof = useMutation(api.taskCompletions.completeTaskWithProof);
+  const generateUploadUrl = useAction(api.storage.generateUploadUrl);
+
   async function handleToggle(
     task: TodayTask,
     currentlyCompleted: boolean,
@@ -489,16 +582,80 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
       await removeCompletion({ taskCompletionId: completionId });
     } else if (!currentlyCompleted) {
       // Get sitter name from sessionStorage (empty string for truly anonymous sitters)
-      const sitterName =
-        typeof window !== "undefined"
-          ? (sessionStorage.getItem("handoff_sitter_name") ?? "")
-          : "";
+      const sitterName = getSitterName();
       await completeTask({
         tripId: tripId as Id<"trips">,
         taskRef: task.taskRef,
         taskType: task.taskType,
         sitterName,
       });
+    }
+  }
+
+  // ── Proof photo upload flow ────────────────────────────────────────
+
+  function handleProofClick(task: TodayTask) {
+    setPendingProofTask(task);
+    const name = getSitterName();
+    if (name) {
+      // Already have name — skip prompt and open file picker
+      pendingProofNameRef.current = name;
+      fileInputRef.current?.click();
+    } else {
+      setShowNamePrompt(true);
+    }
+  }
+
+  function handleNameConfirm(name: string) {
+    setSitterName(name);
+    pendingProofNameRef.current = name;
+    setShowNamePrompt(false);
+    // Open file picker after name is confirmed
+    setTimeout(() => fileInputRef.current?.click(), 50);
+  }
+
+  function handleNameCancel() {
+    setShowNamePrompt(false);
+    setPendingProofTask(null);
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !pendingProofTask) return;
+
+    // Reset the input so the same file can be re-selected if needed
+    e.target.value = "";
+
+    const task = pendingProofTask;
+    setPendingProofTask(null);
+    setUploadingTaskRef(task.taskRef);
+
+    try {
+      // 1. Get a one-time upload URL from Convex
+      const uploadUrl = await generateUploadUrl({});
+
+      // 2. Upload the file directly to Convex storage
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+      const { storageId } = (await response.json()) as { storageId: string };
+
+      // 3. Complete the task with the proof photo URL
+      const sitterName = pendingProofNameRef.current || getSitterName();
+      await completeTaskWithProof({
+        tripId: tripId as Id<"trips">,
+        taskRef: task.taskRef,
+        taskType: task.taskType,
+        sitterName,
+        storageId: storageId as Id<"_storage">,
+      });
+    } catch (err) {
+      console.error("[ProofUpload] Failed:", err);
+    } finally {
+      setUploadingTaskRef(null);
     }
   }
 
@@ -515,7 +672,7 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
       todayOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
       tomorrowRecurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
       tomorrowOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
-      completions: Array<{ _id: Id<"taskCompletions">; taskRef: string }>;
+      completions: Array<{ _id: Id<"taskCompletions">; taskRef: string; proofPhotoUrl?: string }>;
     };
 
   const sitterName = sitters[0]?.name ?? "there";
@@ -538,9 +695,9 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     : [];
   const tomorrowGroups = groupBySlot(tomorrowTasks);
 
-  // Build a map of taskRef → completion ID for O(1) lookup
-  const completionMap = new Map<string, Id<"taskCompletions">>(
-    completions.map((c) => [c.taskRef, c._id as Id<"taskCompletions">]),
+  // Build a map of taskRef → completion info for O(1) lookup
+  const completionMap = new Map<string, CompletionInfo>(
+    completions.map((c) => [c.taskRef, { id: c._id as Id<"taskCompletions">, proofPhotoUrl: c.proofPhotoUrl }]),
   );
 
   // Compute stats
@@ -563,6 +720,26 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
 
   return (
     <SitterLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {/* ── Hidden file input for proof photo ──────────────────────── */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileSelected}
+        aria-hidden="true"
+      />
+
+      {/* ── Name prompt modal ───────────────────────────────────────── */}
+      {showNamePrompt && (
+        <NamePrompt
+          initialName={getSitterName()}
+          onConfirm={handleNameConfirm}
+          onCancel={handleNameCancel}
+        />
+      )}
+
       {/* ── Vault tab ─────────────────────────────────────────────── */}
       {activeTab === "vault" && property && (
         <VaultTab
@@ -605,7 +782,9 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
                   slot={slot}
                   tasks={taskGroups[slot]}
                   completionMap={completionMap}
+                  uploadingTaskRef={uploadingTaskRef}
                   onToggle={handleToggle}
+                  onProof={handleProofClick}
                 />
               ))
             )}

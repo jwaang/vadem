@@ -44,11 +44,12 @@
         "Access control verification — password-protected links block unauthorized access"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement setLinkPassword mutation that hashes the password with bcrypt (or pbkdf2Sync from Node.js crypto, matching the authActions.ts pattern already in the codebase) and stores the hash in Trips.linkPassword. Write a verifyLinkPassword Convex action that compares the submitted password against the hash and returns a short-lived session token (store in a TripSessions table with tripId + sessionToken + expiresAt). Load /nextjs-best-practices to implement the password gate in the sitter route src/app/t/[shareLink]/page.tsx: check for a valid session token in a cookie, show the password prompt if missing or invalid. Load /tailwind-design-system to render the password prompt page using bg-bg, a centered bg-bg-raised rounded-xl shadow-md card with the Handoff wordmark in font-display, a password Input component, and a btn-primary 'Enter' button. Show incorrect password errors inline below the input in text-danger font-body. Use /dev-browser to verify: a password-protected link shows the prompt before any content, entering wrong password shows an error and allows retry, correct password reveals the Today View, and accessing the URL directly without a session shows the prompt again.",
       "dependsOn": [
         "US-063"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-065",
@@ -122,6 +123,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T14:14:53.243Z"
+    "updatedAt": "2026-02-20T14:31:00.087Z"
   }
 }

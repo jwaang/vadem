@@ -217,11 +217,21 @@ export const expireTripInternal = internalMutation({
   },
 });
 
-// Internal: fetch a trip by ID — used by vaultActions for access control checks.
+// Internal: fetch a trip by ID — used by vaultActions and shareActions for access control checks.
 export const _getById = internalQuery({
   args: { tripId: v.id("trips") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.tripId);
+  },
+});
+
+// Internal: clear the linkPassword field on a trip.
+export const _clearLinkPassword = internalMutation({
+  args: { tripId: v.id("trips") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.tripId, { linkPassword: undefined });
+    return null;
   },
 });
 

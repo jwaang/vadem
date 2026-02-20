@@ -161,16 +161,25 @@ function CheckSmallIcon() {
 interface ShareLinkPanelProps {
   tripId: string;
   initialSlug?: string;
+  initialHasPassword?: boolean;
 }
 
-function ShareLinkPanel({ tripId, initialSlug }: ShareLinkPanelProps) {
+function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: ShareLinkPanelProps) {
   const [shareSlug, setShareSlug] = useState<string | null>(initialSlug ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
 
+  // Password protection state
+  const [hasPassword, setHasPassword] = useState(initialHasPassword);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
   const generateShareLink = useAction(api.shareActions.generateShareLink);
+  const setLinkPassword = useAction(api.shareActions.setLinkPassword);
 
   useEffect(() => {
     setCanShare(typeof navigator !== "undefined" && "share" in navigator);
@@ -205,6 +214,43 @@ function ShareLinkPanel({ tripId, initialSlug }: ShareLinkPanelProps) {
       await navigator.share({ url: shareUrl, text: "Here is your Handoff!" });
     } catch {
       // dismissed
+    }
+  }
+
+  async function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passwordInput.trim()) {
+      setPasswordError("Please enter a password.");
+      return;
+    }
+    setIsSavingPassword(true);
+    setPasswordError("");
+    try {
+      await setLinkPassword({
+        tripId: tripId as Parameters<typeof setLinkPassword>[0]["tripId"],
+        password: passwordInput,
+      });
+      setHasPassword(true);
+      setShowPasswordForm(false);
+      setPasswordInput("");
+    } catch {
+      setPasswordError("Failed to set password. Please try again.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
+  async function handleRemovePassword() {
+    setIsSavingPassword(true);
+    try {
+      await setLinkPassword({
+        tripId: tripId as Parameters<typeof setLinkPassword>[0]["tripId"],
+      });
+      setHasPassword(false);
+    } catch {
+      // ignore
+    } finally {
+      setIsSavingPassword(false);
     }
   }
 
@@ -251,6 +297,95 @@ function ShareLinkPanel({ tripId, initialSlug }: ShareLinkPanelProps) {
           <Button variant="soft" size="sm" onClick={handleGenerate} disabled={isGenerating}>
             {isGenerating ? "Generating…" : "Generate share link"}
           </Button>
+        )}
+
+        {/* Password protection toggle */}
+        {shareSlug && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-border-default">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="font-body text-xs font-semibold text-text-primary">
+                  Require password to view
+                </p>
+                {hasPassword && (
+                  <p className="font-body text-xs text-success">Password set</p>
+                )}
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hasPassword || showPasswordForm}
+                disabled={isSavingPassword}
+                onClick={() => {
+                  if (hasPassword) {
+                    handleRemovePassword();
+                  } else {
+                    setShowPasswordForm((v) => !v);
+                    setPasswordError("");
+                    setPasswordInput("");
+                  }
+                }}
+                className={[
+                  "relative w-10 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none disabled:opacity-40 shrink-0",
+                  hasPassword || showPasswordForm
+                    ? "bg-secondary"
+                    : "bg-bg-sunken border border-border-strong",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "absolute top-0.5 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
+                    hasPassword || showPasswordForm ? "translate-x-4" : "translate-x-0.5",
+                  ].join(" ")}
+                  style={{ boxShadow: "var(--shadow-xs)" }}
+                />
+              </button>
+            </div>
+
+            {showPasswordForm && !hasPassword && (
+              <form onSubmit={handleSetPassword} className="flex flex-col gap-2">
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError("");
+                  }}
+                  placeholder="Set a password for the link"
+                  autoComplete="new-password"
+                  className="font-body text-sm text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-text-muted focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)]"
+                />
+                {passwordError && (
+                  <p className="font-body text-xs text-danger" role="alert">
+                    {passwordError}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isSavingPassword}
+                    className="flex-1"
+                  >
+                    {isSavingPassword ? "Saving…" : "Set password"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setPasswordInput("");
+                      setPasswordError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
       </div>
 
@@ -424,6 +559,7 @@ function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
           <ShareLinkPanel
             tripId={existingTrip._id}
             initialSlug={existingTrip.shareLink}
+            initialHasPassword={!!existingTrip.linkPassword}
           />
         )}
 

@@ -193,6 +193,14 @@ export default defineSchema({
     .index("by_trip_taskref", ["tripId", "taskRef"])
     .index("by_trip_date", ["tripId", "date"]),
 
+  tripSessions: defineTable({
+    tripId: v.id("trips"),
+    sessionToken: v.string(),
+    expiresAt: v.number(),
+  })
+    .index("by_token", ["sessionToken"])
+    .index("by_trip", ["tripId"]),
+
   activityLog: defineTable({
     tripId: v.id("trips"),
     propertyId: v.id("properties"),

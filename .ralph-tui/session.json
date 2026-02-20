@@ -3,10 +3,10 @@
   "sessionId": "85c90de5-9eff-48e1-a9da-ba95574f6700",
   "status": "running",
   "startedAt": "2026-02-20T14:02:53.729Z",
-  "updatedAt": "2026-02-20T14:14:53.245Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-20T14:31:00.089Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -17,8 +17,8 @@
       {
         "id": "US-063",
         "title": "Generate shareable link",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-064",
@@ -46,7 +46,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-063",
+      "taskTitle": "Generate shareable link",
+      "taskCompleted": true,
+      "durationMs": 693801,
+      "startedAt": "2026-02-20T14:03:19.439Z",
+      "endedAt": "2026-02-20T14:14:53.240Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

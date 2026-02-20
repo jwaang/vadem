@@ -1113,3 +1113,29 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **`base64url` for URL-safe slugs**: `crypto.randomBytes(9).toString("base64url")` produces exactly 12 chars (9 bytes → 12 base64url chars) with only URL-safe characters (A-Z, a-z, 0-9, -, _). No padding needed.
   - **`canShare` state for Web Share API**: Use `useState(false)` + `useEffect` to detect `navigator.share` availability. This avoids SSR mismatch since `navigator` doesn't exist server-side.
 ---
+
+## 2026-02-20 - US-064
+- Implemented optional link password protection for shareable trip links
+- **What was implemented:**
+  - Creator can toggle "Require password to view" in the ShareLinkPanel on the dashboard
+  - Password stored hashed (pbkdf2Sync, 100k iterations, sha512) as `salt:hash` in `trips.linkPassword`
+  - Sitter opening a password-protected link sees a centered password gate card before any content
+  - Incorrect password shows inline error "Incorrect password. Please try again." and allows retry
+  - Correct password creates a 24h session token in `tripSessions` table, stored in a cookie
+  - Subsequent visits with valid cookie skip the gate and go straight to TodayView
+- **Files changed:**
+  - `convex/schema.ts` — Added `tripSessions` table with `by_token` and `by_trip` indexes
+  - `convex/tripSessions.ts` — New: `verifySession` (public query), `_create` and `_getByToken` (internal)
+  - `convex/shareActions.ts` — Added `setLinkPassword` action (hashes/clears password) and `verifyLinkPassword` action (verifies hash, creates session token)
+  - `convex/trips.ts` — Added `_clearLinkPassword` internal mutation (patches `linkPassword: undefined`)
+  - `convex/_generated/api.d.ts` — Added `tripSessions` import and `fullApi` entry
+  - `src/app/t/[tripId]/PasswordGate.tsx` — New: centered card UI with Handoff wordmark, password Input, primary Enter button, inline error display
+  - `src/app/t/[tripId]/TodayPageClient.tsx` — Added `PasswordProtectedResolver` component: reads cookie, validates session via `verifySession` query, shows PasswordGate if invalid/missing or TodayPageInner if valid
+  - `src/app/dashboard/page.tsx` — Updated `ShareLinkPanel`: added `initialHasPassword` prop, toggle button (switch style), password form with set/cancel buttons, remove password flow; updated call site to pass `initialHasPassword={!!existingTrip.linkPassword}`
+- **Learnings:**
+  - **pbkdf2 `salt:hash` encoding**: Store both salt and hash in a single string field using `:` as delimiter (both are hex strings, no colons in hex). Split on `:` to retrieve — `trip.linkPassword.split(":")` returns `[salt, storedHash]`.
+  - **Cookie-based trip sessions**: Use `document.cookie = \`hoff_trip_\${shareLink}=\${token}; path=/; expires=\${expires}; SameSite=Lax\`` for client-side cookie storage. Read with `document.cookie.split("; ").find(row => row.startsWith(\`name=\`))`.
+  - **`verified` state for immediate unlock**: After calling `verifyLinkPassword` on the PasswordGate, set local `verified: true` in `PasswordProtectedResolver` via the `onSuccess` callback. This shows the TodayPageInner immediately without waiting for another query round-trip.
+  - **Toggle switch with `aria-checked`**: Use `role="switch"` + `aria-checked` on a `<button>` for accessible toggle semantics. Use `translate-x-4`/`translate-x-0.5` Tailwind classes with `ease-spring` transition for the thumb animation.
+  - **Internal mutations in `"use node"` actions**: `shareActions.ts` uses `internal.trips._clearLinkPassword` (new) and `internal.tripSessions._create` (new) via `ctx.runMutation(internal....)`. The `internal` API reference works the same as `api` for cross-module calls.
+---

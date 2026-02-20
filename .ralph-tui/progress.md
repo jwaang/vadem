@@ -41,6 +41,22 @@ Page calls `notifySwManualVersion(propertyId, version)` after each Convex data l
 
 ---
 
+## 2026-02-20 - US-083
+- **What was implemented**: Vault online-only enforcement — service worker exclusion, offline UI, and cache audit.
+- **Files changed**:
+  - `public/sw.js` — added explicit pass-through (no caching) for any GET request whose URL contains "vault" or "getdecryptedvaultitems", inserted early in the fetch handler before any cache branches
+  - `src/app/t/[tripId]/VaultTab.tsx` — added `isOnline` state (initialized from `navigator.onLine`) + `online`/`offline` event listeners; added offline render branch that shows a vault lock icon + "Connect to the internet to access secure items" message (bg-bg-raised rounded-xl p-8, font-body text-text-muted) — appears before any phase/trip-status checks so it fires unconditionally
+- **Cache audit findings** (no code changes needed):
+  - Vault decrypted items are fetched via `useAction` (HTTP POST) — already excluded from SW caching by the `method !== 'GET'` guard on line 80 of sw.js
+  - `saveTripData` / `swCacheTripData` only persist `liveData` from `useQuery(api.trips.getTodayData)` — vault data is never part of that query result
+  - `decryptedItems` in VaultTab lives in React state only — never written to localStorage, IndexedDB, or Cache Storage
+  - Convex client cache is in-memory only; vault query/action results are not persisted
+- **Learnings:**
+  - `useCallback` is the right wrapper for event handler setters passed to `addEventListener` so ESLint `react-hooks/exhaustive-deps` is satisfied and the cleanup effect references stable references
+  - The online-only guard must fire BEFORE `tripStatus` checks (and all other phase logic) so the user never sees a stale "access denied" or "initial" vault state while offline — the offline message is always authoritative
+  - Convex actions (called via `useAction`) are POST requests and therefore never intercepted by the SW's fetch handler (which has `method !== 'GET'` early-return). The explicit vault URL exclusion is defense-in-depth for any future GET-based vault endpoints.
+---
+
 ## 2026-02-20 - US-082
 - **What was implemented**: Offline photo proof queue — IndexedDB blob storage, upload badge, reconnect drain with exponential backoff, and original timestamp preservation.
 - **Files changed**:

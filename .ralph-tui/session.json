@@ -3,10 +3,10 @@
   "sessionId": "dbebf566-8cef-43c6-b9f1-6b14f8daf783",
   "status": "running",
   "startedAt": "2026-02-20T23:13:10.535Z",
-  "updatedAt": "2026-02-20T23:43:10.327Z",
-  "currentIteration": 2,
+  "updatedAt": "2026-02-20T23:47:01.913Z",
+  "currentIteration": 3,
   "maxIterations": 10,
-  "tasksCompleted": 2,
+  "tasksCompleted": 3,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -29,8 +29,8 @@
       {
         "id": "US-082",
         "title": "Offline photo proof queue",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-083",
@@ -60,6 +60,16 @@
       "durationMs": 406858,
       "startedAt": "2026-02-20T23:24:44.418Z",
       "endedAt": "2026-02-20T23:31:31.276Z"
+    },
+    {
+      "iteration": 3,
+      "status": "completed",
+      "taskId": "US-082",
+      "taskTitle": "Offline photo proof queue",
+      "taskCompleted": true,
+      "durationMs": 698893,
+      "startedAt": "2026-02-20T23:31:31.429Z",
+      "endedAt": "2026-02-20T23:43:10.322Z"
     }
   ],
   "skippedTaskIds": [],

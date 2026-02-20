@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAction, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -114,6 +114,21 @@ function AccessDeniedState({ reason }: { reason: AccessDeniedReason }) {
 export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   const sessionKey = `vault_verified_${tripId}`;
   const phoneKey = `vault_phone_${tripId}`;
+
+  // Online/offline detection — vault is online-only for security.
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  const handleOnline = useCallback(() => setIsOnline(true), []);
+  const handleOffline = useCallback(() => setIsOnline(false), []);
+  useEffect(() => {
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [handleOnline, handleOffline]);
 
   // Derive initial state from sessionStorage (SSR-safe).
   // Default to "initial" — no vault data is fetched until the sitter identifies themselves.
@@ -305,6 +320,40 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   const isSending = phase === "sending";
   const isVerifying = phase === "verifying";
   const isLoadingItems = phase === "loading_items";
+
+  // ── Offline state: vault is online-only ───────────────────────────
+  // Never show cached or stale vault data — credentials must not be stored.
+
+  if (!isOnline) {
+    return (
+      <div className="bg-bg-raised rounded-xl p-8 flex flex-col items-center text-center gap-4">
+        <div className="flex items-center justify-center w-14 h-14 rounded-round bg-vault text-text-on-vault shadow-sm">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <div className="flex flex-col gap-2">
+          <p className="font-body text-base font-semibold text-text-primary">
+            Connect to the internet to access secure items
+          </p>
+          <p className="font-body text-sm text-text-muted max-w-[280px]">
+            Vault items are never stored offline to keep your codes safe.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Upfront trip inactive check ────────────────────────────────────
   // Show before any user interaction so the sitter sees the right state

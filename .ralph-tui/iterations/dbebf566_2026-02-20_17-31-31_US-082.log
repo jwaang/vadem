@@ -1,0 +1,236 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: US-082
+- **Task Title**: Offline photo proof queue
+- **Description**: As a sitter, I want to upload proof photos while offline and have them sync later.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-20T23:31:31.429Z
+- **Ended At**: 2026-02-20T23:43:10.322Z
+- **Duration**: 11m 38s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Task][0m Read progress.md and explore codebase
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineStorage.ts[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+
+[91m[Error: File does not exist. Note: your current working directory is /Users/john/Coding/handoff.][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/taskQueue.ts[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Glob][0m pattern: [96msrc/**/*upload* src/**/*proof* src/**/*photo*[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Task][0m Find proof photo and upload related files
+[94m[Glob][0m pattern: [96msrc/**/*SitterLayout* src/**/*TodayView* src/**/*today*[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Grep][0m [95m/Users/john/Coding/handoff/src[0m pattern: [96mIndexedDB|idb\.|indexedDB[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Grep][0m pattern: [96mproof|photo upload|generateUploadUrl[0m
+[94m[Grep][0m pattern: [96mcompleteTask[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Grep][0m pattern: [96mindexedDB|IDBDatabase|objectStore[0m
+[94m[Glob][0m pattern: [96msrc/components/**/*today*[0m
+[94m[Glob][0m pattern: [96msrc/components/**/*Sitter*[0m
+[94m[Glob][0m pattern: [96msrc/app/**/*sitter*[0m
+[94m[Glob][0m pattern: [96msrc/lib/*.ts[0m
+[94m[Glob][0m pattern: [96msrc/app/t/[tripId]/**/*.tsx[0m
+[94m[Glob][0m pattern: [96msrc/components/**/*.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/trip/[tripId]/proof/ProofStepInner.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/layouts/SitterLayout.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/proof.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineQueue.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineTripData.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/LocationCardUploader.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineQueue.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineTripData.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/storage.ts[0m
+[94m[Glob][0m pattern: [96msrc/app/t/**[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/layouts/SitterLayout.tsx[0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff/src -name "*TodayPageInner*" -o -name "*TodayPage*"
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/TaskItem.tsx[0m
+[94m[Grep][0m pattern: [96mcompleteTaskWithProof|generateUploadUrl[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff -name "*.ts" -o -name "*.tsx" | grep -E "(upload|proof|storage|conve...
+[94m[Glob][0m pattern: [96mconvex/*.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/storage.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/proof.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/public/sw.js[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/public/sw.js[0m
+[94m[Bash][0m $ find /Users/john/Coding/handoff -type f \( -name "*.ts" -o -name "*.tsx" \) ! -path "*/node_modules/...
+Now let me read the key files I need to modify:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineQueue.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+Now let me read the TodayPageInner.tsx to understand the current photo upload flow:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+Now let me read the TodayViewHeader component:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/TodayViewHeader.tsx[0m
+Now I have a complete picture. Let me set up the todo list and implement:
+[94m[TodoWrite][0m
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/lib/photoUploadQueue.ts[0m "/**
+ * Offline photo upload queue using IndexedDB.
+ *
+ * When the sitter selects a proof photo while offline, the blob is stored here.
+ * On reconnect the queue is drained: each entry is uploaded to C... (6841 chars)"
+[94m[TodoWrite][0m
+Now update `completeTaskWithProof` to accept optional `completedAt` and add deduplication:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m edit: "/**
+ * Complete a task and attach a proof photo in..." → "/**
+ * Complete a task and attach a proof photo in..."
+Now I need to fix the rest of `completeTaskWithProof` handler since `completedAt` is now computed above but the existing code inserts it separately. Let me check the current state of the insertion:
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+
+[91m[Error: <tool_use_error>InputValidationError: Read failed due to the following issue:
+The parameter `offset` type is expected as `number` but provided as `string`</tool_use_error>][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+The mutation looks correct. Now let me update `TodayPageInner.tsx` with all the photo queue integration:
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "import {
+  getQueue,
+  enqueue,
+  dequeue,
+  remov..." → "import {
+  getQueue,
+  enqueue,
+  dequeue,
+  remov..."
+Now add state for upload counts and the photo drain ref, right after `fileInputRef`:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  const fileInputRef = useRef<HTMLInputElement>(nu..." → "  const fileInputRef = useRef<HTMLInputElement>(nu..."
+Now add a useEffect after the cachedData load effect to initialize from IndexedDB:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // On mount, read whatever was previously persis..." → "  // On mount, read whatever was previously persis..."
+Now add photo queue cleanup to the liveData effect, right after the `removeByTaskRefs` call:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "    // Remove queue entries that Convex now confir..." → "    // Remove queue entries that Convex now confir..."
+Now add the photo drain effect right after the existing task drain effect:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // completeTask: immediately updates the Convex ..." → "  // Drain the photo upload queue when the device ..."
+Now modify `handleFileSelected` to queue offline photos instead of attempting direct upload:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  async function handleFileSelected(e: React.Chang..." → "  async function handleFileSelected(e: React.Chang..."
+Now add the pending upload badge to the JSX in the Today tab. I need to add it after the header div:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "          {/* Emergency contact bar */}
+          ..." → "          {/* Pending photo upload badge — shown w..."
+Now I need to move the `generateUploadUrl` and `completeTaskWithProof` declarations earlier in the component, before the photo drain effect, since the effect references them. Let me check their current position and the effect position:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+I need to fix a declaration-order issue: the photo drain effect references `completeTaskWithProof` and `generateUploadUrl` which are declared after it. Let me move the photo drain effect to after those declarations:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // Drain the photo upload queue when the device ..." → "  // completeTask: immediately updates the Convex ..."
+Now add the photo drain effect after `generateUploadUrl` is declared:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  const completeTaskWithProof = useMutation(api.ta..." → "  const completeTaskWithProof = useMutation(api.ta..."
+Now let me run typecheck to see if there are any issues:
+[94m[Bash][0m Run TypeScript typecheck $ pnpm typecheck 2>&1 | head -60
+Typecheck passes. Now run lint:
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1 | head -80
+Only pre-existing warnings, no new errors. Now run the build:
+[94m[TodoWrite][0m
+[94m[Bash][0m Run Next.js production build $ pnpm build 2>&1 | tail -30
+Build succeeds. Let me update progress.md and mark complete:
+[94m[TodoWrite][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "## Codebase Patterns (Study These First)" → "## Codebase Patterns (Study These First)
+
+### Inde..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "## 2026-02-20 - US-081" → "## 2026-02-20 - US-082
+- **What was implemented**:..."
+All changes are complete and quality checks pass. Here's a summary of what was implemented:
+
+**US-082 - Offline photo proof queue:**
+
+1. **`src/lib/photoUploadQueue.ts`** (new) — IndexedDB-based storage for photo blobs. Stores entries with `{ id, tripId, taskRef, taskType, blob, completedAt, sitterName, retryCount, lastAttemptAt, status }`. Functions: `enqueuePhoto`, `getPhotoQueue`, `getPhotoCounts`, `removePhotoEntry`, `recordPhotoRetry`, `markPhotoFailed`.
+
+2. **`convex/taskCompletions.ts`** — Added `completedAt: v.optional(v.number())` to `completeTaskWithProof` and added deduplication via `by_trip_taskref` index (idempotent for offline retries).
+
+3. **`src/app/t/[tripId]/TodayPageInner.tsx`** — Photo queue integration:
+   - On mount: loads IndexedDB counts and adds photo taskRefs to `pendingTaskRefs` so offline-queued proof tasks render as checked
+   - When photo selected offline: stores blob to IndexedDB, shows task as completed, increments badge count
+   - On reconnect: drains photo queue concurrently with exponential backoff (2s, 4s); after 3 failures marks permanently failed
+   - liveData effect cleans up confirmed IndexedDB entries using the same `syncedRefs` set
+   - Badge: amber `rounded-pill` chip showing "N photos waiting to upload" + red chip for permanently failed uploads
+
+<promise>COMPLETE</promise>
+
+--- SUBAGENT TRACE ---
+{
+  "events": [
+    {
+      "id": "subagent_1771630302800_fw0j99b",
+      "type": "spawn",
+      "timestamp": "2026-02-20T23:31:42.800Z",
+      "agentType": "Explore",
+      "description": "Read progress.md and explore codebase",
+      "prompt": "Read the following files and return their contents:\n1. /Users/john/Coding/handoff/.ralph-tui/progress.md\n2. /Users/john/Coding/handoff/src/lib/offlineStorage.ts (if it exists)\n3. /Users/john/Coding/handoff/src/lib/taskQueue.ts (if it exists)\n\nAlso search for:\n- Files related to photo/proof upload in src/ directory\n- The SitterLayout or today view component\n- Any existing IndexedDB usage\n\nReturn the full contents of each file found, and list all relevant files discovered."
+    },
+    {
+      "id": "subagent_1771630305643_mdx30b3",
+      "type": "spawn",
+      "timestamp": "2026-02-20T23:31:45.643Z",
+      "agentType": "Explore",
+      "description": "Find proof photo and upload related files",
+      "parentId": "subagent_1771630302800_fw0j99b",
+      "prompt": "Search the codebase at /Users/john/Coding/handoff for:\n1. Files mentioning \"proof\" or \"photo upload\" or \"generateUploadUrl\"\n2. Files mentioning \"completeTask\" mutation\n3. The today view or SitterLayout component\n4. Any IndexedDB related code (look for \"indexedDB\", \"IDBDatabase\", \"objectStore\")\n5. The trip sitter page or task completion components\n\nReturn the file paths and relevant code snippets (around the matching lines) for each finding."
+    },
+    {
+      "id": "subagent_1771630305643_mdx30b3",
+      "type": "complete",
+      "timestamp": "2026-02-20T23:43:10.090Z",
+      "agentType": "Explore",
+      "description": "Find proof photo and upload related files",
+      "parentId": "subagent_1771630302800_fw0j99b",
+      "exitStatus": "success",
+      "durationMs": 684447
+    }
+  ],
+  "hierarchy": [
+    {
+      "state": {
+        "id": "subagent_1771630302800_fw0j99b",
+        "agentType": "Explore",
+        "description": "Read progress.md and explore codebase",
+        "status": "running",
+        "childIds": [
+          "subagent_1771630305643_mdx30b3"
+        ],
+        "spawnedAt": "2026-02-20T23:31:42.800Z",
+        "prompt": "Read the following files and return their contents:\n1. /Users/john/Coding/handoff/.ralph-tui/progress.md\n2. /Users/john/Coding/handoff/src/lib/offlineStorage.ts (if it exists)\n3. /Users/john/Coding/handoff/src/lib/taskQueue.ts (if it exists)\n\nAlso search for:\n- Files related to photo/proof upload in src/ directory\n- The SitterLayout or today view component\n- Any existing IndexedDB usage\n\nReturn the full contents of each file found, and list all relevant files discovered."
+      },
+      "children": [
+        {
+          "state": {
+            "id": "subagent_1771630305643_mdx30b3",
+            "agentType": "Explore",
+            "description": "Find proof photo and upload related files",
+            "status": "completed",
+            "parentId": "subagent_1771630302800_fw0j99b",
+            "childIds": [],
+            "spawnedAt": "2026-02-20T23:31:45.643Z",
+            "prompt": "Search the codebase at /Users/john/Coding/handoff for:\n1. Files mentioning \"proof\" or \"photo upload\" or \"generateUploadUrl\"\n2. Files mentioning \"completeTask\" mutation\n3. The today view or SitterLayout component\n4. Any IndexedDB related code (look for \"indexedDB\", \"IDBDatabase\", \"objectStore\")\n5. The trip sitter page or task completion components\n\nReturn the file paths and relevant code snippets (around the matching lines) for each finding.",
+            "endedAt": "2026-02-20T23:43:10.090Z",
+            "durationMs": 684447
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "totalSubagents": 2,
+    "byType": {
+      "Explore": 2
+    },
+    "totalDurationMs": 684447,
+    "failureCount": 0,
+    "maxDepth": 2
+  }
+}

@@ -86,15 +86,16 @@
         "Access control verification — no vault data leaks into any cache"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Security-critical: verify no vault data leaks into any cache. Load /nextjs-best-practices to add a fetch listener in public/sw.js that explicitly calls return (without caching) for any request matching the Convex API calls to vault-related functions (match by URL containing 'getDecryptedVaultItems' or 'vault'). Also add Cache-Control: no-store, no-cache, must-revalidate headers to vault API responses in convex/vaultActions.ts by including them in the HTTP response where possible. Load /convex-best-practices to verify that no vault query results are stored in any client-side Convex cache — Convex's client cache is in-memory only and does not persist to IndexedDB, but confirm by auditing that vault queries are not accidentally included in any offline content snapshot. Load /tailwind-design-system to render the offline vault state: when navigator.onLine is false, replace the vault tab content with a centered lock icon message 'Connect to the internet to access secure items' (bg-bg-raised rounded-xl p-8 text-center, text-vault lock icon, font-body text-text-muted) — never show a cached or stale vault state. Use /dev-browser to verify by toggling airplane mode: the vault tab shows the offline message, DevTools → Application → Cache Storage shows no vault-related entries.",
       "dependsOn": [
         "US-019",
         "US-048"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T23:43:10.324Z"
+    "updatedAt": "2026-02-20T23:47:01.910Z"
   }
 }

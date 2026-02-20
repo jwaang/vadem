@@ -84,6 +84,15 @@ self.addEventListener("fetch", (event) => {
   // Never intercept OAuth callbacks — must hit the server directly
   if (url.pathname.startsWith("/auth/callback")) return;
 
+  // ── Vault: never cache vault-related requests — security-critical ─────
+  // Convex actions (POST) are already excluded by the method check above.
+  // This guard handles any GET requests whose URL mentions vault endpoints,
+  // ensuring no vault data ever lands in Cache Storage.
+  const hrefLower = event.request.url.toLowerCase();
+  if (hrefLower.includes("vault") || hrefLower.includes("getdecryptedvaultitems")) {
+    return; // Pass through to network without caching
+  }
+
   // ── (1) App shell: cache-first for Next.js static assets ──────────────
   if (isAppShellUrl(url)) {
     event.respondWith(

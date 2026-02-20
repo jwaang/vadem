@@ -19,6 +19,8 @@ const tripObject = v.object({
   shareLink: v.optional(v.string()),
   linkPassword: v.optional(v.string()),
   linkExpiry: v.optional(v.number()),
+  pendingDigestAt: v.optional(v.number()),
+  tripEndingScheduledId: v.optional(v.id("_scheduled_functions")),
 });
 
 export const create = mutation({

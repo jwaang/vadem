@@ -1,6 +1,7 @@
 "use client";
 
 import { type HTMLAttributes, useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +125,10 @@ function NotificationToast({
 }: NotificationToastProps) {
   const [internalVisible, setInternalVisible] = useState(true);
   const [exiting, setExiting] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   const isControlled = controlledVisible !== undefined;
   const visible = isControlled ? controlledVisible : internalVisible;
@@ -149,11 +153,11 @@ function NotificationToast({
     };
   }, [visible, autoDismissMs, dismiss]);
 
-  if (!visible && !exiting) return null;
+  if (!mounted || (!visible && !exiting)) return null;
 
   const Icon = variantIcons[variant];
 
-  return (
+  const toastEl = (
     <div
       className={cn(
         toastVariants({ variant }),
@@ -191,6 +195,15 @@ function NotificationToast({
         <CloseIcon />
       </button>
     </div>
+  );
+
+  // Render via portal so the toast escapes any positioned ancestor and appears
+  // fixed at the bottom-right of the viewport (proper global toast behaviour).
+  return createPortal(
+    <div className="fixed bottom-5 right-5 z-[9000] w-[calc(100vw-2.5rem)] max-w-[380px] pointer-events-none">
+      <div className="pointer-events-auto">{toastEl}</div>
+    </div>,
+    document.body,
   );
 }
 

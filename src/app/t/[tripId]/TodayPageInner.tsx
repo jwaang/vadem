@@ -12,12 +12,22 @@ import type { ContactRole } from "@/components/ui/EmergencyContactBar";
 import { TimeSlotDivider } from "@/components/ui/TimeSlotDivider";
 import type { TimeSlot } from "@/components/ui/TimeSlotDivider";
 import { TaskItem } from "@/components/ui/TaskItem";
+import { LocationCard } from "@/components/ui/LocationCard";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { VaultTab } from "./VaultTab";
 import { formatPhone } from "@/lib/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
 type SlotKey = "morning" | "afternoon" | "evening" | "anytime";
+
+interface LocationCardData {
+  photoUrl?: string;
+  videoUrl?: string;
+  caption?: string;
+  roomTag?: string;
+}
 
 interface TodayTask {
   id: string;
@@ -27,6 +37,7 @@ interface TodayTask {
   proofRequired: boolean;
   taskRef: string;
   taskType: "recurring" | "overlay";
+  locationCard?: LocationCardData;
 }
 
 interface CompletionInfo {
@@ -47,8 +58,8 @@ function toContactRole(role: string): ContactRole {
 }
 
 function buildTaskList(
-  recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>,
-  overlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>,
+  recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>,
+  overlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>,
   today: string,
 ): TodayTask[] {
   const recurring: TodayTask[] = recurringInstructions.map((inst) => ({
@@ -60,6 +71,7 @@ function buildTaskList(
     // Date-scoped ref so recurring tasks reset daily
     taskRef: `recurring:${inst._id}:${today}`,
     taskType: "recurring" as const,
+    locationCard: inst.locationCard,
   }));
 
   const overlay: TodayTask[] = overlayItems.map((item) => ({
@@ -70,6 +82,7 @@ function buildTaskList(
     proofRequired: item.proofRequired,
     taskRef: `overlay:${item._id}`,
     taskType: "overlay" as const,
+    locationCard: item.locationCard,
   }));
 
   return [...recurring, ...overlay];
@@ -138,6 +151,56 @@ function AnytimeDivider() {
   );
 }
 
+// ── Uncheck confirmation sheet ────────────────────────────────────────
+
+interface UncheckConfirmSheetProps {
+  hasProof: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function UncheckConfirmSheet({ hasProof, onConfirm, onCancel }: UncheckConfirmSheetProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(42,31,26,0.4)]"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 pb-8 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg text-text-primary">Unmark as complete?</h2>
+          <button
+            type="button"
+            className="w-8 h-8 flex items-center justify-center text-text-muted rounded-round hover:bg-bg-sunken transition-colors duration-150"
+            onClick={onCancel}
+            aria-label="Cancel"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <p className="font-body text-sm text-text-secondary">
+          {hasProof
+            ? "This will remove the completion and permanently delete the proof photo. This cannot be undone."
+            : "This will mark the task as incomplete."}
+        </p>
+        <div className="flex flex-col gap-2">
+          <Button variant="danger" className="w-full" onClick={onConfirm}>
+            {hasProof ? "Unmark and delete photo" : "Unmark as complete"}
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={onCancel}>
+            Keep it done
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Name prompt modal ─────────────────────────────────────────────────
 
 interface NamePromptProps {
@@ -175,9 +238,8 @@ function NamePrompt({ initialName, onConfirm, onCancel }: NamePromptProps) {
         <p className="font-body text-sm text-text-secondary">
           We&rsquo;ll attach your name to the proof photo so the owner knows who completed this task.
         </p>
-        <input
+        <Input
           type="text"
-          className="input-field"
           placeholder="Your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -208,9 +270,10 @@ interface SlotSectionProps {
   uploadingTaskRef: string | null;
   onToggle: (task: TodayTask, currentlyCompleted: boolean, completionId?: Id<"taskCompletions">) => void;
   onProof: (task: TodayTask) => void;
+  onPhotoClick: (url: string) => void;
 }
 
-function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, onProof }: SlotSectionProps) {
+function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, onProof, onPhotoClick }: SlotSectionProps) {
   if (tasks.length === 0) return null;
 
   return (
@@ -225,18 +288,32 @@ function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, o
           const completion = completionMap.get(task.taskRef);
           const isCompleted = completion !== undefined;
           const isUploading = uploadingTaskRef === task.taskRef;
+          const lc = task.locationCard;
           return (
-            <TaskItem
-              key={task.taskRef}
-              text={task.text}
-              completed={isCompleted || isUploading}
-              overlay={task.isOverlay}
-              showProof={task.proofRequired && !isCompleted && !isUploading}
-              proofPhotoUrl={completion?.proofPhotoUrl}
-              uploading={isUploading}
-              onToggle={() => onToggle(task, isCompleted, completion?.id)}
-              onProof={() => onProof(task)}
-            />
+            <div key={task.taskRef}>
+              <TaskItem
+                text={task.text}
+                completed={isCompleted || isUploading}
+                overlay={task.isOverlay}
+                showProof={task.proofRequired && !isCompleted && !isUploading}
+                proofPhotoUrl={completion?.proofPhotoUrl}
+                onPhotoClick={completion?.proofPhotoUrl ? () => onPhotoClick(completion.proofPhotoUrl!) : undefined}
+                uploading={isUploading}
+                onToggle={() => onToggle(task, isCompleted, completion?.id)}
+                onProof={() => onProof(task)}
+              />
+              {lc && (
+                <div className="mt-1.5">
+                  <LocationCard
+                    src={lc.photoUrl}
+                    videoSrc={lc.videoUrl}
+                    caption={lc.caption ?? ""}
+                    room={lc.roomTag}
+                    compact
+                  />
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -530,6 +607,11 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   const [pendingProofTask, setPendingProofTask] = useState<TodayTask | null>(null);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [uploadingTaskRef, setUploadingTaskRef] = useState<string | null>(null);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [pendingUncheck, setPendingUncheck] = useState<{
+    completionId: Id<"taskCompletions">;
+    hasProof: boolean;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingProofNameRef = useRef<string>("");
 
@@ -601,8 +683,15 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     completionId?: Id<"taskCompletions">,
   ) {
     if (currentlyCompleted && completionId) {
-      await removeCompletion({ taskCompletionId: completionId });
+      const completion = completionMap.get(task.taskRef);
+      setPendingUncheck({ completionId, hasProof: !!completion?.proofPhotoUrl });
+      return;
     } else if (!currentlyCompleted) {
+      // Proof-required tasks must be completed via the upload flow, not a bare tap
+      if (task.proofRequired) {
+        handleProofClick(task);
+        return;
+      }
       // Get sitter name from sessionStorage (empty string for truly anonymous sitters)
       const sitterName = getSitterName();
       await completeTask({
@@ -690,10 +779,10 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
       property: { _id: Id<"properties">; name: string } | null;
       sitters: Array<{ name: string }>;
       emergencyContacts: Array<{ name: string; role: string; phone: string; notes?: string; isLocked: boolean }>;
-      recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
-      todayOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
-      tomorrowRecurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
-      tomorrowOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean }>;
+      recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      todayOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      tomorrowRecurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      tomorrowOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
       completions: Array<{ _id: Id<"taskCompletions">; taskRef: string; proofPhotoUrl?: string }>;
     };
 
@@ -753,6 +842,47 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
         aria-hidden="true"
       />
 
+      {/* ── Proof photo viewer ──────────────────────────────────────── */}
+      {selectedPhotoUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(42,31,26,0.85)] animate-location-fade-in"
+          onClick={() => setSelectedPhotoUrl(null)}
+          role="dialog"
+          aria-label="Proof photo"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Escape") setSelectedPhotoUrl(null); }}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 flex items-center justify-center w-11 h-11 rounded-round bg-[rgba(255,255,255,0.15)] text-white cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-[rgba(255,255,255,0.3)]"
+            onClick={() => setSelectedPhotoUrl(null)}
+            aria-label="Close"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={selectedPhotoUrl}
+            alt="Proof photo"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-md"
+            style={{ touchAction: "pinch-zoom" }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* ── Uncheck confirmation sheet ──────────────────────────────── */}
+      {pendingUncheck && (
+        <UncheckConfirmSheet
+          hasProof={pendingUncheck.hasProof}
+          onConfirm={async () => {
+            await removeCompletion({ taskCompletionId: pendingUncheck.completionId });
+            setPendingUncheck(null);
+          }}
+          onCancel={() => setPendingUncheck(null)}
+        />
+      )}
+
       {/* ── Name prompt modal ───────────────────────────────────────── */}
       {showNamePrompt && (
         <NamePrompt
@@ -807,6 +937,7 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
                   uploadingTaskRef={uploadingTaskRef}
                   onToggle={handleToggle}
                   onProof={handleProofClick}
+                  onPhotoClick={setSelectedPhotoUrl}
                 />
               ))
             )}

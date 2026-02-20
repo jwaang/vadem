@@ -9,6 +9,7 @@ const eventTypeValidator = v.union(
   v.literal("vault_accessed"),
   v.literal("trip_started"),
   v.literal("trip_expired"),
+  v.literal("task_unchecked"),
 );
 
 const activityLogEntryValidator = v.object({
@@ -23,6 +24,7 @@ const activityLogEntryValidator = v.object({
   vaultItemId: v.optional(v.id("vaultItems")),
   vaultItemLabel: v.optional(v.string()),
   proofPhotoUrl: v.optional(v.string()),
+  taskTitle: v.optional(v.string()),
   createdAt: v.number(),
 });
 
@@ -42,6 +44,7 @@ export const logEvent = internalMutation({
     vaultItemId: v.optional(v.id("vaultItems")),
     vaultItemLabel: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
+    taskTitle: v.optional(v.string()),
   },
   returns: v.id("activityLog"),
   handler: async (ctx, args) => {
@@ -55,6 +58,7 @@ export const logEvent = internalMutation({
       vaultItemId: args.vaultItemId,
       vaultItemLabel: args.vaultItemLabel,
       proofPhotoUrl: args.proofPhotoUrl,
+      taskTitle: args.taskTitle,
       createdAt: Date.now(),
     });
   },
@@ -108,6 +112,7 @@ export const getActivityForTrip = query({
       vaultItemId: e.vaultItemId,
       vaultItemLabel: e.vaultItemLabel,
       proofPhotoUrl: e.proofPhotoUrl,
+      taskTitle: e.taskTitle,
       createdAt: e.createdAt,
     }));
 
@@ -158,6 +163,7 @@ export const getActivityFeed = query({
       vaultItemId: e.vaultItemId,
       vaultItemLabel: e.vaultItemLabel,
       proofPhotoUrl: e.proofPhotoUrl,
+      taskTitle: e.taskTitle,
       createdAt: e.createdAt,
     }));
   },

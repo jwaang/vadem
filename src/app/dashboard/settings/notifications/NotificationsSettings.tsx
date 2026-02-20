@@ -79,21 +79,19 @@ function Toggle({ checked, onChange, disabled = false }: ToggleProps) {
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={[
-        "relative w-10 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none shrink-0",
+        "relative w-11 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none shrink-0",
         disabled
           ? "opacity-50 cursor-not-allowed"
           : "cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-        checked
-          ? "bg-secondary"
-          : "bg-bg-sunken border border-border-strong",
+        checked ? "bg-secondary" : "bg-border-strong",
       ].join(" ")}
     >
       <span
         className={[
-          "absolute top-0.5 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
-          checked ? "translate-x-4" : "translate-x-0.5",
+          "absolute top-0.5 left-0 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
+          checked ? "translate-x-[22px]" : "translate-x-[2px]",
         ].join(" ")}
-        style={{ boxShadow: "var(--shadow-xs)" }}
+        style={{ boxShadow: "var(--shadow-sm)" }}
       />
     </button>
   );

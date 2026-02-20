@@ -402,18 +402,18 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
                   }
                 }}
                 className={[
-                  "relative w-10 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none disabled:opacity-40 shrink-0",
+                  "relative w-11 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none disabled:opacity-40 shrink-0",
                   hasPassword || showPasswordForm
                     ? "bg-secondary"
-                    : "bg-bg-sunken border border-border-strong",
+                    : "bg-border-strong",
                 ].join(" ")}
               >
                 <span
                   className={[
-                    "absolute top-0.5 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
-                    hasPassword || showPasswordForm ? "translate-x-4" : "translate-x-0.5",
+                    "absolute top-0.5 left-0 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
+                    hasPassword || showPasswordForm ? "translate-x-[22px]" : "translate-x-[2px]",
                   ].join(" ")}
-                  style={{ boxShadow: "var(--shadow-xs)" }}
+                  style={{ boxShadow: "var(--shadow-sm)" }}
                 />
               </button>
             </div>
@@ -773,16 +773,21 @@ function eventToActivityType(event: string): ActivityType {
   if (event === "vault_accessed") return "vault";
   if (event === "task_completed") return "task";
   if (event === "proof_uploaded") return "proof";
+  if (event === "task_unchecked") return "uncheck";
   return "view";
 }
 
-function eventToAction(event: string, vaultItemLabel?: string): string {
+function eventToAction(event: string, vaultItemLabel?: string, taskTitle?: string): string {
   if (event === "link_opened") return "opened the sitter link";
   if (event === "vault_accessed") {
     return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
   }
-  if (event === "task_completed") return "completed a task";
-  if (event === "proof_uploaded") return "submitted a proof photo";
+  if (event === "task_completed")
+    return taskTitle ? `completed "${taskTitle}"` : "completed a task";
+  if (event === "proof_uploaded")
+    return taskTitle ? `submitted proof for "${taskTitle}"` : "submitted a proof photo";
+  if (event === "task_unchecked")
+    return taskTitle ? `unmarked "${taskTitle}" as complete` : "unmarked a task as complete";
   if (event === "trip_expired") return "trip expired";
   return event.replace(/_/g, " ");
 }
@@ -894,7 +899,7 @@ function ActivityFeedSectionInner() {
               key={event._id}
               type={eventToActivityType(event.eventType)}
               name={event.sitterName ?? "Sitter"}
-              action={eventToAction(event.eventType, event.vaultItemLabel)}
+              action={eventToAction(event.eventType, event.vaultItemLabel, event.taskTitle)}
               timestamp={formatActivityTimestamp(event.createdAt)}
               hideBorder={index === events.length - 1}
               proofPhotoUrl={event.proofPhotoUrl}
@@ -1310,19 +1315,34 @@ export default function DashboardPage() {
     }
   }, [mounted, user, isLoading, router]);
 
-  // Show push permission banner once user is authenticated and permission not yet decided
+  // Show push permission banner if permission not yet decided, or if permission was
+  // granted but the subscription is missing (e.g. after clearing site data).
   useEffect(() => {
     if (!mounted || isLoading || !user) return;
     if (typeof Notification === "undefined") return;
-    if (Notification.permission !== "default") return;
+    if (Notification.permission === "denied") return;
     if (sessionStorage.getItem("push_banner_dismissed")) return;
-    setShowPushBanner(true);
+    if (Notification.permission === "default") {
+      setShowPushBanner(true);
+      return;
+    }
+    // Permission already granted — check if we actually have a subscription
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((reg) =>
+        reg.pushManager.getSubscription().then((sub) => {
+          if (!sub) setShowPushBanner(true);
+        }),
+      );
+    }
   }, [mounted, isLoading, user]);
 
   async function handleEnablePush() {
     setIsSubscribing(true);
     try {
-      const permission = await Notification.requestPermission();
+      const permission =
+        Notification.permission === "granted"
+          ? "granted"
+          : await Notification.requestPermission();
       if (permission !== "granted") {
         setShowPushBanner(false);
         return;
@@ -1334,6 +1354,10 @@ export default function DashboardPage() {
         return;
       }
       const registration = await navigator.serviceWorker.ready;
+      // Unsubscribe any stale subscription before creating a new one.
+      // A leftover sub (e.g. from a previous VAPID key) causes an AbortError.
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),

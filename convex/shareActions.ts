@@ -1,7 +1,7 @@
 "use node";
 
 import { action } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { api, internal } from "./_generated/api";
 import crypto from "node:crypto";
 import { pbkdf2Sync } from "node:crypto";
@@ -77,19 +77,22 @@ const TRIP_SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 // On failure: throws an error.
 export const verifyLinkPassword = action({
   args: { tripId: v.id("trips"), password: v.string() },
-  returns: v.string(),
-  handler: async (ctx, args): Promise<string> => {
+  returns: v.union(
+    v.object({ ok: v.literal(true), sessionToken: v.string() }),
+    v.object({ ok: v.literal(false), reason: v.string() }),
+  ),
+  handler: async (ctx, args) => {
     const trip = await ctx.runQuery(internal.trips._getById, {
       tripId: args.tripId,
     });
-    if (!trip) throw new Error("Trip not found");
-    if (!trip.linkPassword) throw new Error("This trip is not password-protected");
+    if (!trip) return { ok: false as const, reason: "Trip not found" };
+    if (!trip.linkPassword) return { ok: false as const, reason: "This trip is not password-protected" };
 
     const [salt, storedHash] = trip.linkPassword.split(":");
-    if (!salt || !storedHash) throw new Error("Invalid password configuration");
+    if (!salt || !storedHash) return { ok: false as const, reason: "Invalid password configuration" };
 
     const attemptHash = pbkdf2Sync(args.password, salt, 100000, 64, "sha512").toString("hex");
-    if (attemptHash !== storedHash) throw new Error("Incorrect password");
+    if (attemptHash !== storedHash) return { ok: false as const, reason: "Incorrect password" };
 
     const sessionToken = crypto.randomBytes(32).toString("hex");
     await ctx.runMutation(internal.tripSessions._create, {
@@ -97,6 +100,6 @@ export const verifyLinkPassword = action({
       sessionToken,
       expiresAt: Date.now() + TRIP_SESSION_TTL_MS,
     });
-    return sessionToken;
+    return { ok: true as const, sessionToken };
   },
 });

@@ -80,15 +80,74 @@ export const getTodayTasks = query({
       (item) => item.date === tomorrow || item.date === undefined,
     );
 
+    // Fetch location cards for recurring instructions (linked via parentId reverse-lookup)
+    const instructionLocationCards = await Promise.all(
+      recurringInstructions.map((inst) =>
+        ctx.db
+          .query("locationCards")
+          .withIndex("by_parent", (q) =>
+            q.eq("parentId", inst._id).eq("parentType", "instruction"),
+          )
+          .first(),
+      ),
+    );
+
+    // Fetch location cards for today's overlay items
+    // Prefer the direct FK (locationCardId) when set; fall back to reverse-lookup
+    const overlayLocationCards = await Promise.all(
+      todayOverlayItems.map(async (item) => {
+        if (item.locationCardId) return ctx.db.get(item.locationCardId);
+        return ctx.db
+          .query("locationCards")
+          .withIndex("by_parent", (q) =>
+            q.eq("parentId", item._id).eq("parentType", "overlayItem"),
+          )
+          .first();
+      }),
+    );
+
+    // Helper: resolve a raw location card record to URL-enriched data
+    async function resolveLocationCard(lc: (typeof instructionLocationCards)[number]) {
+      if (!lc) return undefined;
+      const photoUrl = lc.storageId
+        ? await ctx.storage.getUrl(lc.storageId)
+        : (lc.photoUrl ?? null);
+      const videoUrl = lc.videoStorageId
+        ? await ctx.storage.getUrl(lc.videoStorageId)
+        : (lc.videoUrl ?? null);
+      return {
+        photoUrl: photoUrl ?? undefined,
+        videoUrl: videoUrl ?? undefined,
+        caption: lc.caption,
+        roomTag: lc.roomTag,
+      };
+    }
+
+    // Enrich recurring instructions with their location card data
+    const enrichedRecurringInstructions = await Promise.all(
+      recurringInstructions.map(async (inst, i) => ({
+        ...inst,
+        locationCard: await resolveLocationCard(instructionLocationCards[i]),
+      })),
+    );
+
+    // Enrich today's overlay items with their location card data
+    const enrichedTodayOverlayItems = await Promise.all(
+      todayOverlayItems.map(async (item, i) => ({
+        ...item,
+        locationCard: await resolveLocationCard(overlayLocationCards[i]),
+      })),
+    );
+
     return {
       trip,
       property,
       sitters,
       emergencyContacts,
-      recurringInstructions,
-      todayOverlayItems,
+      recurringInstructions: enrichedRecurringInstructions,
+      todayOverlayItems: enrichedTodayOverlayItems,
       tomorrow,
-      tomorrowRecurringInstructions: recurringInstructions,
+      tomorrowRecurringInstructions: enrichedRecurringInstructions,
       tomorrowOverlayItems,
       completions: allCompletions,
     };

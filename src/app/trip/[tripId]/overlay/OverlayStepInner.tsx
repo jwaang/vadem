@@ -92,7 +92,14 @@ interface SavedItemRowProps {
 
 function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
-  const [photoAttached, setPhotoAttached] = useState(!!item.locationCardId);
+
+  // Live query — drives attached state reactively after upload/reload
+  const existingCards = useQuery(api.locationCards.listByParent, {
+    parentId: item._id,
+    parentType: "overlayItem",
+  });
+  const attachedCard = existingCards?.[0] ?? null;
+  const photoAttached = !!item.locationCardId || (attachedCard !== null);
 
   return (
     <>
@@ -115,42 +122,69 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
 
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Trip overlay badge */}
           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-pill bg-accent-light text-accent border border-accent">
             ✦ This Trip Only
           </span>
-
-          {/* Time slot */}
           {item.timeSlot !== "anytime" && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
               {TIME_SLOT_LABELS[item.timeSlot]}
             </span>
           )}
-
-          {/* Date */}
           {item.date && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
               {item.date}
             </span>
           )}
-
-          {/* Proof required */}
           {item.proofRequired && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-warning-light text-warning">
               📷 Proof needed
             </span>
           )}
-
-          {/* Photo attached */}
-          {photoAttached && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-secondary-light text-secondary">
-              ✓ Photo card
-            </span>
-          )}
         </div>
 
-        {/* Attach photo card button */}
-        {!photoAttached && (
+        {/* Location card — inline preview when attached, attach button when not */}
+        {photoAttached && attachedCard ? (
+          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-sunken border border-border-default">
+            {/* Thumbnail */}
+            {attachedCard.resolvedPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={attachedCard.resolvedPhotoUrl}
+                alt="Location card"
+                className="w-14 h-14 object-cover rounded-md shrink-0 border border-border-default"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-md bg-bg border border-dashed border-border-strong shrink-0 flex items-center justify-center text-text-muted">
+                <CameraIcon />
+              </div>
+            )}
+
+            {/* Caption + room */}
+            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+              {attachedCard.caption ? (
+                <p className="font-handwritten text-base leading-snug text-text-primary truncate">
+                  {attachedCard.caption}
+                </p>
+              ) : (
+                <p className="font-body text-xs text-text-muted italic">No caption</p>
+              )}
+              {attachedCard.roomTag && (
+                <span className="font-body text-xs font-semibold text-text-muted">
+                  {attachedCard.roomTag}
+                </span>
+              )}
+            </div>
+
+            {/* Edit button */}
+            <button
+              type="button"
+              onClick={() => setShowPhotoUploader(true)}
+              className="shrink-0 font-body text-xs font-semibold text-primary hover:text-primary-hover transition-colors duration-150 px-2 py-1 rounded-md hover:bg-primary-subtle"
+            >
+              Edit
+            </button>
+          </div>
+        ) : (
           <button
             onClick={() => setShowPhotoUploader(true)}
             className="self-start inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted border border-dashed border-border-strong rounded-md px-3 py-1.5 hover:text-primary hover:border-primary transition-colors duration-150"
@@ -166,11 +200,12 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
         <LocationCardUploader
           parentId={item._id}
           parentType="overlayItem"
-          onSuccess={() => {
-            setPhotoAttached(true);
-            setShowPhotoUploader(false);
-          }}
+          onSuccess={() => setShowPhotoUploader(false)}
           onClose={() => setShowPhotoUploader(false)}
+          existingCardId={attachedCard?._id}
+          existingPhotoUrl={attachedCard?.resolvedPhotoUrl}
+          existingCaption={attachedCard?.caption}
+          existingRoomTag={attachedCard?.roomTag}
         />
       )}
     </>

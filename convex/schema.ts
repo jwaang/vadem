@@ -239,6 +239,7 @@ export default defineSchema({
         v.literal("vault_accessed"),
         v.literal("trip_started"),
         v.literal("trip_expired"),
+        v.literal("task_unchecked"),
       ),
     ),
     sitterName: v.optional(v.string()),
@@ -247,6 +248,7 @@ export default defineSchema({
     vaultItemId: v.optional(v.id("vaultItems")),
     vaultItemLabel: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
+    taskTitle: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_trip_time", ["tripId", "createdAt"])

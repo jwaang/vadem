@@ -31,13 +31,18 @@ export function PasswordGate({ tripId, shareLink, onSuccess }: PasswordGateProps
     setError("");
 
     try {
-      const sessionToken = await verifyLinkPassword({ tripId, password });
+      const result = await verifyLinkPassword({ tripId, password });
+      if (!result.ok) {
+        setError("Incorrect password. Please try again.");
+        setPassword("");
+        return;
+      }
       // Store session token in a cookie (24h TTL)
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-      document.cookie = `hoff_trip_${shareLink}=${sessionToken}; path=/; expires=${expires}; SameSite=Lax`;
+      document.cookie = `hoff_trip_${shareLink}=${result.sessionToken}; path=/; expires=${expires}; SameSite=Lax`;
       onSuccess();
     } catch {
-      setError("Incorrect password. Please try again.");
+      setError("Something went wrong. Please try again.");
       setPassword("");
     } finally {
       setIsVerifying(false);

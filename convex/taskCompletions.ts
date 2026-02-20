@@ -18,11 +18,16 @@ async function resolveTaskTitle(
   taskRef: string,
   taskType: DataModel["taskCompletions"]["document"]["taskType"],
 ): Promise<string | null> {
+  // taskRef is a compound string: "recurring:{id}:{date}" or "overlay:{id}"
+  // Extract the bare Convex document ID (always the second colon-delimited segment)
+  const rawId = taskRef.split(":")[1];
+  if (!rawId) return null;
+
   if (taskType === "recurring") {
-    const instruction = await db.get(taskRef as Id<"instructions">);
+    const instruction = await db.get(rawId as Id<"instructions">);
     return instruction?.text ?? null;
   }
-  const overlayItem = await db.get(taskRef as Id<"overlayItems">);
+  const overlayItem = await db.get(rawId as Id<"overlayItems">);
   return overlayItem?.text ?? null;
 }
 
@@ -110,6 +115,35 @@ export const remove = mutation({
       });
     }
     await ctx.db.delete(args.taskCompletionId);
+    // Delete proof photo from Convex storage if present.
+    // getUrl() may return a signed URL with query params — strip them to get the bare storageId.
+    // Storage URL format: .../api/storage/{storageId}[?token=...]
+    if (completion.proofPhotoUrl) {
+      const rawSegment = completion.proofPhotoUrl.split("/").pop();
+      const storageId = rawSegment?.split("?")[0];
+      if (storageId) {
+        try {
+          await ctx.storage.delete(storageId as Id<"_storage">);
+        } catch (err) {
+          console.error("[taskCompletions.remove] Storage delete failed:", err);
+          // Non-fatal: DB record is already gone; storage cleanup is best-effort.
+        }
+      }
+    }
+    // Log task_unchecked activity event
+    const trip = await ctx.db.get(completion.tripId);
+    if (trip) {
+      const taskTitle =
+        (await resolveTaskTitle(ctx.db, completion.taskRef, completion.taskType)) ?? "a task";
+      await ctx.db.insert("activityLog", {
+        tripId: completion.tripId,
+        propertyId: trip.propertyId,
+        eventType: "task_unchecked",
+        sitterName: completion.sitterName || undefined,
+        taskTitle,
+        createdAt: Date.now(),
+      });
+    }
     return null;
   },
 });
@@ -139,18 +173,18 @@ export const completeTask = mutation({
     // Log task_completed activity event
     const trip = await ctx.db.get(args.tripId);
     if (trip) {
+      // Resolve task title for both the activity log and push notification
+      const taskTitle =
+        (await resolveTaskTitle(ctx.db, args.taskRef, args.taskType)) ??
+        "a task";
       await ctx.db.insert("activityLog", {
         tripId: args.tripId,
         propertyId: trip.propertyId,
         eventType: "task_completed",
         sitterName: args.sitterName || undefined,
+        taskTitle,
         createdAt: completedAt,
       });
-
-      // Resolve task title and schedule push notification
-      const taskTitle =
-        (await resolveTaskTitle(ctx.db, args.taskRef, args.taskType)) ??
-        "a task";
       await ctx.scheduler.runAfter(0, internal.notifications.sendTaskNotification, {
         tripId: args.tripId,
         taskTitle,
@@ -195,19 +229,19 @@ export const completeTaskWithProof = mutation({
     // Log proof_uploaded activity event (with proof URL for feed thumbnail)
     const trip = await ctx.db.get(args.tripId);
     if (trip) {
+      // Resolve task title for both the activity log and push notification
+      const taskTitle =
+        (await resolveTaskTitle(ctx.db, args.taskRef, args.taskType)) ??
+        "a task";
       await ctx.db.insert("activityLog", {
         tripId: args.tripId,
         propertyId: trip.propertyId,
         eventType: "proof_uploaded",
         sitterName: args.sitterName || undefined,
         proofPhotoUrl,
+        taskTitle,
         createdAt: completedAt,
       });
-
-      // Resolve task title and schedule push notification (with proof)
-      const taskTitle =
-        (await resolveTaskTitle(ctx.db, args.taskRef, args.taskType)) ??
-        "a task";
       await ctx.scheduler.runAfter(0, internal.notifications.sendTaskNotification, {
         tripId: args.tripId,
         taskTitle,
@@ -242,21 +276,21 @@ export const _attachProof = internalMutation({
     // Log proof_uploaded activity event
     const trip = await ctx.db.get(args.tripId);
     if (trip) {
+      // Resolve task title from completion record for activity log + notification
+      const completion = await ctx.db.get(args.taskCompletionId);
+      const taskTitle = completion
+        ? ((await resolveTaskTitle(ctx.db, completion.taskRef, completion.taskType)) ?? "a task")
+        : "a task";
+
       await ctx.db.insert("activityLog", {
         tripId: args.tripId,
         propertyId: trip.propertyId,
         eventType: "proof_uploaded",
         sitterName: args.sitterName,
+        proofPhotoUrl,
+        taskTitle,
         createdAt: Date.now(),
       });
-
-      // Resolve task title from completion record for notification message
-      const completion = await ctx.db.get(args.taskCompletionId);
-      let taskTitle = "a task";
-      if (completion) {
-        const title = await resolveTaskTitle(ctx.db, completion.taskRef, completion.taskType);
-        if (title) taskTitle = title;
-      }
 
       // Schedule task-completion notification with proof
       await ctx.scheduler.runAfter(0, internal.notifications.sendTaskNotification, {

@@ -31,16 +31,21 @@ function eventToActivityType(event: string): ActivityType {
   if (event === "vault_accessed") return "vault";
   if (event === "task_completed") return "task";
   if (event === "proof_uploaded") return "proof";
+  if (event === "task_unchecked") return "uncheck";
   return "view";
 }
 
-function eventToAction(event: string, vaultItemLabel?: string): string {
+function eventToAction(event: string, vaultItemLabel?: string, taskTitle?: string): string {
   if (event === "link_opened") return "opened the sitter link";
   if (event === "vault_accessed") {
     return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
   }
-  if (event === "task_completed") return "completed a task";
-  if (event === "proof_uploaded") return "submitted a proof photo";
+  if (event === "task_completed")
+    return taskTitle ? `completed "${taskTitle}"` : "completed a task";
+  if (event === "proof_uploaded")
+    return taskTitle ? `submitted proof for "${taskTitle}"` : "submitted a proof photo";
+  if (event === "task_unchecked")
+    return taskTitle ? `unmarked "${taskTitle}" as complete` : "unmarked a task as complete";
   if (event === "trip_started") return "trip started";
   if (event === "trip_expired") return "trip expired";
   return event.replace(/_/g, " ");
@@ -169,7 +174,7 @@ function TripActivityFeedInner({ tripId }: { tripId: Id<"trips"> }) {
                       key={event._id}
                       type={eventToActivityType(event.eventType)}
                       name={event.sitterName ?? "Sitter"}
-                      action={eventToAction(event.eventType, event.vaultItemLabel)}
+                      action={eventToAction(event.eventType, event.vaultItemLabel, event.taskTitle)}
                       timestamp={formatActivityTimestamp(event.createdAt)}
                       hideBorder={isLast && isDone}
                       proofPhotoUrl={event.proofPhotoUrl}

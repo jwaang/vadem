@@ -21,6 +21,11 @@ interface LocationCardProps extends HTMLAttributes<HTMLDivElement> {
   onExpand?: (src: string) => void;
   /** When set, shows a play icon overlay and plays this video on expand */
   videoSrc?: string;
+  /**
+   * Compact mode — renders as a slim horizontal strip instead of the full
+   * polaroid card. Tapping still opens the full-screen viewer.
+   */
+  compact?: boolean;
 }
 
 function PlaceholderIcon() {
@@ -51,8 +56,10 @@ function PlayIcon() {
       height="20"
       viewBox="0 0 24 24"
       fill="white"
-      stroke="none"
-      aria-hidden="true"
+      stroke="white"
+      strokeWidth="1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
       <polygon points="5 3 19 12 5 21 5 3" />
     </svg>
@@ -77,6 +84,25 @@ function CloseIcon() {
   );
 }
 
+function MapPinIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 const tiltBase: Record<TiltVariant, string> = {
   "tilted-left": "rotate-[-1.5deg]",
   neutral: "rotate-0",
@@ -97,6 +123,7 @@ function LocationCard({
   tilt = "neutral",
   onExpand,
   videoSrc,
+  compact = false,
   className,
   ...props
 }: LocationCardProps) {
@@ -135,6 +162,123 @@ function LocationCard({
     [handleClose],
   );
 
+  // ── Compact strip mode ─────────────────────────────────────────────────────
+  if (compact) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={isClickable ? handleClick : undefined}
+          onKeyDown={isClickable ? handleKeyDown : undefined}
+          disabled={!isClickable}
+          className={cn(
+            "flex items-center gap-3 w-full rounded-lg border border-border-default bg-bg-raised px-3 py-2.5 text-left transition-colors duration-150",
+            isClickable && "hover:bg-bg-sunken active:bg-bg-sunken cursor-pointer",
+            !isClickable && "cursor-default",
+            className,
+          )}
+          style={{ borderLeft: "3px solid var(--primary)" }}
+          aria-label={caption || "View location photo"}
+          {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+        >
+          {/* Thumbnail */}
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={alt || caption}
+              className="w-11 h-11 rounded-md object-cover shrink-0 border border-border-default"
+              draggable={false}
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-md bg-bg-sunken shrink-0 flex items-center justify-center text-text-muted">
+              <MapPinIcon />
+            </div>
+          )}
+
+          {/* Text */}
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            {room && (
+              <span className="font-body text-[10px] font-semibold text-text-muted uppercase tracking-wide leading-none">
+                {room}
+              </span>
+            )}
+            {caption ? (
+              <span className="font-handwritten text-base leading-snug text-text-primary truncate">
+                {caption}
+              </span>
+            ) : (
+              <span className="font-body text-xs text-text-muted">
+                {videoSrc ? "View location video" : "View location photo"}
+              </span>
+            )}
+          </div>
+
+          {/* View affordance */}
+          {isClickable && (
+            <span className="shrink-0 font-body text-xs font-semibold text-primary">
+              View →
+            </span>
+          )}
+        </button>
+
+        {/* Full-screen viewer */}
+        {expanded && isClickable && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(42,31,26,0.85)] animate-location-fade-in"
+            onClick={handleClose}
+            onKeyDown={handleOverlayKeyDown}
+            role="dialog"
+            aria-label={alt || caption}
+            tabIndex={0}
+          >
+            <button
+              className="absolute top-4 right-4 flex items-center justify-center w-11 h-11 rounded-round border-none bg-[rgba(255,255,255,0.15)] text-white cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-[rgba(255,255,255,0.3)]"
+              onClick={handleClose}
+              aria-label="Close"
+            >
+              <CloseIcon />
+            </button>
+            {videoSrc ? (
+              <video
+                src={videoSrc}
+                controls
+                autoPlay
+                className="max-w-[90vw] max-h-[90vh] rounded-md"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={src}
+                alt={alt || caption}
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-md"
+                style={{ touchAction: "pinch-zoom" }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            {/* Caption overlay at bottom */}
+            {(caption || room) && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none">
+                {caption && (
+                  <p className="font-handwritten text-xl text-white/90 text-center px-4 drop-shadow">
+                    {caption}
+                  </p>
+                )}
+                {room && (
+                  <span className="font-body text-xs font-semibold text-white/70 bg-black/30 px-3 py-1 rounded-pill">
+                    {room}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // ── Full polaroid mode (default) ───────────────────────────────────────────
   return (
     <>
       <div

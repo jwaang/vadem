@@ -4,7 +4,7 @@ import { useState, type HTMLAttributes } from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-type ActivityType = "view" | "task" | "vault" | "proof";
+type ActivityType = "view" | "task" | "vault" | "proof" | "uncheck";
 
 interface ActivityFeedItemProps extends HTMLAttributes<HTMLDivElement> {
   /** The type of activity — determines dot color */
@@ -30,6 +30,7 @@ const dotVariants = cva(
         task: "bg-secondary",
         vault: "bg-vault",
         proof: "bg-accent",
+        uncheck: "bg-text-muted",
       },
     },
   },
@@ -46,6 +47,7 @@ function ActivityFeedItem({
   ...props
 }: ActivityFeedItemProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <>
@@ -70,7 +72,7 @@ function ActivityFeedItem({
               {timestamp}
             </span>
           </div>
-          {proofPhotoUrl && (
+          {proofPhotoUrl && !imgError && (
             <button
               type="button"
               onClick={() => setViewerOpen(true)}
@@ -82,6 +84,7 @@ function ActivityFeedItem({
                 src={proofPhotoUrl}
                 alt="Proof photo"
                 className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
               />
             </button>
           )}

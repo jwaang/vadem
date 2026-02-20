@@ -25,6 +25,8 @@ interface TaskItemProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick" |
   onProof?: () => void;
   /** Proof photo URL — shows 48px thumbnail on completed task row */
   proofPhotoUrl?: string;
+  /** Called when the proof thumbnail is tapped — opens full-screen viewer */
+  onPhotoClick?: () => void;
   /** Whether a proof upload is in progress for this task */
   uploading?: boolean;
   /** Additional meta content */
@@ -98,6 +100,7 @@ function TaskItem({
   showProof = false,
   onProof,
   proofPhotoUrl,
+  onPhotoClick,
   uploading = false,
   meta,
   className,
@@ -181,12 +184,10 @@ function TaskItem({
 
       {/* Proof photo thumbnail — shown when completed with proof */}
       {completed && proofPhotoUrl && (
-        <a
-          href={proofPhotoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 mt-px"
-          onClick={(e) => e.stopPropagation()}
+        <button
+          type="button"
+          className="shrink-0 mt-px cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onPhotoClick?.(); }}
           aria-label="View proof photo"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -195,7 +196,7 @@ function TaskItem({
             alt="Proof"
             className="w-12 h-12 rounded-md object-cover border border-border-default shadow-xs"
           />
-        </a>
+        </button>
       )}
 
       {/* Uploading spinner */}

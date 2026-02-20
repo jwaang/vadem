@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,11 @@ interface LocationCardUploaderProps {
   onSuccess: () => void;
   /** Called to dismiss the modal */
   onClose: () => void;
+  // ── Edit mode (pass to update an existing card) ──
+  existingCardId?: Id<"locationCards">;
+  existingPhotoUrl?: string | null;
+  existingCaption?: string;
+  existingRoomTag?: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -122,20 +128,33 @@ export function LocationCardUploader({
   parentType,
   onSuccess,
   onClose,
+  existingCardId,
+  existingPhotoUrl,
+  existingCaption,
+  existingRoomTag,
 }: LocationCardUploaderProps) {
+  const isEditMode = !!existingCardId;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [preview, setPreview] = useState<string | null>(null);
+  // Determine initial room state from existing room tag
+  const initialRoomIsPreset = existingRoomTag ? ROOM_TAGS.includes(existingRoomTag) : false;
+  const initialRoomIsCustom = !!existingRoomTag && !initialRoomIsPreset;
+
+  const [preview, setPreview] = useState<string | null>(existingPhotoUrl ?? null);
+  const [previewIsBlob, setPreviewIsBlob] = useState(false);
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
-  const [caption, setCaption] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const [customRoom, setCustomRoom] = useState("");
-  const [showCustomRoom, setShowCustomRoom] = useState(false);
+  const [caption, setCaption] = useState(existingCaption ?? "");
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(
+    initialRoomIsPreset ? (existingRoomTag ?? null) : null,
+  );
+  const [customRoom, setCustomRoom] = useState(initialRoomIsCustom ? (existingRoomTag ?? "") : "");
+  const [showCustomRoom, setShowCustomRoom] = useState(initialRoomIsCustom);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generateUploadUrl = useMutation(api.locationCards.generateUploadUrl);
   const createLocationCard = useMutation(api.locationCards.create);
+  const updateLocationCard = useMutation(api.locationCards.update);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,46 +164,74 @@ export function LocationCardUploader({
       try {
         const blob = await compressImage(file);
         setCompressedBlob(blob);
-        // Show preview from compressed blob
         const url = URL.createObjectURL(blob);
         setPreview((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
+          if (previewIsBlob && prev) URL.revokeObjectURL(prev);
           return url;
         });
+        setPreviewIsBlob(true);
       } catch {
         setError("Failed to process image. Please try another file.");
       }
-      // Reset the input so the same file can be re-selected
       e.target.value = "";
     },
-    [],
+    [previewIsBlob],
   );
 
   const handleSave = useCallback(async () => {
-    if (!compressedBlob) return;
     setError(null);
     setUploading(true);
+
+    const effectiveRoom = showCustomRoom
+      ? customRoom.trim() || undefined
+      : selectedRoom || undefined;
+
     try {
-      const uploadUrl = await generateUploadUrl({});
-      const res = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": "image/jpeg" },
-        body: compressedBlob,
-      });
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-      const { storageId } = (await res.json()) as { storageId: string };
-
-      const effectiveRoom = showCustomRoom
-        ? customRoom.trim() || undefined
-        : selectedRoom || undefined;
-
-      await createLocationCard({
-        parentId,
-        parentType,
-        storageId: storageId as Parameters<typeof createLocationCard>[0]["storageId"],
-        caption: caption.trim() || undefined,
-        roomTag: effectiveRoom,
-      });
+      if (isEditMode && existingCardId) {
+        // ── Edit mode ──────────────────────────────────────────
+        if (compressedBlob) {
+          // New photo selected — upload it and update storageId
+          const uploadUrl = await generateUploadUrl({});
+          const res = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": "image/jpeg" },
+            body: compressedBlob,
+          });
+          if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+          const { storageId } = (await res.json()) as { storageId: string };
+          await updateLocationCard({
+            cardId: existingCardId,
+            storageId: storageId as Parameters<typeof updateLocationCard>[0]["storageId"],
+            caption: caption.trim() || undefined,
+            roomTag: effectiveRoom,
+          });
+        } else {
+          // No new photo — update metadata only
+          await updateLocationCard({
+            cardId: existingCardId,
+            caption: caption.trim() || undefined,
+            roomTag: effectiveRoom,
+          });
+        }
+      } else {
+        // ── Create mode ────────────────────────────────────────
+        if (!compressedBlob) return;
+        const uploadUrl = await generateUploadUrl({});
+        const res = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": "image/jpeg" },
+          body: compressedBlob,
+        });
+        if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+        const { storageId } = (await res.json()) as { storageId: string };
+        await createLocationCard({
+          parentId,
+          parentType,
+          storageId: storageId as Parameters<typeof createLocationCard>[0]["storageId"],
+          caption: caption.trim() || undefined,
+          roomTag: effectiveRoom,
+        });
+      }
 
       onSuccess();
     } catch (err) {
@@ -193,6 +240,8 @@ export function LocationCardUploader({
       setUploading(false);
     }
   }, [
+    isEditMode,
+    existingCardId,
     compressedBlob,
     caption,
     selectedRoom,
@@ -202,6 +251,7 @@ export function LocationCardUploader({
     parentType,
     generateUploadUrl,
     createLocationCard,
+    updateLocationCard,
     onSuccess,
   ]);
 
@@ -216,6 +266,9 @@ export function LocationCardUploader({
     setSelectedRoom(null);
   };
 
+  // Save is enabled in edit mode even without a new photo (metadata-only update)
+  const canSave = isEditMode ? !uploading : !!(compressedBlob && !uploading);
+
   return (
     <>
       {/* Backdrop */}
@@ -229,13 +282,13 @@ export function LocationCardUploader({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Add photo card"
+        aria-label={isEditMode ? "Edit photo card" : "Add photo card"}
         className="fixed inset-x-4 bottom-4 z-[201] rounded-2xl bg-bg-raised shadow-xl flex flex-col overflow-hidden max-w-lg mx-auto sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
           <h2 className="font-body text-base font-semibold text-text-primary">
-            Add photo card
+            {isEditMode ? "Edit photo card" : "Add photo card"}
           </h2>
           <button
             type="button"
@@ -384,10 +437,10 @@ export function LocationCardUploader({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!compressedBlob || uploading}
+            disabled={!canSave}
             className="flex-1 font-body text-sm font-semibold py-2.5 rounded-lg bg-primary text-text-on-primary hover:bg-primary-hover transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {uploading ? "Saving…" : "Save card"}
+            {uploading ? "Saving…" : isEditMode ? "Update card" : "Save card"}
           </button>
         </div>
       </div>

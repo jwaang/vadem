@@ -1038,3 +1038,16 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Contacts tab inline vs separate file**: For simpler tab components that share all data with the parent page, inline helper components within TodayPageInner.tsx is cleaner than a separate file (contrast with VaultTab which has its own auth state machine).
   - **isLocked = system-locked, not sitter-hidden**: The `isLocked` field means the record can't be edited/deleted by the creator, NOT that it's hidden from sitters. Both locked (ASPCA) and unlocked contacts should appear in the full-page Contacts tab. Only the compact bar filters them out (for layout/space reasons).
 ---
+
+## 2026-02-19 - US-060
+- Added `completeTask` mutation to `convex/taskCompletions.ts` — convenience mutation that computes `completedAt=Date.now()` and `date` (YYYY-MM-DD UTC) server-side; accepts `sitterName` as empty string for anonymous sitters; no auth check
+- Updated `TodayPageInner.tsx` to use `api.taskCompletions.completeTask` instead of `api.taskCompletions.create`; reads `sitterName` from `sessionStorage.getItem("handoff_sitter_name") ?? ""` with SSR guard; adds `withOptimisticUpdate` on both `completeTask` and `removeCompletion` mutations so the UI responds immediately (offline resilience); removed `useCallback` wrapper on `handleToggle` due to React Compiler `preserve-manual-memoization` constraint
+- Files changed:
+  - `convex/taskCompletions.ts` — added `completeTask` mutation
+  - `src/app/t/[tripId]/TodayPageInner.tsx` — replaced `createCompletion` with `completeTask`, sessionStorage sitterName, withOptimisticUpdate on both mutations, removed useCallback
+- **Learnings:**
+  - **`withOptimisticUpdate` for offline resilience**: Use `useMutation(fn).withOptimisticUpdate((localStore, args) => { ... })` to immediately reflect mutations in the Convex local cache. Use `localStore.getQuery(api.xxx.fn, args)` / `localStore.setQuery(...)` to modify the cached query result. Since `getTodayTasks` uses `returns: v.any()`, the store value is untyped — cast with `as any`.
+  - **No `Date.now()` inside `withOptimisticUpdate`**: The `react-hooks/purity` rule flags `Date.now()` as impure in render-time closures (even in optimistic update callbacks). Use a stable reference instead — e.g., use `args.taskRef` as a fake optimistic ID: `` `opt:${args.taskRef}` ``.
+  - **React Compiler `preserve-manual-memoization`**: Wrapping functions returned from `.withOptimisticUpdate()` in `useCallback` triggers `react-hooks/preserve-manual-memoization` errors because the compiler can't prove the returned function is stable. Solution: drop `useCallback` and let the React Compiler handle memoization automatically.
+  - **`completeTask` vs `create` naming**: The story specified `api.taskCompletions.completeTask` specifically. The existing `create` mutation still works but requires callers to pass `completedAt` and `date`. The new `completeTask` encapsulates those details, giving a simpler API for the toggle handler.
+---

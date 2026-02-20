@@ -94,3 +94,28 @@ export const remove = mutation({
     return null;
   },
 });
+
+/**
+ * Convenience mutation for sitter task check-off.
+ * Computes completedAt and date server-side so callers don't need to pass them.
+ * No auth check — sitters are anonymous and access via trip link only.
+ */
+export const completeTask = mutation({
+  args: {
+    tripId: v.id("trips"),
+    taskRef: v.string(),
+    taskType: taskTypeValidator,
+    sitterName: v.string(), // empty string for anonymous sitters
+  },
+  returns: v.id("taskCompletions"),
+  handler: async (ctx, args) => {
+    const completedAt = Date.now();
+    // YYYY-MM-DD in UTC — close enough for daily task grouping
+    const date = new Date(completedAt).toISOString().split("T")[0];
+    return await ctx.db.insert("taskCompletions", {
+      ...args,
+      completedAt,
+      date,
+    });
+  },
+});

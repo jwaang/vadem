@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -426,31 +426,81 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     today,
   });
 
-  const createCompletion = useMutation(api.taskCompletions.create);
-  const removeCompletion = useMutation(api.taskCompletions.remove);
-
-  const handleToggle = useCallback(
-    async (
-      task: TodayTask,
-      currentlyCompleted: boolean,
-      completionId?: Id<"taskCompletions">,
-    ) => {
-      if (currentlyCompleted && completionId) {
-        await removeCompletion({ taskCompletionId: completionId });
-      } else if (!currentlyCompleted) {
-        const sitterName = data?.sitters?.[0]?.name ?? "Sitter";
-        await createCompletion({
-          tripId: tripId as Id<"trips">,
-          taskRef: task.taskRef,
-          taskType: task.taskType,
-          sitterName,
-          completedAt: Date.now(),
-          date: today,
-        });
-      }
+  // completeTask: immediately updates the Convex local store so the checkbox responds
+  // before the server round-trip completes (offline resilience via optimistic update).
+  const completeTask = useMutation(api.taskCompletions.completeTask).withOptimisticUpdate(
+    (localStore, args) => {
+      const currentData = localStore.getQuery(api.todayView.getTodayTasks, {
+        tripId: args.tripId,
+        today,
+      });
+      if (!currentData) return;
+      // Use taskRef as stable optimistic ID (no Date.now() — that's impure in render-time closures)
+      const optimisticCompletion = {
+        _id: `opt:${args.taskRef}` as Id<"taskCompletions">,
+        _creationTime: 0,
+        tripId: args.tripId,
+        taskRef: args.taskRef,
+        taskType: args.taskType,
+        sitterName: args.sitterName,
+        completedAt: 0,
+        date: today,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existing = ((currentData as any).completions ?? []) as typeof optimisticCompletion[];
+      localStore.setQuery(
+        api.todayView.getTodayTasks,
+        { tripId: args.tripId, today },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { ...(currentData as any), completions: [...existing, optimisticCompletion] },
+      );
     },
-    [data, today, tripId, createCompletion, removeCompletion],
   );
+
+  const removeCompletion = useMutation(api.taskCompletions.remove).withOptimisticUpdate(
+    (localStore, args) => {
+      const currentData = localStore.getQuery(api.todayView.getTodayTasks, {
+        tripId: tripId as Id<"trips">,
+        today,
+      });
+      if (!currentData) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existing = ((currentData as any).completions ?? []) as Array<{
+        _id: Id<"taskCompletions">;
+      }>;
+      localStore.setQuery(
+        api.todayView.getTodayTasks,
+        { tripId: tripId as Id<"trips">, today },
+        {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(currentData as any),
+          completions: existing.filter((c) => c._id !== args.taskCompletionId),
+        },
+      );
+    },
+  );
+
+  async function handleToggle(
+    task: TodayTask,
+    currentlyCompleted: boolean,
+    completionId?: Id<"taskCompletions">,
+  ) {
+    if (currentlyCompleted && completionId) {
+      await removeCompletion({ taskCompletionId: completionId });
+    } else if (!currentlyCompleted) {
+      // Get sitter name from sessionStorage (empty string for truly anonymous sitters)
+      const sitterName =
+        typeof window !== "undefined"
+          ? (sessionStorage.getItem("handoff_sitter_name") ?? "")
+          : "";
+      await completeTask({
+        tripId: tripId as Id<"trips">,
+        taskRef: task.taskRef,
+        taskType: task.taskType,
+        sitterName,
+      });
+    }
+  }
 
   if (data === undefined) return <LoadingSkeleton />;
   if (data === null) return <TripNotFound />;

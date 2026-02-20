@@ -13,6 +13,7 @@ import { TimeSlotDivider } from "@/components/ui/TimeSlotDivider";
 import type { TimeSlot } from "@/components/ui/TimeSlotDivider";
 import { TaskItem } from "@/components/ui/TaskItem";
 import { VaultTab } from "./VaultTab";
+import { formatPhone } from "@/lib/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -378,13 +379,13 @@ function ContactsTab({ contacts }: { contacts: ContactTabEntry[] }) {
               {/* Phone — tappable tel: link */}
               <a
                 href={`tel:${contact.phone}`}
-                className="flex items-center gap-2 font-body text-sm font-medium text-secondary no-underline"
+                className="flex items-center gap-3 font-body text-sm font-medium text-secondary no-underline"
                 aria-label={`Call ${contact.name} at ${contact.phone}`}
               >
                 <svg
                   width="15"
                   height="15"
-                  viewBox="0 0 24 24"
+                  viewBox="-1 -1 26 26"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -395,7 +396,7 @@ function ContactsTab({ contacts }: { contacts: ContactTabEntry[] }) {
                 >
                   <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.61 19.79 19.79 0 01.07 1a2 2 0 012-2H6a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
                 </svg>
-                {contact.phone}
+                {formatPhone(contact.phone)}
               </a>
 
               {/* Notes (optional) */}

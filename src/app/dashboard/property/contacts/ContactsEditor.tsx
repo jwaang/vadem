@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -217,7 +218,7 @@ function LockedContactCard({ contact }: { contact: ContactDoc }) {
           className="inline-flex items-center gap-1 font-body text-sm text-secondary hover:text-secondary-hover transition-colors duration-150 mt-1"
         >
           <PhoneIcon />
-          {contact.phone}
+          {formatPhone(contact.phone)}
         </a>
       </div>
       <div className="shrink-0 flex items-center gap-1 text-text-muted">
@@ -252,11 +253,12 @@ function EditableContactCard({
   const [form, setForm] = useState<ContactFormState>({
     name: contact.name,
     role: contact.role,
-    phone: contact.phone,
+    phone: formatPhone(contact.phone),
     notes: contact.notes ?? "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -264,7 +266,7 @@ function EditableContactCard({
     setForm({
       name: contact.name,
       role: contact.role,
-      phone: contact.phone,
+      phone: formatPhone(contact.phone),
       notes: contact.notes ?? "",
     });
   }, [contact._id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -272,19 +274,28 @@ function EditableContactCard({
   const isDirty =
     form.name.trim() !== contact.name ||
     form.role.trim() !== contact.role ||
-    form.phone.trim() !== contact.phone ||
+    normalizePhone(form.phone) !== contact.phone ||
     form.notes.trim() !== (contact.notes ?? "");
 
   const set =
     (field: keyof ContactFormState) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = field === "phone" ? formatPhoneInput(e.target.value) : e.target.value;
+      setForm((prev) => ({ ...prev, [field]: value }));
+      if (field === "phone") setPhoneError("");
+    };
 
   const handleSave = async () => {
+    const pErr = validatePhone(form.phone, false);
+    if (pErr) {
+      setPhoneError(pErr);
+      return;
+    }
+    setPhoneError("");
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onUpdate(form);
+      await onUpdate({ ...form, phone: normalizePhone(form.phone) });
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 2000);
     } catch {
@@ -389,6 +400,7 @@ function EditableContactCard({
           placeholder="e.g. (555) 123-4567"
           value={form.phone}
           onChange={set("phone")}
+          error={phoneError || undefined}
         />
 
         <Input

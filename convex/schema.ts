@@ -215,16 +215,18 @@ export default defineSchema({
     verified: v.boolean(), // true = successful item view, false = failed PIN attempt
   }).index("by_trip_accessed", ["tripId", "accessedAt"]),
 
-  // Vault SMS PIN verification — pending PIN attempts and verified sessions.
-  // A record transitions from pending (attemptCount >= 0, verified=undefined) to
-  // verified (verified=true, expiresAt extended to 24h) on successful PIN entry.
+  // Vault SMS PIN verification — verified session records only.
+  // Created by verifyPin on successful Prelude OTP check; read by getDecryptedVaultItems.
+  // Legacy fields (hashedPin, salt, attemptCount) are optional for backward compat with
+  // pre-Prelude records; they will be absent on all new records.
   vaultPins: defineTable({
     tripId: v.id("trips"),
     sitterPhone: v.string(), // normalized 10-digit US number (digits only)
-    hashedPin: v.string(), // SHA-256(pin + salt); cleared after verification
-    salt: v.string(), // random hex salt; cleared after verification
-    expiresAt: v.number(), // Unix ms: now+10min (pending) or now+24h (verified)
-    attemptCount: v.number(), // incremented on wrong PIN; max 3 before lockout
-    verified: v.optional(v.boolean()), // true after successful PIN verification
+    expiresAt: v.number(), // Unix ms: now+24h after successful verification
+    verified: v.optional(v.boolean()), // true for verified sessions; absent on stale records
+    // Legacy Twilio fields — present on pre-Prelude records until TTL expiry
+    hashedPin: v.optional(v.string()),
+    salt: v.optional(v.string()),
+    attemptCount: v.optional(v.number()),
   }).index("by_trip_phone", ["tripId", "sitterPhone"]),
 });

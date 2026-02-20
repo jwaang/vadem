@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { PetProfileCard } from "@/components/ui/PetProfileCard";
+import { validatePhone, normalizePhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -185,7 +186,8 @@ function PetForm({ onSave, onCancel, isSaving, generalError }: PetFormProps) {
   const set = (field: keyof PetFormValues) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = field === "vetPhone" ? formatPhoneInput(e.target.value) : e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
@@ -246,7 +248,8 @@ function PetForm({ onSave, onCancel, isSaving, generalError }: PetFormProps) {
     if (!formData.feedingInstructions.trim())
       newErrors.feedingInstructions = "Feeding instructions are required";
     if (!formData.vetName.trim()) newErrors.vetName = "Vet name is required";
-    if (!formData.vetPhone.trim()) newErrors.vetPhone = "Vet phone is required";
+    const vetPhoneErr = validatePhone(formData.vetPhone);
+    if (vetPhoneErr) newErrors.vetPhone = vetPhoneErr;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -698,7 +701,7 @@ export default function Step2Pets() {
         photos: photoIds,
         feedingInstructions: data.feedingInstructions.trim() || undefined,
         vetName: data.vetName.trim() || undefined,
-        vetPhone: data.vetPhone.trim() || undefined,
+        vetPhone: data.vetPhone.trim() ? normalizePhone(data.vetPhone) : undefined,
         personalityNotes: data.personalityNotes.trim() || undefined,
         medicalConditions: data.medicalConditions.trim() || undefined,
         medications: data.medications.filter((m) => m.name.trim()),

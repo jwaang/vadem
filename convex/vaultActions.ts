@@ -33,7 +33,8 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { randomBytes, createCipheriv, createDecipheriv, createHash } from "node:crypto";
+import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
+import Prelude from "@prelude.so/sdk";
 
 const ALGORITHM = "aes-256-gcm";
 const TAG_LENGTH = 16; // GCM auth tag is always 128 bits
@@ -151,18 +152,12 @@ export const updateVaultItemValue = action({
 
 // ── SMS PIN verification helpers ──────────────────────────────────────────────
 
-const PIN_TTL_MS = 10 * 60 * 1000; // 10 minutes — pending PIN validity
-const MAX_PIN_ATTEMPTS = 3;
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — verified session validity
 
 /** Normalize a US phone number to 10 digits only (strip formatting and leading 1). */
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
-}
-
-/** Hash a PIN with a salt using SHA-256. */
-function hashPin(pin: string, salt: string): string {
-  return createHash("sha256").update(`${pin}${salt}`).digest("hex");
 }
 
 /**
@@ -218,51 +213,21 @@ export const sendSmsPin = action({
       return { success: false as const, error: "VAULT_ACCESS_DENIED" as const };
     }
 
-    // 3. Generate and hash a 6-digit PIN
-    const pin = String(Math.floor(100000 + Math.random() * 900000));
-    const salt = randomBytes(16).toString("hex");
-    const hashedPin = hashPin(pin, salt);
-    const expiresAt = Date.now() + PIN_TTL_MS;
-
-    // 4. Store PIN with normalized phone (canonical form for consistent lookup)
-    await ctx.runMutation(internal.vaultPins._upsert, {
-      tripId: args.tripId,
-      sitterPhone: normalizedInput,
-      hashedPin,
-      salt,
-      expiresAt,
-    });
-
-    // 5. Send SMS via Twilio, or log PIN in development
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
-
-    if (twilioSid && twilioToken && twilioFrom) {
+    // 3. Send OTP via Prelude
+    const apiToken = process.env.PRELUDE_API_KEY;
+    const toPhone = `+1${normalizedInput}`;
+    if (apiToken) {
       try {
-        // Use E.164 format for Twilio
-        const toPhone = normalizedInput.length === 10 ? `+1${normalizedInput}` : `+${normalizedInput}`;
-        const body = `Your Handoff vault code is: ${pin}. Valid for 10 minutes. Do not share this code.`;
-        const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64")}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ To: toPhone, From: twilioFrom, Body: body }).toString(),
+        const client = new Prelude({ apiToken });
+        await client.verification.create({
+          target: { type: "phone_number", value: toPhone },
         });
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error("[Twilio] SMS send failed:", errText);
-          // PIN is stored — sitter can retry; don't expose Twilio errors to client
-        }
       } catch (err) {
-        console.error("[Twilio] SMS send error:", err);
+        console.error("[Prelude] SMS send error:", err);
+        // Don't expose send errors to the client — sitter can retry
       }
     } else {
-      // Development fallback: log the PIN so the flow can be tested without Twilio
-      console.log(`[DEV] Vault PIN for ${sitter.phone ?? normalizedInput} (trip ${args.tripId}): ${pin}`);
+      console.log(`[DEV] PRELUDE_API_KEY not set — skipping SMS for ${toPhone}`);
     }
 
     return { success: true as const };
@@ -270,16 +235,16 @@ export const sendSmsPin = action({
 });
 
 /**
- * Verify a 6-digit SMS PIN for vault access.
+ * Verify a Prelude OTP for vault access.
  *
- * Checks expiry, attempt count, and hash match. On success, marks the record as a
- * verified session (extends expiry to 24h, clears PIN hash).
+ * Delegates code validation to Prelude (attempt limiting, expiry, etc.).
+ * On success, writes a 24h verified session to vaultPins.
  */
 export const verifyPin = action({
   args: {
     tripId: v.id("trips"),
     sitterPhone: v.string(),
-    pin: v.string(), // 6-digit PIN as string
+    pin: v.string(), // OTP code entered by sitter
   },
   returns: v.union(
     v.object({ success: v.literal(true) }),
@@ -298,27 +263,25 @@ export const verifyPin = action({
     | { success: false; error: "NOT_FOUND" | "EXPIRED" | "MAX_ATTEMPTS" | "INVALID_PIN" }
   > => {
     const normalizedPhone = normalizePhone(args.sitterPhone);
-    const record = await ctx.runQuery(internal.vaultPins._getByTripAndPhone, {
-      tripId: args.tripId,
-      sitterPhone: normalizedPhone,
-    });
+    const toPhone = `+1${normalizedPhone}`;
 
-    if (!record || record.verified) {
-      // No pending PIN (either never sent, or already verified/used)
-      return { success: false as const, error: "NOT_FOUND" as const };
-    }
-    if (Date.now() > record.expiresAt) {
-      await ctx.runMutation(internal.vaultPins._delete, { pinId: record._id });
+    const apiToken = process.env.PRELUDE_API_KEY;
+    if (!apiToken) {
       return { success: false as const, error: "EXPIRED" as const };
     }
-    if (record.attemptCount >= MAX_PIN_ATTEMPTS) {
-      return { success: false as const, error: "MAX_ATTEMPTS" as const };
+
+    const client = new Prelude({ apiToken });
+    const check = await client.verification.check({
+      target: { type: "phone_number", value: toPhone },
+      code: args.pin,
+    });
+
+    if (check.status === "expired_or_not_found") {
+      return { success: false as const, error: "EXPIRED" as const };
     }
 
-    const expectedHash = hashPin(args.pin, record.salt);
-    if (expectedHash !== record.hashedPin) {
-      await ctx.runMutation(internal.vaultPins._incrementAttempt, { pinId: record._id });
-      // Log the failed verification attempt (verified: false, no vaultItemId)
+    if (check.status === "failure") {
+      // Log the failed verification attempt
       await ctx.runMutation(internal.vaultAccessLog.logVaultAccess, {
         tripId: args.tripId,
         sitterPhone: normalizedPhone,
@@ -327,8 +290,13 @@ export const verifyPin = action({
       return { success: false as const, error: "INVALID_PIN" as const };
     }
 
-    // Correct PIN — promote to verified session (24h)
-    await ctx.runMutation(internal.vaultPins._markVerified, { pinId: record._id });
+    // success — write verified session (24h)
+    await ctx.runMutation(internal.vaultPins._upsert, {
+      tripId: args.tripId,
+      sitterPhone: normalizedPhone,
+      verified: true,
+      expiresAt: Date.now() + SESSION_TTL_MS,
+    });
     return { success: true as const };
   },
 });

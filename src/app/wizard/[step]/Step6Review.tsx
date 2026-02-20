@@ -8,6 +8,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
+import { formatPhone } from "@/lib/phone";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ function ManualPreview({
                 </div>
                 {contact.phone && (
                   <p className="font-body text-xs text-secondary shrink-0">
-                    {contact.phone}
+                    {formatPhone(contact.phone)}
                   </p>
                 )}
               </div>

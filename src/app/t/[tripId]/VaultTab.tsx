@@ -8,6 +8,7 @@ import { VaultItem, LockIcon, type VaultItemLocationCard } from "@/components/ui
 import { PinInput } from "@/components/ui/PinInput";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { validatePhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -193,8 +194,9 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   }, [phase, tripId, propertyId, phone, getDecryptedItemsAction, sessionKey]);
 
   async function handleSendPin() {
-    if (!phone.trim()) {
-      setError("Please enter your phone number.");
+    const phoneErr = validatePhone(phone);
+    if (phoneErr) {
+      setError(phoneErr);
       return;
     }
     setError(null);
@@ -485,7 +487,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               placeholder="(555) 867-5309"
               value={phone}
               onChange={(e) => {
-                setPhone(e.target.value);
+                setPhone(formatPhoneInput(e.target.value));
                 setError(null);
               }}
               disabled={isSending}
@@ -533,9 +535,8 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               />
               {error && (
                 <p
-                  className={`font-body text-sm text-center ${
-                    attemptsLeft <= 1 ? "text-danger" : "text-warning"
-                  }`}
+                  className={`font-body text-sm text-center ${attemptsLeft <= 1 ? "text-danger" : "text-warning"
+                    }`}
                   role="alert"
                 >
                   {error}

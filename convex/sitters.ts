@@ -1,16 +1,7 @@
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
-
-const US_PHONE_RE = /^\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
-
-function validatePhone(phone: string): void {
-  if (!US_PHONE_RE.test(phone)) {
-    throw new ConvexError(
-      "Please enter a valid US phone number (e.g. (555) 867-5309).",
-    );
-  }
-}
+import { normalizePhone, isValidPhone } from "./phoneUtils";
 
 const sitterObject = v.object({
   _id: v.id("sitters"),
@@ -30,10 +21,12 @@ export const create = mutation({
   },
   returns: v.id("sitters"),
   handler: async (ctx, args) => {
-    if (args.phone !== undefined) {
-      validatePhone(args.phone);
+    const phone =
+      args.phone !== undefined ? normalizePhone(args.phone) : undefined;
+    if (phone !== undefined && !isValidPhone(phone)) {
+      throw new ConvexError("Enter a valid 10-digit US phone number.");
     }
-    return await ctx.db.insert("sitters", args);
+    return await ctx.db.insert("sitters", { ...args, phone });
   },
 });
 
@@ -57,10 +50,12 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    if (args.phone !== undefined) {
-      validatePhone(args.phone);
+    const phone =
+      args.phone !== undefined ? normalizePhone(args.phone) : undefined;
+    if (phone !== undefined && !isValidPhone(phone)) {
+      throw new ConvexError("Enter a valid 10-digit US phone number.");
     }
-    const { sitterId, ...fields } = args;
+    const { sitterId, ...fields } = { ...args, phone };
     const updates = Object.fromEntries(
       Object.entries(fields).filter(([, val]) => val !== undefined),
     );

@@ -1,6 +1,7 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { normalizePhone, isValidPhone } from "./phoneUtils";
 
 const emergencyContactObject = v.object({
   _id: v.id("emergencyContacts"),
@@ -26,7 +27,11 @@ export const create = mutation({
   },
   returns: v.id("emergencyContacts"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("emergencyContacts", args);
+    const phone = normalizePhone(args.phone);
+    if (phone !== "" && !isValidPhone(phone)) {
+      throw new ConvexError({ code: "INVALID_PHONE", message: "Enter a valid 10-digit US phone number." });
+    }
+    return await ctx.db.insert("emergencyContacts", { ...args, phone });
   },
 });
 
@@ -55,6 +60,13 @@ export const update = mutation({
     const contact = await ctx.db.get(contactId);
     if (!contact) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Contact not found" });
+    }
+    if (fields.phone !== undefined) {
+      const phone = normalizePhone(fields.phone);
+      if (phone !== "" && !isValidPhone(phone)) {
+        throw new ConvexError({ code: "INVALID_PHONE", message: "Enter a valid 10-digit US phone number." });
+      }
+      fields.phone = phone;
     }
     const patch = Object.fromEntries(
       Object.entries(fields).filter(([, val]) => val !== undefined),

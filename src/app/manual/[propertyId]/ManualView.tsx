@@ -11,6 +11,7 @@ import { PetProfileCard, type PetDetail } from "@/components/ui/PetProfileCard";
 import { LocationCard, type TiltVariant } from "@/components/ui/LocationCard";
 import { SitterLayout } from "@/components/layouts/SitterLayout";
 import { cn } from "@/lib/utils";
+import { formatPhone } from "@/lib/phone";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,7 +94,7 @@ function buildPetDetails(pet: PetData): PetDetail[] {
       emoji: "🏥",
       label: "Vet",
       value: pet.vetName,
-      ...(pet.vetPhone ? { phone: pet.vetPhone } : {}),
+      ...(pet.vetPhone ? { phone: formatPhone(pet.vetPhone) } : {}),
     });
   }
   if (pet.walkingRoutine) {
@@ -628,7 +629,7 @@ export default function ManualView({ propertyId }: ManualViewProps) {
                             href={`tel:${contact.phone}`}
                             className="font-body text-sm font-semibold text-secondary no-underline hover:text-secondary-hover transition-colors duration-150 shrink-0"
                           >
-                            {contact.phone}
+                            {formatPhone(contact.phone)}
                           </a>
                         </div>
                         {contact.notes && (

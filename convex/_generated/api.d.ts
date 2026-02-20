@@ -20,6 +20,7 @@ import type * as manualView from "../manualView.js";
 import type * as notifications from "../notifications.js";
 import type * as overlayItems from "../overlayItems.js";
 import type * as pets from "../pets.js";
+import type * as phoneUtils from "../phoneUtils.js";
 import type * as proof from "../proof.js";
 import type * as properties from "../properties.js";
 import type * as search from "../search.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   overlayItems: typeof overlayItems;
   pets: typeof pets;
+  phoneUtils: typeof phoneUtils;
   proof: typeof proof;
   properties: typeof properties;
   search: typeof search;

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { PetProfileCard } from "@/components/ui/PetProfileCard";
+import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ function petToFormValues(pet: Doc<"pets">): PetFormValues {
     age: pet.age ?? "",
     feedingInstructions: pet.feedingInstructions ?? "",
     vetName: pet.vetName ?? "",
-    vetPhone: pet.vetPhone ?? "",
+    vetPhone: formatPhone(pet.vetPhone ?? ""),
     personalityNotes: pet.personalityNotes ?? "",
     medicalConditions: pet.medicalConditions ?? "",
     medications: pet.medications,
@@ -252,7 +253,8 @@ function PetForm({
   const set =
     (field: keyof PetFormValues) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      const value = field === "vetPhone" ? formatPhoneInput(e.target.value) : e.target.value;
+      setFormData((prev) => ({ ...prev, [field]: value }));
       if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
     };
 
@@ -310,6 +312,8 @@ function PetForm({
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Pet name is required";
     if (!formData.species.trim()) newErrors.species = "Species is required";
+    const vetPhoneErr = validatePhone(formData.vetPhone, false);
+    if (vetPhoneErr) newErrors.vetPhone = vetPhoneErr;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -478,6 +482,7 @@ function PetForm({
             value={formData.vetPhone}
             onChange={set("vetPhone")}
             type="tel"
+            error={errors.vetPhone}
           />
         </div>
 
@@ -869,7 +874,7 @@ export default function PetsEditor() {
         photos: photoIds,
         feedingInstructions: data.feedingInstructions.trim() || undefined,
         vetName: data.vetName.trim() || undefined,
-        vetPhone: data.vetPhone.trim() || undefined,
+        vetPhone: data.vetPhone.trim() ? normalizePhone(data.vetPhone) : undefined,
         personalityNotes: data.personalityNotes.trim() || undefined,
         medicalConditions: data.medicalConditions.trim() || undefined,
         medications: data.medications.filter((m) => m.name.trim()),
@@ -910,7 +915,7 @@ export default function PetsEditor() {
         photos: allPhotoIds,
         feedingInstructions: data.feedingInstructions.trim() || undefined,
         vetName: data.vetName.trim() || undefined,
-        vetPhone: data.vetPhone.trim() || undefined,
+        vetPhone: data.vetPhone.trim() ? normalizePhone(data.vetPhone) : undefined,
         personalityNotes: data.personalityNotes.trim() || undefined,
         medicalConditions: data.medicalConditions.trim() || undefined,
         medications: data.medications.filter((m) => m.name.trim()),

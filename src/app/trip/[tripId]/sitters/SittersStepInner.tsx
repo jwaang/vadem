@@ -7,12 +7,11 @@ import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
 import { NotificationToast } from "@/components/ui/NotificationToast";
+import { validatePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
-
-const US_PHONE_RE = /^\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
 
 const STEPS = [
   { label: "Overlay Items", active: false },
@@ -20,13 +19,6 @@ const STEPS = [
   { label: "Proof Settings", active: false },
   { label: "Share", active: false },
 ];
-
-function validatePhone(phone: string): string {
-  if (!phone.trim()) return "Phone number is required.";
-  if (!US_PHONE_RE.test(phone.trim()))
-    return "Please enter a valid US phone number (e.g. (555) 867-5309).";
-  return "";
-}
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -226,7 +218,7 @@ function SitterCard({ sitter, onEdit, onRemove, onRevoke }: SitterCardProps) {
             {sitter.name}
           </p>
           <p className="font-body text-xs text-text-secondary">
-            {sitter.phone ?? "No phone"}&nbsp;·&nbsp;
+            {sitter.phone ? formatPhone(sitter.phone) : "No phone"}&nbsp;·&nbsp;
             {sitter.vaultAccess ? (
               <span className="text-vault font-semibold">Vault access on</span>
             ) : (
@@ -329,7 +321,7 @@ function EditSitterForm({ sitter, onDone }: EditSitterFormProps) {
   const updateSitter = useMutation(api.sitters.update);
 
   const [name, setName] = useState(sitter.name);
-  const [phone, setPhone] = useState(sitter.phone ?? "");
+  const [phone, setPhone] = useState(sitter.phone ? formatPhone(sitter.phone) : "");
   const [vaultAccess, setVaultAccess] = useState(sitter.vaultAccess);
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -392,7 +384,7 @@ function EditSitterForm({ sitter, onDone }: EditSitterFormProps) {
           id={`edit-phone-${sitter._id}`}
           label="Phone number"
           value={phone}
-          onChange={setPhone}
+          onChange={(v) => setPhone(formatPhoneInput(v))}
           placeholder="(555) 867-5309"
           type="tel"
           error={phoneError}
@@ -505,7 +497,7 @@ function AddSitterForm({
           id="sitter-phone"
           label="Phone number"
           value={phone}
-          onChange={setPhone}
+          onChange={(v) => setPhone(formatPhoneInput(v))}
           placeholder="(555) 867-5309"
           type="tel"
           error={phoneError}

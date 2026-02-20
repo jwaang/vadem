@@ -1027,3 +1027,14 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Delete confirmation inline pattern**: `showDeleteConfirm` boolean state in the card component; trash button sets it true; a `bg-danger-light` panel appears at top of the form body with Cancel/Yes buttons. The card stays open during confirmation — no modal needed.
   - **Dashboard property page pattern**: 3-file structure — `page.tsx` (server + metadata), `<Name>PageClient.tsx` (client with `dynamic(ssr:false)`), `<Name>.tsx` (full editor with inner/outer env guard split). The inner component uses Convex hooks; outer guards with `process.env.NEXT_PUBLIC_CONVEX_URL` check.
 ---
+
+## 2026-02-19 - US-059
+- Implemented full-page Contacts tab in the sitter Today View (`/t/[tripId]`)
+- The existing placeholder `(activeTab === "manual" || activeTab === "contacts")` was split into separate conditions: contacts gets the real ContactsTab component, manual keeps the "Coming soon" placeholder
+- Files changed:
+  - `src/app/t/[tripId]/TodayPageInner.tsx` — (1) Updated `emergencyContacts` type to include `notes?: string`; (2) Changed `toContactRole()` from exact-match to fuzzy lowercase-contains match so DB strings like "Owner (primary)"/"Veterinarian"/"Emergency neighbor" map to the right colors; (3) Added `roleCardBg`/`roleCardText` color maps; (4) Added `getRoleForColor()` fuzzy helper for the tab; (5) Added `ContactsTab` component (vertical card list with name, color-coded role badge, tel: phone link, optional notes); (6) Replaced combined placeholder with separate `contacts` and `manual` conditionals
+- **Learnings:**
+  - **Fuzzy role matching**: Convex stores roles as human-readable strings ("Owner (primary)", "Veterinarian") not enum values. Use lowercase contains-checks (`r.includes("vet")`) rather than exact Set membership tests. Update both the compact bar helper (`toContactRole`) and the full-page helper (`getRoleForColor`) — they can share the same logic.
+  - **Contacts tab inline vs separate file**: For simpler tab components that share all data with the parent page, inline helper components within TodayPageInner.tsx is cleaner than a separate file (contrast with VaultTab which has its own auth state machine).
+  - **isLocked = system-locked, not sitter-hidden**: The `isLocked` field means the record can't be edited/deleted by the creator, NOT that it's hidden from sitters. Both locked (ASPCA) and unlocked contacts should appear in the full-page Contacts tab. Only the compact bar filters them out (for layout/space reasons).
+---

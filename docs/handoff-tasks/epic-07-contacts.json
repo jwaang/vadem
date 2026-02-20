@@ -65,15 +65,16 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to use useQuery(api.contacts.getByPropertyId) in both the compact bar and full-page views, ordered by sortOrder. Load /tailwind-design-system to implement two presentations: (1) the compact Emergency Contact Bar for Today View (US-011 component) — horizontal scroll of rounded-round avatar icons with role color-coding (primary=owner, secondary=vet, danger=emergency, accent=neighbor) and name below, each wrapping an <a href='tel:[phone]'>; (2) the full-page Contacts tab view — vertical list of bg-bg-raised rounded-lg cards each showing name, role badge, phone as a tappable tel: link (text-secondary font-body font-medium), and optional notes in text-text-muted. Set the Contacts tab as active in the SitterLayout bottom nav when on this route. Use /dev-browser to verify: contacts appear in the bar on Today View, tapping a contact icon in the bar initiates a call (tel: href), the Contacts tab nav item opens the full-page view, notes are visible on the full-page view, role icons are color-coded correctly.",
       "dependsOn": [
         "US-011",
         "US-057"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T03:03:34.415Z"
+    "updatedAt": "2026-02-20T03:13:58.926Z"
   }
 }

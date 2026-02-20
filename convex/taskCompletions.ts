@@ -218,6 +218,10 @@ export const completeTask = mutation({
  * Complete a task and attach a proof photo in one step.
  * Resolves the storageId to a public URL before storing.
  * Also logs a proof_uploaded event to the activity feed.
+ * Accepts optional completedAt for offline sync: preserves the original timestamp
+ * from when the sitter took the photo, not when the upload synced.
+ * Deduplicates: if a completion for this tripId+taskRef already exists, returns
+ * the existing ID (idempotent for offline retry safety).
  */
 export const completeTaskWithProof = mutation({
   args: {
@@ -226,14 +230,26 @@ export const completeTaskWithProof = mutation({
     taskType: taskTypeValidator,
     sitterName: v.string(),
     storageId: v.id("_storage"),
+    // Optional: supply the original client-side timestamp when syncing an
+    // offline-queued photo upload.
+    completedAt: v.optional(v.number()),
   },
   returns: v.id("taskCompletions"),
   handler: async (ctx, args) => {
+    // Dedup: if already completed (offline retry case) return existing ID
+    const existingCompletion = await ctx.db
+      .query("taskCompletions")
+      .withIndex("by_trip_taskref", (q) =>
+        q.eq("tripId", args.tripId).eq("taskRef", args.taskRef),
+      )
+      .first();
+    if (existingCompletion) return existingCompletion._id;
+
     const proofPhotoUrl = await ctx.storage.getUrl(args.storageId);
     if (!proofPhotoUrl) {
       throw new ConvexError({ code: "STORAGE_ERROR", message: "Failed to resolve proof photo URL" });
     }
-    const completedAt = Date.now();
+    const completedAt = args.completedAt ?? Date.now();
     const date = new Date(completedAt).toISOString().split("T")[0];
     const completionId = await ctx.db.insert("taskCompletions", {
       tripId: args.tripId,

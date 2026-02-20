@@ -1,0 +1,115 @@
+# Iteration 2 Log
+
+## Metadata
+
+- **Task ID**: US-081
+- **Task Title**: Offline task check-off with sync
+- **Description**: As a sitter, I want to check off tasks while offline and have them sync when I'm back online.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-20T23:24:44.418Z
+- **Ended At**: 2026-02-20T23:31:31.276Z
+- **Duration**: 6m 46s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96msrc/**/*.{ts,tsx}[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/*.ts[0m
+Now let me read the key files to understand the data model and what already exists:
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/package.json[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/lib/offlineTripData.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/layouts/SitterLayout.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m
+Now I have everything I need to implement. Let me set up the todo list and start coding:
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/lib/offlineQueue.ts[0m "/**
+ * Offline task completion queue.
+ *
+ * When the sitter checks off a task while offline (or when the Convex mutation
+ * fails due to a connectivity issue), the completion is written here first.
+ *... (3435 chars)"
+[94m[TodoWrite][0m
+Now modify `completeTask` to accept an optional `completedAt` and add deduplication:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m edit: "/**
+ * Convenience mutation for sitter task check-..." → "/**
+ * Convenience mutation for sitter task check-..."
+Now I need to update the `date` computation to use the resolved `completedAt`:
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m
+The `...args` spread needs fixing since it includes the optional `completedAt` which conflicts with our computed value. Let me update the insert:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/taskCompletions.ts[0m edit: "    const completedAt = args.completedAt ?? Date.n..." → "    // Destructure out the optional completedAt so..."
+[94m[TodoWrite][0m
+Now update `TodayPageInner.tsx`. This is the main work — I'll add online/offline detection, the queue, sync drain, and the offline badge:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "import {
+  saveTripData,
+  loadTripData,
+  notifyS..." → "import {
+  saveTripData,
+  loadTripData,
+  notifyS..."
+Now update the `CompletionInfo` interface to make `id` optional (so offline-queued items can be represented without a real ID):
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "interface CompletionInfo {
+  id: Id<"taskCompletio..." → "interface CompletionInfo {
+  /** Undefined for off..."
+Now add the `OfflineBanner` component before the main component:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "// ── Main component ─────────────────────────────..." → "// ── Offline sync banner ────────────────────────..."
+Now add the state and effects for online/offline detection, offline queue, and sync drain. I'll insert them after the existing state declarations in the main component:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  const liveData = useQuery(api.todayView.getToday..." → "  // ── Online / offline state ───────────────────..."
+Now I need to update the `useEffect` that fires when `liveData` changes to also clean up the queue. Let me find and update that effect:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // When fresh data arrives from Convex, persist ..." → "  // When fresh data arrives from Convex, persist ..."
+Now add the sync-drain effect (fires when `isOnline` becomes true) and update `handleToggle`. First, let me add the drain effect after the existing effects, before `handleToggle`. Let me find the right spot:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // completeTask: immediately updates the Convex ..." → "  // ── Queue drain on reconnect ─────────────────..."
+Now add the drain effect after the `completeTask` and `removeCompletion` mutation declarations. Let me find the right insertion point (after `removeCompletion` and before `completeTaskWithProof`):
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  const completeTaskWithProof = useMutation(api.ta..." → "  const completeTaskWithProof = useMutation(api.ta..."
+Now update `handleToggle` to write to the queue first, then attempt the mutation:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  async function handleToggle(
+    task: TodayTask..." → "  async function handleToggle(
+    task: TodayTask..."
+Now I need to update the `completionMap` construction to include `pendingTaskRefs` as offline-queued completions (with no real ID so they can't be unchecked). Let me find that section in the render logic:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  // Build a map of taskRef → completion info for ..." → "  // Build a map of taskRef → completion info for ..."
+Now render the `OfflineBanner` inside the `SitterLayout` when offline:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  return (
+    <SitterLayout activeTab={activeTab}..." → "  return (
+    <SitterLayout activeTab={activeTab}..."
+Now let's run typecheck to catch any issues:
+[94m[Bash][0m Run TypeScript type check $ pnpm typecheck 2>&1 | head -80
+Clean. Now run lint:
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1 | head -60
+No new errors. All 4 warnings are pre-existing in other files. Let me do a quick build check:
+[94m[Bash][0m Run Next.js production build $ pnpm build 2>&1 | tail -20
+Build passes. Let me mark the tasks complete and update the progress log:
+[94m[TodoWrite][0m
+Now append to the progress log:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "## Codebase Patterns (Study These First)" → "## Codebase Patterns (Study These First)
+
+### Offl..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m edit: "---
+
+## 2026-02-20 - US-080" → "---
+
+## 2026-02-20 - US-081
+- **What was implement..."
+All done. Here's a summary of what was implemented for US-081:
+
+**`src/lib/offlineQueue.ts`** (new) — localStorage-based queue with:
+- `enqueue` / `dequeue` / `getQueue` / `removeByTaskRefs` / `incrementRetry`
+- Deduplication on `taskRef` to prevent double-queuing
+
+**`convex/taskCompletions.ts`** (modified):
+- Added `completedAt: v.optional(v.number())` to `completeTask` — lets the offline sync pass the original timestamp
+- Added server-side deduplication: checks `by_trip_taskref` index before inserting; returns existing ID if already done
+
+**`src/app/t/[tripId]/TodayPageInner.tsx`** (modified):
+- `isOnline` state + `window.online`/`offline` event listeners
+- `pendingTaskRefs` state (Set) initialized from localStorage queue on mount
+- `handleToggle` now: writes to queue → marks checked locally → attempts mutation → dequeues on success / keeps on failure
+- `liveData` effect now calls `removeByTaskRefs` to clean up confirmed items
+- `useEffect` on `isOnline` drains the queue when reconnected, using stored `completedAt`
+- `completionMap` includes offline-queued items with `id: undefined` (blocks uncheck dialog)
+- `OfflineBanner` fixed bar shown at `bottom-72px+safearea` when `!isOnline`
+
+<promise>COMPLETE</promise>

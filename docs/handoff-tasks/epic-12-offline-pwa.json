@@ -63,12 +63,13 @@
         "pnpm build passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /nextjs-best-practices to extend the IndexedDB store from US-081 with a pending_uploads store for photo blobs: entries { id, tripId, taskRef, blob, completedAt, sitterName, retryCount, lastAttemptAt }. When the proof photo is selected offline, store the full File/Blob in IndexedDB (IndexedDB supports binary data natively). On reconnect, process the upload queue in order: call generateUploadUrl, POST the blob, then call completeTask with the storageId and original completedAt timestamp. Implement exponential backoff: on upload failure, increment retryCount, set lastAttemptAt, and schedule retry at 2^retryCount seconds later (up to 3 attempts). After 3 failures, mark as permanently_failed and show a 'Some photos failed to upload' error badge. Load /tailwind-design-system to render the pending upload count as a badge on the Today View header: a rounded-pill chip (bg-accent-light text-accent) showing '2 photos waiting to upload', visible only when the queue is non-empty.",
       "dependsOn": [
         "US-061",
         "US-019"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-083",
@@ -94,6 +95,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T23:31:31.278Z"
+    "updatedAt": "2026-02-20T23:43:10.324Z"
   }
 }

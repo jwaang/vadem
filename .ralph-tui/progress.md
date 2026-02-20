@@ -5,6 +5,13 @@ after each iteration and it's included in prompts for context.
 
 ## Codebase Patterns (Study These First)
 
+### IndexedDB photo upload queue pattern
+Use IndexedDB (not localStorage) for offline photo blobs since localStorage is string-only. Schema: single `pending_uploads` object store keyed by `id` with a `by_trip` index. Entries: `{ id, tripId, taskRef, taskType, blob, completedAt, sitterName, retryCount, lastAttemptAt, status }`. On reconnect, fire all pending entries concurrently with `processPhotoEntry(entry)`. On failure, increment `retryCount` and schedule retry via `setTimeout(2^retryCount * 1000)`. After MAX_PHOTO_RETRIES (3) mark as `permanently_failed` and show error badge. Clean up IndexedDB entries in the liveData effect (same `syncedRefs` set used for localStorage queue cleanup). Photo drain effect must be declared AFTER `completeTaskWithProof` and `generateUploadUrl` (TDZ ordering).
+
+### completeTaskWithProof dedup + completedAt override
+Like `completeTask`, add `completedAt: v.optional(v.number())` to `completeTaskWithProof` and add `by_trip_taskref` dedup check at the top of the handler. Access `args.completedAt ?? Date.now()` directly (no destructuring needed since the insert is built manually, not spread from args).
+
+
 ### Offline-first task queue pattern
 Queue task check-offs to localStorage before attempting the Convex mutation. Keep a `pendingTaskRefs` React state (Set) that renders pending items as checked. Merge with `completionMap` at render time — pending entries get `id: undefined` so the uncheck dialog can't be triggered on unsynced items. Clean up queue entries by watching `liveData.completions` in a useEffect (calls `removeByTaskRefs`). Drain on reconnect via `online` event handler; pass original `completedAt` to `completeTask` for accurate timestamps. Deduplication is enforced server-side (query `by_trip_taskref` before insert) and client-side (queue `enqueue` skips duplicate taskRef).
 
@@ -32,6 +39,19 @@ Since Convex uses WebSocket (not interceptable by SW), persist live query data t
 ### SW postMessage for cache invalidation
 Page calls `notifySwManualVersion(propertyId, version)` after each Convex data load. SW compares version to stored meta; on mismatch, evicts `handoff-photos-v1` and cached trip data, then stores new version.
 
+---
+
+## 2026-02-20 - US-082
+- **What was implemented**: Offline photo proof queue — IndexedDB blob storage, upload badge, reconnect drain with exponential backoff, and original timestamp preservation.
+- **Files changed**:
+  - `src/lib/photoUploadQueue.ts` — new file: IndexedDB store `pending_uploads`, `enqueuePhoto`, `getPhotoQueue`, `getPhotoCounts`, `removePhotoEntry`, `recordPhotoRetry`, `markPhotoFailed`, `MAX_PHOTO_RETRIES`
+  - `convex/taskCompletions.ts` — added `completedAt: v.optional(v.number())` to `completeTaskWithProof` args; added `by_trip_taskref` dedup check at top of handler (idempotent for offline retry safety)
+  - `src/app/t/[tripId]/TodayPageInner.tsx` — added `pendingUploadCount` + `failedUploadCount` states + `photoDrainInProgressRef`; mount effect loads IndexedDB counts and adds photo taskRefs to `pendingTaskRefs`; liveData effect cleans up confirmed IndexedDB entries; photo drain useEffect fires on reconnect (fires concurrent uploads with exponential backoff); `handleFileSelected` checks `isOnline` — offline path stores to IndexedDB + updates badge + adds to pendingTaskRefs; added pending upload badge chip (bg-accent-light text-accent, rounded-pill) and failed badge (bg-danger-light text-danger) in Today tab
+- **Learnings:**
+  - React hooks in useEffect closures don't have TDZ issues at runtime (closures are evaluated when called, not when defined), but TypeScript/ESLint static analysis still requires declarations to appear before the effect that references them. Moved photo drain effect AFTER `completeTaskWithProof` and `generateUploadUrl` declarations.
+  - For concurrent offline uploads, fire all entries in parallel (each manages its own backoff via setTimeout). This matches natural offline behavior where multiple tasks were completed before reconnecting.
+  - `getPhotoCounts` runs at mount via useEffect (async), not `useState` initializer, because IndexedDB is always async. To also add photo taskRefs to `pendingTaskRefs`, run `getPhotoQueue` in the same mount effect and fold them in with `setPendingTaskRefs((prev) => new Set([...prev, ...entries.map(e => e.taskRef)]))`.
+  - For the liveData cleanup: use the same `syncedRefs` Set (already built for localStorage cleanup) to filter IndexedDB entries that are now server-confirmed. This handles edge cases where another device uploaded the proof.
 ---
 
 ## 2026-02-20 - US-081

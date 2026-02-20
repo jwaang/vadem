@@ -3,10 +3,10 @@
   "sessionId": "dbebf566-8cef-43c6-b9f1-6b14f8daf783",
   "status": "running",
   "startedAt": "2026-02-20T23:13:10.535Z",
-  "updatedAt": "2026-02-20T23:31:31.280Z",
-  "currentIteration": 1,
+  "updatedAt": "2026-02-20T23:43:10.327Z",
+  "currentIteration": 2,
   "maxIterations": 10,
-  "tasksCompleted": 1,
+  "tasksCompleted": 2,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -23,8 +23,8 @@
       {
         "id": "US-081",
         "title": "Offline task check-off with sync",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-082",
@@ -50,6 +50,16 @@
       "durationMs": 684067,
       "startedAt": "2026-02-20T23:13:20.184Z",
       "endedAt": "2026-02-20T23:24:44.251Z"
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "taskId": "US-081",
+      "taskTitle": "Offline task check-off with sync",
+      "taskCompleted": true,
+      "durationMs": 406858,
+      "startedAt": "2026-02-20T23:24:44.418Z",
+      "endedAt": "2026-02-20T23:31:31.276Z"
     }
   ],
   "skippedTaskIds": [],

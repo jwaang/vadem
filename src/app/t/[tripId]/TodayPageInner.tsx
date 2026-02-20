@@ -30,6 +30,16 @@ import {
   removeByTaskRefs,
   incrementRetry,
 } from "@/lib/offlineQueue";
+import {
+  enqueuePhoto,
+  getPhotoQueue,
+  getPhotoCounts,
+  removePhotoEntry,
+  recordPhotoRetry,
+  markPhotoFailed,
+  MAX_PHOTO_RETRIES,
+  type PendingPhotoUpload,
+} from "@/lib/photoUploadQueue";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -666,6 +676,11 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingProofNameRef = useRef<string>("");
 
+  // Pending photo upload queue state (IndexedDB-backed)
+  const [pendingUploadCount, setPendingUploadCount] = useState(0);
+  const [failedUploadCount, setFailedUploadCount] = useState(0);
+  const photoDrainInProgressRef = useRef(false);
+
   // ── Online / offline state ─────────────────────────────────────────────
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true,
@@ -707,6 +722,21 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     if (saved) setCachedData(saved);
   }, [tripId]);
 
+  // Load photo upload queue counts and taskRefs from IndexedDB on mount.
+  // IndexedDB is async so we can't initialize in useState; add refs to
+  // pendingTaskRefs so offline-queued proof tasks render as checked.
+  useEffect(() => {
+    void getPhotoCounts(tripId).then(({ pending, failed }) => {
+      setPendingUploadCount(pending);
+      setFailedUploadCount(failed);
+    });
+    void getPhotoQueue(tripId).then((entries) => {
+      if (entries.length > 0) {
+        setPendingTaskRefs((prev) => new Set([...prev, ...entries.map((e) => e.taskRef)]));
+      }
+    });
+  }, [tripId]);
+
   // When fresh data arrives from Convex, persist it, notify the SW, and
   // clean up any queue entries that are now confirmed server-side.
   useEffect(() => {
@@ -743,6 +773,18 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
         return next;
       });
     }
+
+    // Clean up IndexedDB photo entries that are now confirmed server-side.
+    // This handles the case where another device uploaded the proof, or the
+    // mutation succeeded but the component didn't clean up (e.g. app restart).
+    void getPhotoQueue(tripId).then((photoQueue) => {
+      const toRemove = photoQueue.filter((e) => syncedRefs.has(e.taskRef));
+      for (const entry of toRemove) {
+        void removePhotoEntry(entry.id).then(() => {
+          setPendingUploadCount((prev) => Math.max(0, prev - 1));
+        });
+      }
+    });
   }, [liveData, tripId]);
 
   // Resolve: prefer live data, fall back to cached when Convex is unavailable
@@ -810,6 +852,67 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
 
   const completeTaskWithProof = useMutation(api.taskCompletions.completeTaskWithProof);
   const generateUploadUrl = useAction(api.storage.generateUploadUrl);
+
+  // Drain the photo upload queue when the device comes back online.
+  // Each entry is uploaded to Convex storage with the original completedAt timestamp
+  // and exponential backoff (2^retryCount seconds, up to MAX_PHOTO_RETRIES attempts).
+  // generateUploadUrl and completeTaskWithProof are stable Convex hook refs.
+  useEffect(() => {
+    if (!isOnline) {
+      photoDrainInProgressRef.current = false;
+      return;
+    }
+    if (photoDrainInProgressRef.current) return;
+    photoDrainInProgressRef.current = true;
+
+    async function processPhotoEntry(entry: PendingPhotoUpload): Promise<void> {
+      try {
+        const uploadUrl = await generateUploadUrl({});
+        const uploadRes = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": entry.blob.type },
+          body: entry.blob,
+        });
+        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+        const { storageId } = (await uploadRes.json()) as { storageId: string };
+        await completeTaskWithProof({
+          tripId: entry.tripId as Id<"trips">,
+          taskRef: entry.taskRef,
+          taskType: entry.taskType,
+          sitterName: entry.sitterName,
+          storageId: storageId as Id<"_storage">,
+          completedAt: entry.completedAt,
+        });
+        await removePhotoEntry(entry.id);
+        setPendingUploadCount((prev) => Math.max(0, prev - 1));
+        // pendingTaskRefs cleanup is handled by the liveData effect (removeByTaskRefs)
+      } catch {
+        const newRetryCount = entry.retryCount + 1;
+        if (newRetryCount >= MAX_PHOTO_RETRIES) {
+          await markPhotoFailed(entry.id);
+          setPendingUploadCount((prev) => Math.max(0, prev - 1));
+          setFailedUploadCount((prev) => prev + 1);
+        } else {
+          await recordPhotoRetry(entry.id, newRetryCount);
+          // Exponential backoff: 2s, 4s (up to MAX_PHOTO_RETRIES-1 attempts)
+          const backoffMs = Math.pow(2, newRetryCount) * 1000;
+          setTimeout(() => {
+            void processPhotoEntry({ ...entry, retryCount: newRetryCount });
+          }, backoffMs);
+        }
+      }
+    }
+
+    void (async () => {
+      const queue = await getPhotoQueue(tripId);
+      for (const entry of queue) {
+        // Fire all uploads concurrently; each manages its own backoff on failure
+        void processPhotoEntry(entry);
+      }
+    })();
+  // generateUploadUrl and completeTaskWithProof are stable Convex hook refs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, tripId]);
 
   // Drain the offline queue when the device comes back online.
   // Each queued entry is submitted with its original completedAt timestamp.
@@ -942,8 +1045,34 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
 
     const task = pendingProofTask;
     setPendingProofTask(null);
-    setUploadingTaskRef(task.taskRef);
 
+    const sitterName = pendingProofNameRef.current || getSitterName();
+    const completedAt = Date.now();
+
+    if (!isOnline) {
+      // Offline: store blob to IndexedDB, show task as completed locally.
+      // The photo drain effect will upload when the device reconnects.
+      const entryId = `photo:${tripId}:${task.taskRef}:${completedAt}`;
+      try {
+        await enqueuePhoto({
+          id: entryId,
+          tripId,
+          taskRef: task.taskRef,
+          taskType: task.taskType,
+          blob: file,
+          completedAt,
+          sitterName,
+        });
+        setPendingUploadCount((prev) => prev + 1);
+        setPendingTaskRefs((prev) => new Set([...prev, task.taskRef]));
+      } catch (err) {
+        console.error("[ProofUpload] Failed to queue offline photo:", err);
+      }
+      return;
+    }
+
+    // Online: direct upload flow
+    setUploadingTaskRef(task.taskRef);
     try {
       // 1. Get a one-time upload URL from Convex
       const uploadUrl = await generateUploadUrl({});
@@ -958,7 +1087,6 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
       const { storageId } = (await response.json()) as { storageId: string };
 
       // 3. Complete the task with the proof photo URL
-      const sitterName = pendingProofNameRef.current || getSitterName();
       await completeTaskWithProof({
         tripId: tripId as Id<"trips">,
         taskRef: task.taskRef,
@@ -1129,6 +1257,37 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
               proofNeeded={proofNeeded}
             />
           </div>
+
+          {/* Pending photo upload badge — shown when offline photos are queued */}
+          {pendingUploadCount > 0 && (
+            <div aria-live="polite" role="status" className="mt-3 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-accent-light text-accent font-body text-xs font-medium px-3 py-1.5">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                </svg>
+                {pendingUploadCount} photo{pendingUploadCount !== 1 ? "s" : ""} waiting to upload
+              </span>
+            </div>
+          )}
+          {failedUploadCount > 0 && (
+            <div role="alert" className="mt-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-danger-light text-danger font-body text-xs font-medium px-3 py-1.5">
+                Some photos failed to upload
+              </span>
+            </div>
+          )}
 
           {/* Emergency contact bar */}
           {visibleContacts.length > 0 && (

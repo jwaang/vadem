@@ -17,6 +17,12 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { VaultTab } from "./VaultTab";
 import { formatPhone } from "@/lib/phone";
+import {
+  saveTripData,
+  loadTripData,
+  notifySwManualVersion,
+  swCacheTripData,
+} from "@/lib/offlineTripData";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -615,10 +621,49 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingProofNameRef = useRef<string>("");
 
-  const data = useQuery(api.todayView.getTodayTasks, {
+  const liveData = useQuery(api.todayView.getTodayTasks, {
     tripId: tripId as Id<"trips">,
     today,
   });
+
+  // ── Offline persistence ────────────────────────────────────────────────
+  // Load the last-known trip data from localStorage so the sitter can see
+  // their instructions offline (when Convex cannot reconnect).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [cachedData, setCachedData] = useState<any>(null);
+
+  // On mount, read whatever was previously persisted
+  useEffect(() => {
+    const saved = loadTripData(tripId);
+    if (saved) setCachedData(saved);
+  }, [tripId]);
+
+  // When fresh data arrives from Convex, persist it and notify the SW
+  useEffect(() => {
+    if (!liveData) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const live = liveData as any;
+    const propertyId: string | undefined = live?.property?._id;
+    const manualVersion: number = live?.property?.manualVersion ?? 0;
+
+    // Persist to localStorage (offline fallback)
+    saveTripData(tripId, propertyId ?? "", manualVersion, liveData);
+
+    // Also persist to SW Cache Storage for extra durability
+    swCacheTripData(`trip_${tripId}`, liveData);
+
+    // Tell the SW to check/invalidate photo+content caches if version changed
+    if (propertyId) {
+      notifySwManualVersion(propertyId, manualVersion);
+    }
+
+    // Update in-memory cached copy
+    setCachedData(liveData);
+  }, [liveData, tripId]);
+
+  // Resolve: prefer live data, fall back to cached when Convex is unavailable
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = liveData ?? cachedData;
 
   // completeTask: immediately updates the Convex local store so the checkbox responds
   // before the server round-trip completes (offline resilience via optimistic update).
@@ -770,7 +815,8 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     }
   }
 
-  if (data === undefined) return <LoadingSkeleton />;
+  // Show skeleton only on the very first load (no live data AND no cached fallback)
+  if (liveData === undefined && cachedData === null) return <LoadingSkeleton />;
   if (data === null) return <TripNotFound />;
 
   const { trip, property, sitters, emergencyContacts, recurringInstructions, todayOverlayItems, completions } =

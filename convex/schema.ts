@@ -48,6 +48,10 @@ export default defineSchema({
     photo: v.optional(v.id("_storage")),
     ownerId: v.id("users"),
     status: v.optional(v.union(v.literal("draft"), v.literal("published"))),
+    // Monotonically-increasing integer bumped whenever manual content changes.
+    // Sitter clients send this to the service worker so it can evict stale
+    // photo/content caches on reconnect.
+    manualVersion: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]),
 
   manualSections: defineTable({

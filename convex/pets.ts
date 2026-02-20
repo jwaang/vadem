@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 
 const medicationObject = v.object({
   name: v.string(),
@@ -60,7 +61,7 @@ export const create = mutation({
   },
   returns: v.id("pets"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("pets", {
+    const id = await ctx.db.insert("pets", {
       propertyId: args.propertyId,
       name: args.name,
       species: args.species,
@@ -82,6 +83,10 @@ export const create = mutation({
       comfortItems: args.comfortItems,
       sortOrder: args.sortOrder,
     });
+    await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+      propertyId: args.propertyId,
+    });
+    return id;
   },
 });
 
@@ -142,6 +147,9 @@ export const remove = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Pet not found" });
     }
     await ctx.db.delete(args.petId);
+    await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+      propertyId: pet.propertyId,
+    });
     return null;
   },
 });

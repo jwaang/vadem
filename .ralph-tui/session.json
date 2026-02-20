@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "sessionId": "31af335e-b055-46cd-9c6a-853472d2e614",
+  "sessionId": "dbebf566-8cef-43c6-b9f1-6b14f8daf783",
   "status": "running",
-  "startedAt": "2026-02-20T23:05:00.356Z",
-  "updatedAt": "2026-02-20T23:10:18.665Z",
+  "startedAt": "2026-02-20T23:13:10.535Z",
+  "updatedAt": "2026-02-20T23:24:44.255Z",
   "currentIteration": 0,
   "maxIterations": 10,
   "tasksCompleted": 0,
@@ -11,30 +11,30 @@
   "agentPlugin": "claude",
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./docs/handoff-tasks/epic-11-trip-report.json",
+    "prdPath": "./docs/handoff-tasks/epic-12-offline-pwa.json",
     "totalTasks": 4,
     "tasks": [
       {
-        "id": "US-076",
-        "title": "Trip report data aggregation",
-        "status": "completed",
+        "id": "US-080",
+        "title": "Service worker caching for instructions and photos",
+        "status": "open",
         "completedInSession": false
       },
       {
-        "id": "US-077",
-        "title": "Trip report in-app view",
-        "status": "completed",
+        "id": "US-081",
+        "title": "Offline task check-off with sync",
+        "status": "open",
         "completedInSession": false
       },
       {
-        "id": "US-078",
-        "title": "Trip report PDF export",
-        "status": "completed",
+        "id": "US-082",
+        "title": "Offline photo proof queue",
+        "status": "open",
         "completedInSession": false
       },
       {
-        "id": "US-079",
-        "title": "Trip report shareable link",
+        "id": "US-083",
+        "title": "Vault stays online-only",
         "status": "open",
         "completedInSession": false
       }

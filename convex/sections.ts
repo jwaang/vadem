@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 
 export const create = mutation({
   args: {
@@ -11,12 +12,16 @@ export const create = mutation({
   },
   returns: v.id("manualSections"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("manualSections", {
+    const id = await ctx.db.insert("manualSections", {
       propertyId: args.propertyId,
       title: args.title,
       icon: args.icon,
       sortOrder: args.sortOrder,
     });
+    await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+      propertyId: args.propertyId,
+    });
+    return id;
   },
 });
 
@@ -78,6 +83,9 @@ export const remove = mutation({
       await ctx.db.delete(instruction._id);
     }
     await ctx.db.delete(args.sectionId);
+    await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+      propertyId: section.propertyId,
+    });
     return null;
   },
 });

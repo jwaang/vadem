@@ -1,4 +1,4 @@
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
@@ -15,6 +15,7 @@ const propertyObject = v.object({
   photo: v.optional(v.id("_storage")),
   ownerId: v.id("users"),
   status: statusValidator,
+  manualVersion: v.optional(v.number()),
 });
 
 export const create = mutation({
@@ -226,6 +227,21 @@ export const publishManual = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Property not found" });
     }
     await ctx.db.patch(propertyId, { status: "published" });
+    return null;
+  },
+});
+
+// Internal: atomically increment manualVersion.
+// Called by instruction/section/pet/contact/locationCard mutations to signal
+// that the sitter's cached content is stale and should be re-fetched.
+export const bumpManualVersion = internalMutation({
+  args: { propertyId: v.id("properties") },
+  returns: v.null(),
+  handler: async (ctx, { propertyId }) => {
+    const property = await ctx.db.get(propertyId);
+    if (!property) return null;
+    const next = (property.manualVersion ?? 0) + 1;
+    await ctx.db.patch(propertyId, { manualVersion: next });
     return null;
   },
 });

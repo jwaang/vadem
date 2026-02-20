@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 
 const timeSlotValidator = v.union(
   v.literal("morning"),
@@ -20,7 +21,7 @@ export const create = mutation({
   },
   returns: v.id("instructions"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("instructions", {
+    const id = await ctx.db.insert("instructions", {
       sectionId: args.sectionId,
       text: args.text,
       sortOrder: args.sortOrder,
@@ -28,6 +29,13 @@ export const create = mutation({
       isRecurring: args.isRecurring,
       proofRequired: args.proofRequired,
     });
+    const section = await ctx.db.get(args.sectionId);
+    if (section) {
+      await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+        propertyId: section.propertyId,
+      });
+    }
+    return id;
   },
 });
 
@@ -71,6 +79,15 @@ export const update = mutation({
     );
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(instructionId, updates);
+      const instruction = await ctx.db.get(instructionId);
+      if (instruction) {
+        const section = await ctx.db.get(instruction.sectionId);
+        if (section) {
+          await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+            propertyId: section.propertyId,
+          });
+        }
+      }
     }
     return null;
   },
@@ -85,6 +102,12 @@ export const remove = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Instruction not found" });
     }
     await ctx.db.delete(args.instructionId);
+    const section = await ctx.db.get(instruction.sectionId);
+    if (section) {
+      await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+        propertyId: section.propertyId,
+      });
+    }
     return null;
   },
 });

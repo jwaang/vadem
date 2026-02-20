@@ -3,10 +3,10 @@
   "sessionId": "9070c191-048a-4b6a-a247-cfe20585c46e",
   "status": "running",
   "startedAt": "2026-02-20T15:57:01.355Z",
-  "updatedAt": "2026-02-20T17:13:50.535Z",
-  "currentIteration": 5,
+  "updatedAt": "2026-02-20T17:17:44.279Z",
+  "currentIteration": 6,
   "maxIterations": 10,
-  "tasksCompleted": 5,
+  "tasksCompleted": 6,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -47,8 +47,8 @@
       {
         "id": "US-073",
         "title": "Push notification — vault accessed",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-074",
@@ -114,6 +114,16 @@
       "durationMs": 459694,
       "startedAt": "2026-02-20T16:46:44.896Z",
       "endedAt": "2026-02-20T16:54:24.590Z"
+    },
+    {
+      "iteration": 6,
+      "status": "completed",
+      "taskId": "US-073",
+      "taskTitle": "Push notification — vault accessed",
+      "taskCompleted": true,
+      "durationMs": 1165805,
+      "startedAt": "2026-02-20T16:54:24.727Z",
+      "endedAt": "2026-02-20T17:13:50.532Z"
     }
   ],
   "skippedTaskIds": [],

@@ -194,6 +194,44 @@ export const sendTaskNotification = internalAction({
  * Fires at the top of the hour following the window.
  * Example: "3 tasks completed since 7:00 AM"
  */
+/**
+ * Scheduled notification fired 24 hours before a trip's end date.
+ *
+ * Verifies the trip is still active (or draft) before sending.
+ * If the trip was cancelled or already expired, the notification is skipped.
+ *
+ * Message: "Your trip ends tomorrow. Vault access will expire automatically."
+ */
+export const sendTripEndingSoonNotification = internalAction({
+  args: { tripId: v.id("trips") },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    const trip = await ctx.runQuery(internal.trips._getById, {
+      tripId: args.tripId,
+    });
+    if (!trip || (trip.status !== "active" && trip.status !== "draft")) {
+      return null;
+    }
+
+    const property = await ctx.runQuery(internal.properties._getById, {
+      propertyId: trip.propertyId,
+    });
+    if (!property) return null;
+
+    const userId = property.ownerId;
+
+    await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
+      userId,
+      tripId: args.tripId,
+      message:
+        "Your trip ends tomorrow. Vault access will expire automatically.",
+      deepLinkUrl: "/dashboard",
+    });
+
+    return null;
+  },
+});
+
 export const sendDigestNotification = internalAction({
   args: {
     tripId: v.id("trips"),

@@ -1271,3 +1271,17 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **`useSearchParams` in ssr:false dynamic components**: Safe to use `useSearchParams()` in components loaded via `dynamic(() => import(...), { ssr: false })` — Next.js wraps them in Suspense internally, so no additional Suspense boundary needed.
   - **URL-initialised filter state**: `useState(initialValue)` only uses the initial value on first render; the filter chip state becomes independent of the URL after mount, which is the desired behavior for a pre-selected-but-changeable filter.
 ---
+
+## 2026-02-20 - US-074
+- Implemented "trip ending soon" push notification: schedules an owner reminder 24 hours before trip end date at creation time, with cancellation and rescheduling when dates change
+- **Files changed:**
+  - `convex/schema.ts` — Added `tripEndingScheduledId: v.optional(v.id("_scheduled_functions"))` to `trips` table to store the scheduled function ID for cancellation
+  - `convex/notifications.ts` — Added `sendTripEndingSoonNotification` internalAction: verifies trip is still active/draft, looks up property owner, schedules `sendPushNotification` with message "Your trip ends tomorrow. Vault access will expire automatically."
+  - `convex/trips.ts` — Added `internal` import from `_generated/api`; updated `createTrip` to schedule `sendTripEndingSoonNotification` at `endDate midnight UTC - 24h` and store scheduled ID via `ctx.db.patch`; added `updateTripDates` mutation that cancels any existing scheduled notification and schedules a new one for the updated end date
+- **Learnings:**
+  - **Storing scheduled function ID for cancellation**: Store `ctx.scheduler.runAt()` return value (type `Id<"_scheduled_functions">`) in the document that owns the scheduled job. Use `v.id("_scheduled_functions")` in schema. When end date changes, call `ctx.scheduler.cancel(trip.tripEndingScheduledId)` before rescheduling.
+  - **`ctx.scheduler.cancel()` is idempotent**: If the scheduled function already ran, `cancel()` is a no-op — safe to call unconditionally without checking if it fired.
+  - **`tripEndingScheduledId` not in `tripObject` validator**: Like `pendingDigestAt`, implementation-detail fields don't need to be in the `returns: tripObject` validator for public queries. Convex strips extra fields from returned docs when a validator is provided. Access these fields only from internal mutations/actions using `ctx.db.get()`.
+  - **Two-step insert+patch in createTrip**: Can't store `tripEndingScheduledId` in the initial `ctx.db.insert` call because we need the `tripId` first to pass to the scheduled function. Pattern: insert → get tripId → schedule with tripId → patch with scheduledId.
+  - **Skip scheduling when end date < 24h away**: Guard with `if (notifyAt > Date.now())` to avoid scheduling a notification in the past (which would fire immediately, confusingly).
+---

@@ -166,6 +166,7 @@ export default defineSchema({
     linkPassword: v.optional(v.string()),
     linkExpiry: v.optional(v.number()),
     pendingDigestAt: v.optional(v.number()), // Unix ms timestamp when a digest notification is scheduled
+    tripEndingScheduledId: v.optional(v.id("_scheduled_functions")), // ID of the scheduled trip-ending-soon notification
   })
     .index("by_property_status", ["propertyId", "status"])
     .index("by_share_link", ["shareLink"]),

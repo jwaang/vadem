@@ -1,4 +1,5 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 
 const tripStatusValidator = v.union(
@@ -86,13 +87,28 @@ export const createTrip = mutation({
     }
     // Auto-set linkExpiry to end of endDate day (23:59:59.999 UTC)
     const linkExpiry = new Date(args.endDate + "T23:59:59.999Z").getTime();
-    return await ctx.db.insert("trips", {
+    const tripId = await ctx.db.insert("trips", {
       propertyId: args.propertyId,
       startDate: args.startDate,
       endDate: args.endDate,
       status: "draft",
       linkExpiry,
     });
+
+    // Schedule the "trip ending soon" notification 24 hours before the end date
+    const notifyAt =
+      new Date(args.endDate + "T00:00:00.000Z").getTime() -
+      24 * 60 * 60 * 1000;
+    if (notifyAt > Date.now()) {
+      const scheduledId = await ctx.scheduler.runAt(
+        notifyAt,
+        internal.notifications.sendTripEndingSoonNotification,
+        { tripId },
+      );
+      await ctx.db.patch(tripId, { tripEndingScheduledId: scheduledId });
+    }
+
+    return tripId;
   },
 });
 
@@ -223,6 +239,51 @@ export const setLinkExpiry = mutation({
       });
     }
     await ctx.db.patch(args.tripId, { linkExpiry: args.linkExpiry });
+    return null;
+  },
+});
+
+// Updates a trip's start and end dates, cancelling any previously scheduled
+// trip-ending-soon notification and rescheduling it for the new end date.
+export const updateTripDates = mutation({
+  args: {
+    tripId: v.id("trips"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const trip = await ctx.db.get(args.tripId);
+    if (!trip) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
+    }
+
+    // Cancel existing scheduled notification if present
+    if (trip.tripEndingScheduledId) {
+      await ctx.scheduler.cancel(trip.tripEndingScheduledId);
+    }
+
+    // Schedule new notification 24h before the updated end date
+    const notifyAt =
+      new Date(args.endDate + "T00:00:00.000Z").getTime() -
+      24 * 60 * 60 * 1000;
+    let tripEndingScheduledId:
+      | (typeof trip)["tripEndingScheduledId"]
+      | undefined;
+    if (notifyAt > Date.now()) {
+      tripEndingScheduledId = await ctx.scheduler.runAt(
+        notifyAt,
+        internal.notifications.sendTripEndingSoonNotification,
+        { tripId: args.tripId },
+      );
+    }
+
+    await ctx.db.patch(args.tripId, {
+      startDate: args.startDate,
+      endDate: args.endDate,
+      tripEndingScheduledId,
+    });
+
     return null;
   },
 });

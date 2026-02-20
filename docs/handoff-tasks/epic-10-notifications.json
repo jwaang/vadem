@@ -148,12 +148,13 @@
         "pnpm build passes"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to schedule the trip-ending notification at trip creation time: in the createTrip mutation, call ctx.scheduler.runAt(tripEndDate - 24*60*60*1000, internal.notifications.sendTripEndingSoonNotification, { tripId }) to schedule a Convex scheduled function exactly 24 hours before endDate. The sendTripEndingSoonNotification internalAction verifies the trip is still active (not cancelled), then calls sendPushNotification with the message 'Your trip ends tomorrow. Vault access will expire automatically.' If the trip end date is changed, the old scheduled function must be cancelled (store the scheduled function ID on the Trips record) and a new one scheduled — handle this in the updateTripDates mutation.",
       "dependsOn": [
         "US-045",
         "US-070"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-075",
@@ -178,6 +179,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T17:13:50.533Z"
+    "updatedAt": "2026-02-20T17:17:44.277Z"
   }
 }

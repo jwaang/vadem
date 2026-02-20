@@ -197,6 +197,13 @@ export const sendSmsPin = action({
     if (!trip || trip.status !== "active") {
       return { success: false as const, error: "TRIP_INACTIVE" as const };
     }
+    // Inline lazy expiration — handles the gap between trip.endDate and the daily cron run.
+    // If endDate < today but the cron hasn't updated status yet, expire the trip now.
+    const todaySmsPin = new Date().toISOString().split("T")[0];
+    if (trip.endDate < todaySmsPin) {
+      await ctx.runMutation(internal.trips.expireTripInternal, { tripId: args.tripId });
+      return { success: false as const, error: "TRIP_INACTIVE" as const };
+    }
 
     // 2. Find sitter by normalized phone (handles formatting differences)
     const normalizedInput = normalizePhone(args.sitterPhone);
@@ -414,6 +421,13 @@ export const getDecryptedVaultItems = action({
     if (!trip || trip.propertyId !== args.propertyId || trip.status !== "active") {
       return { success: false as const, error: "TRIP_INACTIVE" as const };
     }
+    // Inline lazy expiration — handles the gap between trip.endDate and the daily cron run.
+    // If endDate < today but the cron hasn't updated status yet, expire the trip now.
+    const todayItems = new Date().toISOString().split("T")[0];
+    if (trip.endDate < todayItems) {
+      await ctx.runMutation(internal.trips.expireTripInternal, { tripId: args.tripId });
+      return { success: false as const, error: "TRIP_INACTIVE" as const };
+    }
 
     // 2. Verify sitter is registered for this trip with vault access
     const allSitters = await ctx.runQuery(internal.sitters._listByTrip, { tripId: args.tripId });
@@ -553,6 +567,13 @@ export const getDecryptedVaultItem = action({
       tripId: args.tripId,
     });
     if (!trip || trip.propertyId !== item.propertyId || trip.status !== "active") {
+      return { success: false as const, error: "TRIP_INACTIVE" as const };
+    }
+    // Inline lazy expiration — handles the gap between trip.endDate and the daily cron run.
+    // If endDate < today but the cron hasn't updated status yet, expire the trip now.
+    const todayItem = new Date().toISOString().split("T")[0];
+    if (trip.endDate < todayItem) {
+      await ctx.runMutation(internal.trips.expireTripInternal, { tripId: args.tripId });
       return { success: false as const, error: "TRIP_INACTIVE" as const };
     }
 

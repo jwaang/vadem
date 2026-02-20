@@ -158,12 +158,13 @@
         "Expiration logic — confirm time-bound access auto-expires correctly"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement expiration as a query-level guard rather than a delete: the getDecryptedVaultItems action (US-051) already checks trip.status === 'active' as step 1 of its access control — verify this check catches expiration immediately after the cron runs (US-045). Also add an inline expiration check: if trip.endDate < Date.now() and status is still 'active', call expireTrip mutation lazily before returning the error. This ensures expiration works even if the daily cron hasn't run yet. Test the expiration boundary: a trip expiring at midnight should deny access at 12:01 AM and show 'This trip has ended' (TRIP_INACTIVE error enum from US-051).",
       "dependsOn": [
         "US-045",
         "US-048"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-055",
@@ -214,6 +215,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T01:15:52.138Z"
+    "updatedAt": "2026-02-20T01:19:25.227Z"
   }
 }

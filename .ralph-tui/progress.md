@@ -955,3 +955,19 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Deduplication with per-item vs summary logging**: When both `logVaultAccess` (per-item) and `_logVaultAccess` (summary) insert to activityLog, the feed gets duplicate `vault_accessed` events. Remove the summary call when per-item entries are sufficient — the feed shows N entries (one per item) which gives the owner the most actionable info (which items were seen).
   - **ActivityFeedSection env-guard pattern**: New components that use Convex hooks inside an existing page follow the outer/inner split: outer checks `process.env.NEXT_PUBLIC_CONVEX_URL` and renders fallback; inner holds all hooks. This matches the `NewTripForm`/`NewTripFormInner` pattern already in the codebase.
 ---
+
+## 2026-02-19 - US-054
+- Implemented vault auto-expiration on trip end — inline lazy expiration check in vault actions
+- **Files changed:**
+  - `convex/vaultActions.ts` — Added inline expiration check to `sendSmsPin`, `getDecryptedVaultItems`, and `getDecryptedVaultItem`: after the `trip.status !== "active"` check passes, compares `trip.endDate < today` (YYYY-MM-DD string) — if expired but cron hasn't run yet, calls `ctx.runMutation(internal.trips.expireTripInternal, ...)` lazily and returns `TRIP_INACTIVE`
+- **What was already in place (no changes needed):**
+  - `getDecryptedVaultItems`/`getDecryptedVaultItem`/`sendSmsPin` already check `trip.status !== "active"` → `TRIP_INACTIVE` (from US-051)
+  - VaultTab already shows "This handoff is not currently active" + "The trip has ended or hasn't started yet" detail for `TRIP_INACTIVE` (from US-051)
+  - Daily cron at midnight UTC runs `expireTripsDaily` (from US-045)
+  - `getActiveTripForProperty` already has a lazy expiration check in the public query (from US-045)
+- **Learnings:**
+  - **Two-layer expiration for actions**: Convex queries are read-only and can't mutate state, so lazy expiration in queries returns null without updating the DB. Actions CAN call `ctx.runMutation`, so they can do a true lazy expire: detect expired trip, call `expireTripInternal`, then return `TRIP_INACTIVE`. This ensures expiration happens even when the cron hasn't run yet.
+  - **`"use node"` actions can call internal mutations**: `ctx.runMutation(internal.trips.expireTripInternal, { tripId })` works in `"use node"` action handlers — no need to promote the caller to a different runtime.
+  - **String date comparison for YYYY-MM-DD works correctly**: `trip.endDate < today` where both are ISO date strings in `YYYY-MM-DD` format does correct chronological comparison (lexicographic = chronological for this format). Don't use `Date.now()` directly — compare string-to-string.
+  - **Most US-054 acceptance criteria were satisfied by prior stories**: The actual implementation gap was only the inline `endDate < today` check in actions. Checking `trip.status !== "active"` alone wouldn't catch the cron gap. Checking `endDate` bridges this window.
+---

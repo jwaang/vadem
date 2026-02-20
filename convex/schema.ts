@@ -272,6 +272,14 @@ export default defineSchema({
     verified: v.boolean(), // true = successful item view, false = failed PIN attempt
   }).index("by_trip_accessed", ["tripId", "accessedAt"]),
 
+  // Tracks sitter-to-creator conversions for viral growth analytics.
+  // Created when a sitter (originTripId) signs up as a creator.
+  conversions: defineTable({
+    sitterUserId: v.id("users"),
+    originTripId: v.id("trips"),
+    convertedAt: v.number(),
+  }).index("by_user", ["sitterUserId"]),
+
   // Vault SMS PIN verification — verified session records only.
   // Created by verifyPin on successful Prelude OTP check; read by getDecryptedVaultItems.
   // Legacy fields (hashedPin, salt, attemptCount) are optional for backward compat with

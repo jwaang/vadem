@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   description: "Sign up to start building your home care manual.",
 };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
+  const { ref } = await searchParams;
+  const originTripId = ref ?? null;
+
   return (
     <main className="min-h-dvh bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -17,11 +24,13 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="font-body text-base text-text-secondary">
-            Start building your home care manual
+            {originTripId
+              ? "Now make your own home care manual"
+              : "Start building your home care manual"}
           </p>
         </div>
 
-        <SignupPageClient />
+        <SignupPageClient originTripId={originTripId} />
 
         <p className="text-center mt-6 font-body text-sm text-text-muted">
           Already have an account?{" "}

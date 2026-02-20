@@ -22,7 +22,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // Sign up: create a new user account and return a session token
 export const signUp = action({
-  args: { email: v.string(), password: v.string() },
+  args: { email: v.string(), password: v.string(), originTripId: v.optional(v.string()) },
   handler: async (ctx, args): Promise<{ token: string; email: string }> => {
     const existing = await ctx.runQuery(internal.auth._getUserByEmail, {
       email: args.email,
@@ -44,6 +44,18 @@ export const signUp = action({
       token,
       expiresAt: Date.now() + SESSION_TTL_MS,
     });
+
+    // Record sitter-to-creator conversion if originTripId is provided
+    if (args.originTripId) {
+      try {
+        await ctx.runMutation(internal.trips.recordConversionInternal, {
+          sitterUserId: userId,
+          originTripId: args.originTripId as Id<"trips">,
+        });
+      } catch {
+        // Non-critical — don't fail signup if conversion recording fails
+      }
+    }
 
     return { token, email: args.email };
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -634,6 +635,63 @@ function OfflineBanner() {
   );
 }
 
+// ── Sitter conversion banner ───────────────────────────────────────────
+
+const CONVERSION_BANNER_KEY = "handoff_conversion_banner_dismissed";
+
+/**
+ * Slim, non-intrusive banner shown during active trips encouraging the sitter
+ * to create their own Handoff. Dismissible for the session.
+ * Positioned above the bottom nav; hidden when offline banner is visible.
+ */
+function SitterConversionBanner({ tripId }: { tripId: string }) {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(CONVERSION_BANNER_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      sessionStorage.setItem(CONVERSION_BANNER_KEY, "1");
+    } catch {
+      // ignore
+    }
+  };
+
+  if (dismissed) return null;
+
+  return (
+    <div
+      role="complementary"
+      aria-label="Create your own Handoff"
+      className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-0 right-0 z-30 flex items-center justify-between gap-3 bg-primary-subtle text-primary font-body text-xs rounded-t-lg px-4 py-2"
+    >
+      <span className="shrink-0">Want your own Handoff?</span>
+      <Link
+        href={`/signup?ref=${tripId}`}
+        className="font-semibold underline underline-offset-2 hover:text-primary-hover shrink-0"
+      >
+        Create one →
+      </Link>
+      <button
+        type="button"
+        onClick={handleDismiss}
+        aria-label="Dismiss"
+        className="ml-auto shrink-0 flex items-center justify-center w-5 h-5 rounded-round hover:bg-primary/10 transition-[background-color] duration-150"
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────
 
 export default function TodayPageInner({ tripId }: { tripId: string }) {
@@ -1172,6 +1230,9 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     <SitterLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {/* ── Offline sync banner ─────────────────────────────────────── */}
       {!isOnline && <OfflineBanner />}
+
+      {/* ── Sitter conversion banner (online only, dismissible) ──────── */}
+      {isOnline && <SitterConversionBanner tripId={tripId} />}
 
       {/* ── Hidden file input for proof photo ──────────────────────── */}
       <input

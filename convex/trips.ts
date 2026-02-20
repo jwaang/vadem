@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 
 const tripStatusValidator = v.union(
   v.literal("draft"),
@@ -343,7 +344,7 @@ export const getTripByShareLink = query({
   args: { shareLink: v.string() },
   returns: v.union(
     v.null(), // Not found / revoked
-    v.object({ status: v.literal("EXPIRED") }),
+    v.object({ status: v.literal("EXPIRED"), tripId: v.optional(v.id("trips")) }),
     v.object({ status: v.literal("PASSWORD_REQUIRED"), tripId: v.id("trips") }),
     v.object({
       status: v.literal("NOT_STARTED"),
@@ -373,7 +374,7 @@ export const getTripByShareLink = query({
       (trip.linkExpiry !== undefined && trip.linkExpiry < Date.now()) ||
       trip.endDate < today
     ) {
-      return { status: "EXPIRED" as const };
+      return { status: "EXPIRED" as const, tripId: trip._id };
     }
 
     // Password-protected: gate before revealing any trip details
@@ -526,6 +527,53 @@ export const revokeReportLink = mutation({
     const trip = await ctx.db.get(tripId);
     if (!trip) throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
     await ctx.db.patch(tripId, { reportShareLink: undefined });
+    return null;
+  },
+});
+
+// Public: returns only the owner's first name (derived from email) for conversion prompts.
+// Accepts a string so invalid IDs don't throw — returns null gracefully.
+export const getPropertyOwnerName = query({
+  args: { tripId: v.string() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    let trip;
+    try {
+      trip = await ctx.db.get(args.tripId as Id<"trips">);
+    } catch {
+      return null;
+    }
+    if (!trip) return null;
+    const property = await ctx.db.get(trip.propertyId);
+    if (!property) return null;
+    const owner = await ctx.db.get(property.ownerId);
+    if (!owner) return null;
+    // Derive a display name from the email prefix
+    const prefix = owner.email.split("@")[0] ?? "";
+    const firstName = prefix.split(".")[0] ?? prefix;
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1) || null;
+  },
+});
+
+// Internal: record a sitter-to-creator conversion (called from signUp action).
+export const recordConversionInternal = internalMutation({
+  args: {
+    sitterUserId: v.id("users"),
+    originTripId: v.id("trips"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Idempotent: skip if already recorded for this user
+    const existing = await ctx.db
+      .query("conversions")
+      .withIndex("by_user", (q) => q.eq("sitterUserId", args.sitterUserId))
+      .first();
+    if (existing) return null;
+    await ctx.db.insert("conversions", {
+      sitterUserId: args.sitterUserId,
+      originTripId: args.originTripId,
+      convertedAt: Date.now(),
+    });
     return null;
   },
 });

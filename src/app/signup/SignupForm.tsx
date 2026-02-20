@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { Input } from "@/components/ui/Input";
@@ -32,10 +32,16 @@ function validatePassword(password: string): string | null {
 }
 
 // Inner component: only rendered when ConvexProvider is in the tree
-function SignupFormInner() {
+function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
   const router = useRouter();
   const signupAction = useAction(api.authActions.signUp);
   const { setUser } = useAuth();
+
+  // Fetch owner's first name for context messaging when coming from a sitter link
+  const ownerName = useQuery(
+    api.trips.getPropertyOwnerName,
+    originTripId ? { tripId: originTripId } : "skip",
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,7 +73,11 @@ function SignupFormInner() {
     setIsLoading(true);
 
     try {
-      const { token, email: userEmail } = await signupAction({ email, password });
+      const { token, email: userEmail } = await signupAction({
+        email,
+        password,
+        ...(originTripId ? { originTripId } : {}),
+      });
       setUser({ token, email: userEmail });
       router.push("/wizard");
     } catch (err) {
@@ -83,6 +93,17 @@ function SignupFormInner() {
 
   return (
     <div className="bg-bg-raised rounded-xl shadow-md p-8">
+      {/* Sitter conversion context banner */}
+      {originTripId && (
+        <div className="mb-6 px-4 py-3 bg-primary-subtle rounded-lg text-center">
+          <p className="font-body text-sm text-primary">
+            {ownerName
+              ? `You were ${ownerName}'s sitter — now make your own.`
+              : "You were a Handoff sitter — now make your own."}
+          </p>
+        </div>
+      )}
+
       {/* OAuth sign-up buttons */}
       {hasOAuthProviders && (
         <>
@@ -150,7 +171,7 @@ function SignupFormInner() {
 }
 
 // Outer component: guards against missing ConvexProvider when CONVEX_URL is unset
-export default function SignupForm() {
+export default function SignupForm({ originTripId }: { originTripId?: string | null }) {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
     return (
       <div className="bg-bg-raised rounded-xl shadow-md p-8 text-center">
@@ -165,5 +186,5 @@ export default function SignupForm() {
     );
   }
 
-  return <SignupFormInner />;
+  return <SignupFormInner originTripId={originTripId} />;
 }

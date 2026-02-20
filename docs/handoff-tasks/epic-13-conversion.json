@@ -1,7 +1,7 @@
 {
   "name": "Epic 13: Sitter-to-Creator Conversion",
-  "branchName": "ralph/epic-13-conversion",
   "description": "The viral loop — sitters become creators.",
+  "branchName": "ralph/epic-13-conversion",
   "userStories": [
     {
       "id": "US-084",
@@ -19,9 +19,16 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to add attribution tracking: when the sitter opens a trip link (US-067), store the tripId in session storage as originTripId. In the signUp action (convex/authActions.ts), accept an optional originTripId argument and record it in a Conversions table (sitterUserId, originTripId, convertedAt) for analytics. Write a getPropertyOwnerName query (public, accepts tripId) that returns only the owner's first name for the conversion prompt messaging — no other owner data. Load /nextjs-best-practices to implement the post-trip and in-manual prompts: (1) in src/app/t/[shareLink]/page.tsx, when getTripByShareLink returns status='EXPIRED', render the post-trip conversion card before the 'This handoff has ended' message; (2) in the manual sitter view (US-036), add a non-intrusive fixed bottom banner during active trips. Both CTAs link to /signup?ref=[tripId] which the signup page reads to pre-fill context. Load /tailwind-design-system to render: (1) the post-trip conversion card as bg-bg-raised rounded-xl shadow-md p-8 text-center with font-display italic headline 'Loved using Handoff?', body text 'Create one for your own home.', and a btn-primary CTA — warm and editorial, not salesy; (2) the in-manual banner as a slim bg-primary-subtle text-primary rounded-lg px-4 py-2 bottom bar with a single line of text and a text link, easily dismissible. Never wrap sitter content in a signup gate. Use /dev-browser to verify: the post-trip card appears on an expired trip link, the in-manual banner is visible but non-intrusive during active trips, the CTA navigates to /signup with the ref param, dismissing the banner removes it for the session, and sitter functionality works without signing up.",
-      "dependsOn": ["US-021", "US-067"]
+      "dependsOn": [
+        "US-021",
+        "US-067"
+      ],
+      "completionNotes": "Completed by agent"
     }
-  ]
+  ],
+  "metadata": {
+    "updatedAt": "2026-02-20T23:59:44.511Z"
+  }
 }

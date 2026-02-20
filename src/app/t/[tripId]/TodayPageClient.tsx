@@ -1,6 +1,7 @@
 "use client";
 
-import { Component, useState, type ReactNode } from "react";
+import { Component, useState, useEffect, type ReactNode } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -67,11 +68,40 @@ class TodayErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 }
 
+// ── Post-trip conversion card ──────────────────────────────────────────
+
+function ConversionCard({ tripId }: { tripId?: Id<"trips"> }) {
+  const signupHref = tripId ? `/signup?ref=${tripId}` : "/signup";
+  return (
+    <div
+      className="bg-bg-raised rounded-xl p-8 flex flex-col items-center gap-4 w-full max-w-sm text-center"
+      style={{ boxShadow: "var(--shadow-md)" }}
+    >
+      <h2 className="font-display text-2xl text-text-primary italic">
+        Loved using Handoff?
+      </h2>
+      <p className="font-body text-sm text-text-secondary">
+        Create one for your own home.
+      </p>
+      <Link
+        href={signupHref}
+        className="btn btn-primary inline-flex items-center justify-center font-body text-sm font-medium text-text-on-primary bg-primary rounded-lg px-6 py-3 w-full max-w-[220px]"
+      >
+        Create your Handoff
+      </Link>
+    </div>
+  );
+}
+
 // ── Expired state ──────────────────────────────────────────────────────
 
-function ExpiredState() {
+function ExpiredState({ tripId }: { tripId?: Id<"trips"> }) {
   return (
-    <div className="min-h-dvh bg-bg flex items-center justify-center p-6">
+    <div className="min-h-dvh bg-bg flex flex-col items-center justify-center gap-5 p-6">
+      {/* Conversion card — shown first, warm and editorial */}
+      <ConversionCard tripId={tripId} />
+
+      {/* Expired notice */}
       <div
         className="bg-bg-raised rounded-xl p-8 flex flex-col items-center gap-4 w-full max-w-sm text-center"
         style={{ boxShadow: "var(--shadow-md)" }}
@@ -188,7 +218,7 @@ function PostAuthTripView({ tripId }: { tripId: Id<"trips"> }) {
   }
 
   if (state === null || state.status === "EXPIRED") {
-    return <ExpiredState />;
+    return <ExpiredState tripId={tripId} />;
   }
 
   if (state.status === "NOT_STARTED") {
@@ -253,6 +283,17 @@ function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResol
 function TodayPageResolver({ shareLink }: { shareLink: string }) {
   const state = useQuery(api.trips.getTripByShareLink, { shareLink });
 
+  // Store tripId in sessionStorage for attribution when trip is active
+  useEffect(() => {
+    if (state && "tripId" in state && state.tripId && state.status === "ACTIVE") {
+      try {
+        sessionStorage.setItem("handoff_origin_trip_id", state.tripId);
+      } catch {
+        // sessionStorage may be unavailable in private browsing
+      }
+    }
+  }, [state]);
+
   // Still loading
   if (state === undefined) {
     return (
@@ -299,7 +340,7 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
   }
 
   if (state.status === "EXPIRED") {
-    return <ExpiredState />;
+    return <ExpiredState tripId={state.tripId} />;
   }
 
   if (state.status === "PASSWORD_REQUIRED") {

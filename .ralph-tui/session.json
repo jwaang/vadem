@@ -1,79 +1,30 @@
 {
   "version": 1,
-  "sessionId": "dbebf566-8cef-43c6-b9f1-6b14f8daf783",
+  "sessionId": "08a03b15-c2d8-4eb1-a946-8dcd9c020136",
   "status": "running",
-  "startedAt": "2026-02-20T23:13:10.535Z",
-  "updatedAt": "2026-02-20T23:47:01.913Z",
-  "currentIteration": 3,
+  "startedAt": "2026-02-20T23:47:19.587Z",
+  "updatedAt": "2026-02-20T23:59:44.514Z",
+  "currentIteration": 0,
   "maxIterations": 10,
-  "tasksCompleted": 3,
+  "tasksCompleted": 0,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
     "plugin": "json",
-    "prdPath": "./docs/handoff-tasks/epic-12-offline-pwa.json",
-    "totalTasks": 4,
+    "prdPath": "./docs/handoff-tasks/epic-13-conversion.json",
+    "totalTasks": 1,
     "tasks": [
       {
-        "id": "US-080",
-        "title": "Service worker caching for instructions and photos",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-081",
-        "title": "Offline task check-off with sync",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-082",
-        "title": "Offline photo proof queue",
-        "status": "completed",
-        "completedInSession": true
-      },
-      {
-        "id": "US-083",
-        "title": "Vault stays online-only",
+        "id": "US-084",
+        "title": "Sitter-to-creator prompt",
         "status": "open",
         "completedInSession": false
       }
     ]
   },
-  "iterations": [
-    {
-      "iteration": 1,
-      "status": "completed",
-      "taskId": "US-080",
-      "taskTitle": "Service worker caching for instructions and photos",
-      "taskCompleted": true,
-      "durationMs": 684067,
-      "startedAt": "2026-02-20T23:13:20.184Z",
-      "endedAt": "2026-02-20T23:24:44.251Z"
-    },
-    {
-      "iteration": 2,
-      "status": "completed",
-      "taskId": "US-081",
-      "taskTitle": "Offline task check-off with sync",
-      "taskCompleted": true,
-      "durationMs": 406858,
-      "startedAt": "2026-02-20T23:24:44.418Z",
-      "endedAt": "2026-02-20T23:31:31.276Z"
-    },
-    {
-      "iteration": 3,
-      "status": "completed",
-      "taskId": "US-082",
-      "taskTitle": "Offline photo proof queue",
-      "taskCompleted": true,
-      "durationMs": 698893,
-      "startedAt": "2026-02-20T23:31:31.429Z",
-      "endedAt": "2026-02-20T23:43:10.322Z"
-    }
-  ],
+  "iterations": [],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],
-  "subagentPanelVisible": true
+  "subagentPanelVisible": false
 }

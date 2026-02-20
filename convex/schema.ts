@@ -9,6 +9,7 @@ export default defineSchema({
     googleId: v.optional(v.string()),
     appleId: v.optional(v.string()),
     createdAt: v.number(),
+    pushSubscription: v.optional(v.string()), // JSON-serialized PushSubscription for web push
   })
     .index("by_email", ["email"])
     .index("by_google_id", ["googleId"])

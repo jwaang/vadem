@@ -1211,3 +1211,21 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **`hasNoActiveTrip` guard pattern**: Distinguish "loading" (propertyId === undefined) from "no active trip" (propertyId defined but activeTrip === null) to show the right empty state. Without this, the feed stays in "Loading..." forever when there's no active trip.
   - **Filter chips with union type**: Define FeedFilter as `"all" | eventTypeString` — passing `filter === "all" ? undefined : filter` to `eventType` arg TypeScript-safely narrows to the valid event type subset.
 ---
+
+## 2026-02-20 - US-070
+- Implemented web push notification infrastructure — VAPID setup, service worker push handlers, permission prompt, subscription storage
+- **Files changed:**
+  - `convex/schema.ts` — Added `pushSubscription: v.optional(v.string())` to users table
+  - `convex/users.ts` — Added `storePushSubscription` (public mutation), `getPushSubscription` (internalQuery), `clearPushSubscription` (internalMutation)
+  - `convex/notifications.ts` — Replaced console.log stub with real `web-push` implementation; added `"use node"` directive; reads stored subscription via `ctx.runQuery`, sends push via `webpush.sendNotification()`, auto-removes expired (410/404) subscriptions
+  - `public/sw.js` — Added `push` event handler (`self.registration.showNotification`) and `notificationclick` handler (focuses existing window or opens new one)
+  - `src/app/dashboard/page.tsx` — Added `PushNotificationBanner` component, `urlBase64ToUint8Array` helper, permission prompt `useEffect` (only for authenticated creators, checks `Notification.permission === "default"`, skips if dismissed via `sessionStorage`), `handleEnablePush` subscribes via `pushManager.subscribe()` and calls `storePushSubscription` mutation
+  - `.env.example` — Added `NEXT_PUBLIC_VAPID_PUBLIC_KEY` with generation instructions; documented Convex env vars `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  - `package.json` / `pnpm-lock.yaml` — Added `web-push@3.6.7` + `@types/web-push@3.6.4`
+- **Learnings:**
+  - **`"use node"` in notifications.ts**: Convex actions using Node.js-only npm packages (like `web-push`) require `"use node"` at the top of the file. The function can call db-backed queries via `ctx.runQuery(internal.users.getPushSubscription, ...)` since actions cannot access `ctx.db` directly.
+  - **Uint8Array generic for VAPID key**: `Uint8Array.from([...str].map(...))` returns `Uint8Array<ArrayBufferLike>` which TypeScript rejects for `applicationServerKey`. Use `const buffer = new ArrayBuffer(n); const output = new Uint8Array(buffer)` to get `Uint8Array<ArrayBuffer>`, satisfying `BufferSource`.
+  - **Push permission flow**: Check `typeof Notification === "undefined"` (SSR guard) before accessing `Notification.permission`. Use `sessionStorage` (not localStorage) for dismissal so the banner can reappear in new sessions if needed.
+  - **VAPID key split**: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` goes in `.env.local` for client-side subscription. `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` go in Convex dashboard environment variables for server-side delivery. Never expose private key to browser.
+  - **Fallback behavior**: When no push subscription exists (permission denied/not requested), `sendPushNotification` returns null silently — notifications still appear in the in-app activity feed as the fallback.
+---

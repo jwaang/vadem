@@ -64,11 +64,12 @@
         "pnpm build passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Load /nextjs-best-practices to configure Web Push: generate VAPID keys (store VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY as Convex + Next.js env vars), add push event handler to public/sw.js that calls self.registration.showNotification with the notification data, and expose NEXT_PUBLIC_VAPID_PUBLIC_KEY for the client-side subscription. Load /convex-best-practices to: (1) add pushSubscription field to the users table in convex/schema.ts to store the PushSubscription JSON, (2) write storePushSubscription mutation called after Notification.requestPermission resolves to 'granted', (3) write a sendPushNotification internalAction (convex/notificationsActions.ts, 'use node') that uses the web-push npm package with the stored subscription to send notifications. Trigger the permission prompt in the creator dashboard after first login using a useEffect that checks Notification.permission and only fires for authenticated creators (not sitter routes).",
       "dependsOn": [
         "US-019"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-071",
@@ -174,6 +175,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T16:30:37.149Z"
+    "updatedAt": "2026-02-20T16:41:31.949Z"
   }
 }

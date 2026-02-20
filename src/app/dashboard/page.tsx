@@ -1176,6 +1176,80 @@ function SettingsSection({ email, onSignOut }: SettingsSectionProps) {
   );
 }
 
+// ── Push Notification Banner ──────────────────────────────────────────
+
+function BellIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
+interface PushNotificationBannerProps {
+  onEnable: () => void;
+  onDismiss: () => void;
+  isSubscribing: boolean;
+}
+
+function PushNotificationBanner({
+  onEnable,
+  onDismiss,
+  isSubscribing,
+}: PushNotificationBannerProps) {
+  return (
+    <div className="bg-accent-subtle border border-accent-light rounded-lg px-4 py-3 flex items-center gap-3">
+      <span className="shrink-0 text-accent">
+        <BellIcon />
+      </span>
+      <p className="font-body text-sm text-text-primary flex-1">
+        Get notified when your sitter checks in or accesses the vault.
+      </p>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="font-body text-xs text-text-muted hover:text-text-secondary transition-colors duration-150"
+        >
+          Not now
+        </button>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onEnable}
+          disabled={isSubscribing}
+        >
+          {isSubscribing ? "Enabling…" : "Enable"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Convert a URL-safe base64 string to a Uint8Array for the VAPID applicationServerKey. */
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const buffer = new ArrayBuffer(rawData.length);
+  const output = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; ++i) {
+    output[i] = rawData.charCodeAt(i);
+  }
+  return output;
+}
+
 // ── Loading Screen ───────────────────────────────────────────────────
 
 function LoadingScreen() {
@@ -1193,9 +1267,12 @@ export default function DashboardPage() {
   const { user, isLoading, signOut } = useAuth();
   const [activeNav, setActiveNav] = useState<CreatorNavId>("property");
   const [mounted, setMounted] = useState(false);
+  const [showPushBanner, setShowPushBanner] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const storePushSubscription = useMutation(api.users.storePushSubscription);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -1204,6 +1281,51 @@ export default function DashboardPage() {
       router.replace("/login");
     }
   }, [mounted, user, isLoading, router]);
+
+  // Show push permission banner once user is authenticated and permission not yet decided
+  useEffect(() => {
+    if (!mounted || isLoading || !user) return;
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission !== "default") return;
+    if (sessionStorage.getItem("push_banner_dismissed")) return;
+    setShowPushBanner(true);
+  }, [mounted, isLoading, user]);
+
+  async function handleEnablePush() {
+    setIsSubscribing(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setShowPushBanner(false);
+        return;
+      }
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
+        console.warn("[Push] NEXT_PUBLIC_VAPID_PUBLIC_KEY not set");
+        setShowPushBanner(false);
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      await storePushSubscription({
+        token: user!.token,
+        subscription: JSON.stringify(subscription),
+      });
+    } catch (err) {
+      console.error("[Push] Subscription failed:", err);
+    } finally {
+      setIsSubscribing(false);
+      setShowPushBanner(false);
+    }
+  }
+
+  function handleDismissPush() {
+    sessionStorage.setItem("push_banner_dismissed", "1");
+    setShowPushBanner(false);
+  }
 
   // Render LoadingScreen on server and client's first pass so both match.
   // After mount, re-render with real auth state.
@@ -1235,7 +1357,16 @@ export default function DashboardPage() {
 
   return (
     <CreatorLayout activeNav={activeNav} onNavChange={setActiveNav}>
-      {renderContent()}
+      <div className="flex flex-col gap-6">
+        {showPushBanner && (
+          <PushNotificationBanner
+            onEnable={handleEnablePush}
+            onDismiss={handleDismissPush}
+            isSubscribing={isSubscribing}
+          />
+        )}
+        {renderContent()}
+      </div>
     </CreatorLayout>
   );
 }

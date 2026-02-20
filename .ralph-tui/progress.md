@@ -5,6 +5,13 @@ after each iteration and it's included in prompts for context.
 
 ## Codebase Patterns (Study These First)
 
+### Offline-first task queue pattern
+Queue task check-offs to localStorage before attempting the Convex mutation. Keep a `pendingTaskRefs` React state (Set) that renders pending items as checked. Merge with `completionMap` at render time — pending entries get `id: undefined` so the uncheck dialog can't be triggered on unsynced items. Clean up queue entries by watching `liveData.completions` in a useEffect (calls `removeByTaskRefs`). Drain on reconnect via `online` event handler; pass original `completedAt` to `completeTask` for accurate timestamps. Deduplication is enforced server-side (query `by_trip_taskref` before insert) and client-side (queue `enqueue` skips duplicate taskRef).
+
+### completeTask deduplication + completedAt override
+The `completeTask` mutation now accepts `completedAt: v.optional(v.number())`. Server checks for existing completion via `by_trip_taskref` index and returns existing ID if found (idempotent). Destructure `completedAt` out of args before spreading into `db.insert` to avoid type conflict with the computed value.
+
+
 ### Internal version bumping via scheduler
 When mutations don't have direct access to `propertyId` (e.g. instructions only have `sectionId`), use an intermediate lookup then schedule the version bump:
 ```ts
@@ -25,6 +32,19 @@ Since Convex uses WebSocket (not interceptable by SW), persist live query data t
 ### SW postMessage for cache invalidation
 Page calls `notifySwManualVersion(propertyId, version)` after each Convex data load. SW compares version to stored meta; on mismatch, evicts `handoff-photos-v1` and cached trip data, then stores new version.
 
+---
+
+## 2026-02-20 - US-081
+- **What was implemented**: Offline task check-off with sync — localStorage queue, online/offline detection, queue drain on reconnect, deduplication, original timestamps, and "offline — will sync" banner.
+- **Files changed**:
+  - `src/lib/offlineQueue.ts` — new file: `PendingCompletion` type, `getQueue`, `enqueue`, `dequeue`, `removeByTaskRefs`, `incrementRetry`
+  - `convex/taskCompletions.ts` — added `completedAt: v.optional(v.number())` to `completeTask` args; added dedup check (query `by_trip_taskref` before insert, return existing ID if found); destructure `completedAt` from args before spread to avoid type conflict
+  - `src/app/t/[tripId]/TodayPageInner.tsx` — added `isOnline` state + `online`/`offline` event listeners; `pendingTaskRefs` state initialized from localStorage queue; updated `liveData` effect to call `removeByTaskRefs` for cleanup; added `drainInProgressRef` + drain `useEffect` that fires when `isOnline → true`; updated `handleToggle` to: write to queue first → update `pendingTaskRefs` → attempt mutation → dequeue on success / keep on failure; merged `pendingTaskRefs` into `completionMap` with `id: undefined` (prevents uncheck dialog); added `OfflineBanner` component; render banner when `!isOnline`; made `CompletionInfo.id` optional
+- **Learnings:**
+  - When merging offline-queued items into `completionMap`, setting `id: undefined` is the key trick to prevent the uncheck confirmation sheet from showing for items that haven't synced yet — the `handleToggle` guard `if (currentlyCompleted && completionId)` naturally skips them.
+  - Destructure `completedAt` out of Convex mutation args before `...spread` into `db.insert`. Spreading `{ ...args, completedAt }` when args has `completedAt: optional` creates a TypeScript type conflict; destructuring cleanly separates the optional from the computed required value.
+  - `drainInProgressRef` prevents duplicate drain loops if the `isOnline` effect fires multiple times. Reset the ref to `false` on `offline` so the next `online` event triggers a fresh drain.
+  - The `OfflineBanner` must be positioned `bottom-[calc(72px+env(safe-area-inset-bottom))]` to sit above the sticky bottom nav (which is also `72px + safe-area`). Using `z-30` keeps it below modals (`z-50`) but above content.
 ---
 
 ## 2026-02-20 - US-080

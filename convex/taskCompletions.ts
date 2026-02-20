@@ -150,7 +150,10 @@ export const remove = mutation({
 
 /**
  * Convenience mutation for sitter task check-off.
- * Computes completedAt and date server-side so callers don't need to pass them.
+ * Computes completedAt and date server-side unless completedAt is provided
+ * (offline sync case: preserves the original timestamp from the local queue).
+ * Deduplicates: if a completion for this tripId+taskRef already exists, returns
+ * the existing ID without inserting a duplicate.
  * No auth check — sitters are anonymous and access via trip link only.
  */
 export const completeTask = mutation({
@@ -159,14 +162,29 @@ export const completeTask = mutation({
     taskRef: v.string(),
     taskType: taskTypeValidator,
     sitterName: v.string(), // empty string for anonymous sitters
+    // Optional: supply the original client-side timestamp when syncing an
+    // offline-queued completion so the owner sees when the task was actually
+    // checked, not when the sync happened.
+    completedAt: v.optional(v.number()),
   },
   returns: v.id("taskCompletions"),
   handler: async (ctx, args) => {
-    const completedAt = Date.now();
+    // Dedup: if already completed (same trip + taskRef) return existing ID
+    const existing = await ctx.db
+      .query("taskCompletions")
+      .withIndex("by_trip_taskref", (q) =>
+        q.eq("tripId", args.tripId).eq("taskRef", args.taskRef),
+      )
+      .first();
+    if (existing) return existing._id;
+
+    // Destructure out the optional completedAt so we can compute a clean value
+    const { completedAt: providedCompletedAt, ...taskFields } = args;
+    const completedAt = providedCompletedAt ?? Date.now();
     // YYYY-MM-DD in UTC — close enough for daily task grouping
     const date = new Date(completedAt).toISOString().split("T")[0];
     const completionId = await ctx.db.insert("taskCompletions", {
-      ...args,
+      ...taskFields,
       completedAt,
       date,
     });

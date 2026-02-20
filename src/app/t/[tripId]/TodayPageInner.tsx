@@ -23,6 +23,13 @@ import {
   notifySwManualVersion,
   swCacheTripData,
 } from "@/lib/offlineTripData";
+import {
+  getQueue,
+  enqueue,
+  dequeue,
+  removeByTaskRefs,
+  incrementRetry,
+} from "@/lib/offlineQueue";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -47,7 +54,8 @@ interface TodayTask {
 }
 
 interface CompletionInfo {
-  id: Id<"taskCompletions">;
+  /** Undefined for offline-queued completions that haven't synced yet. */
+  id?: Id<"taskCompletions">;
   proofPhotoUrl?: string;
 }
 
@@ -579,6 +587,43 @@ function ContactsTab({ contacts }: { contacts: ContactTabEntry[] }) {
   );
 }
 
+// ── Offline sync banner ───────────────────────────────────────────────
+
+/**
+ * Subtle fixed bar shown at the bottom of the viewport when the device is
+ * offline. Positioned above the bottom nav (z-30 < z-40 for nav).
+ */
+function OfflineBanner() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-0 right-0 z-30 flex items-center justify-center gap-2 bg-warning-light text-warning font-body text-xs rounded-t-lg px-4 py-2"
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="1" y1="1" x2="23" y2="23" />
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+        <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+        <line x1="12" y1="20" x2="12.01" y2="20" />
+      </svg>
+      offline — will sync when connected
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────
 
 export default function TodayPageInner({ tripId }: { tripId: string }) {
@@ -621,6 +666,30 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingProofNameRef = useRef<string>("");
 
+  // ── Online / offline state ─────────────────────────────────────────────
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true,
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // ── Offline task queue ─────────────────────────────────────────────────
+  // taskRefs checked while offline (or whose mutation failed). These render
+  // as checked even before the Convex server confirms them.
+  const [pendingTaskRefs, setPendingTaskRefs] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set<string>();
+    return new Set(getQueue(tripId).map((e) => e.taskRef));
+  });
+
   const liveData = useQuery(api.todayView.getTodayTasks, {
     tripId: tripId as Id<"trips">,
     today,
@@ -638,7 +707,8 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     if (saved) setCachedData(saved);
   }, [tripId]);
 
-  // When fresh data arrives from Convex, persist it and notify the SW
+  // When fresh data arrives from Convex, persist it, notify the SW, and
+  // clean up any queue entries that are now confirmed server-side.
   useEffect(() => {
     if (!liveData) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -659,11 +729,30 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
 
     // Update in-memory cached copy
     setCachedData(liveData);
+
+    // Remove queue entries that Convex now confirms as complete
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const syncedRefs = new Set<string>((live?.completions ?? []).map((c: any) => c.taskRef as string));
+    const removed = removeByTaskRefs(tripId, syncedRefs);
+    if (removed) {
+      setPendingTaskRefs((prev) => {
+        const next = new Set(prev);
+        for (const ref of syncedRefs) {
+          next.delete(ref);
+        }
+        return next;
+      });
+    }
   }, [liveData, tripId]);
 
   // Resolve: prefer live data, fall back to cached when Convex is unavailable
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = liveData ?? cachedData;
+
+  // ── Queue drain on reconnect ───────────────────────────────────────────
+  // Keep a ref so we only start one drain per online transition even if the
+  // effect fires multiple times during the same online session.
+  const drainInProgressRef = useRef(false);
 
   // completeTask: immediately updates the Convex local store so the checkbox responds
   // before the server round-trip completes (offline resilience via optimistic update).
@@ -722,6 +811,44 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
   const completeTaskWithProof = useMutation(api.taskCompletions.completeTaskWithProof);
   const generateUploadUrl = useAction(api.storage.generateUploadUrl);
 
+  // Drain the offline queue when the device comes back online.
+  // Each queued entry is submitted with its original completedAt timestamp.
+  // The server deduplicates on tripId+taskRef so re-submitting is safe.
+  useEffect(() => {
+    if (!isOnline) {
+      drainInProgressRef.current = false;
+      return;
+    }
+    if (drainInProgressRef.current) return;
+    drainInProgressRef.current = true;
+
+    void (async () => {
+      const queue = getQueue(tripId);
+      for (const entry of queue) {
+        try {
+          await completeTask({
+            tripId: entry.tripId as Id<"trips">,
+            taskRef: entry.taskRef,
+            taskType: entry.taskType,
+            sitterName: entry.sitterName,
+            completedAt: entry.completedAt,
+          });
+          dequeue(tripId, entry.id);
+          setPendingTaskRefs((prev) => {
+            const next = new Set(prev);
+            next.delete(entry.taskRef);
+            return next;
+          });
+        } catch {
+          incrementRetry(tripId, entry.id);
+        }
+      }
+    })();
+  // completeTask is stable (useMutation returns a stable ref); isOnline and tripId
+  // are the only values that should re-trigger the drain.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, tripId]);
+
   async function handleToggle(
     task: TodayTask,
     currentlyCompleted: boolean,
@@ -737,14 +864,45 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
         handleProofClick(task);
         return;
       }
-      // Get sitter name from sessionStorage (empty string for truly anonymous sitters)
+
       const sitterName = getSitterName();
-      await completeTask({
-        tripId: tripId as Id<"trips">,
+      const completedAt = Date.now();
+      // Unique ID for this queue entry (tripId+taskRef+ms is collision-resistant)
+      const entryId = `${tripId}:${task.taskRef}:${completedAt}`;
+
+      // Step 1 — Write to queue immediately (offline-first, before network call)
+      enqueue(tripId, {
+        id: entryId,
+        tripId,
         taskRef: task.taskRef,
         taskType: task.taskType,
+        completedAt,
         sitterName,
       });
+
+      // Step 2 — Show as checked in local state immediately
+      setPendingTaskRefs((prev) => new Set([...prev, task.taskRef]));
+
+      // Step 3 — Attempt Convex mutation
+      try {
+        await completeTask({
+          tripId: tripId as Id<"trips">,
+          taskRef: task.taskRef,
+          taskType: task.taskType,
+          sitterName,
+          completedAt,
+        });
+        // Mutation succeeded: remove from queue (liveData update will clean state)
+        dequeue(tripId, entryId);
+        setPendingTaskRefs((prev) => {
+          const next = new Set(prev);
+          next.delete(task.taskRef);
+          return next;
+        });
+      } catch {
+        // Mutation failed (offline or server error) — keep in queue and local state
+        // The drain effect will retry when the device comes back online.
+      }
     }
   }
 
@@ -852,10 +1010,17 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
     : [];
   const tomorrowGroups = groupBySlot(tomorrowTasks);
 
-  // Build a map of taskRef → completion info for O(1) lookup
+  // Build a map of taskRef → completion info for O(1) lookup.
+  // Includes both server-confirmed completions and locally-queued (offline) ones.
+  // Offline entries have no id so the uncheck flow won't trigger for them.
   const completionMap = new Map<string, CompletionInfo>(
     completions.map((c) => [c.taskRef, { id: c._id as Id<"taskCompletions">, proofPhotoUrl: c.proofPhotoUrl }]),
   );
+  for (const taskRef of pendingTaskRefs) {
+    if (!completionMap.has(taskRef)) {
+      completionMap.set(taskRef, { id: undefined, proofPhotoUrl: undefined });
+    }
+  }
 
   // Compute stats
   const tasksToday = todayTasks.length;
@@ -877,6 +1042,9 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
 
   return (
     <SitterLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {/* ── Offline sync banner ─────────────────────────────────────── */}
+      {!isOnline && <OfflineBanner />}
+
       {/* ── Hidden file input for proof photo ──────────────────────── */}
       <input
         ref={fileInputRef}

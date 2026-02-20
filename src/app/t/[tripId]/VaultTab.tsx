@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAction, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { VaultItem, LockIcon } from "@/components/ui/VaultItem";
+import { VaultItem, LockIcon, type VaultItemLocationCard } from "@/components/ui/VaultItem";
 import { PinInput } from "@/components/ui/PinInput";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,19 @@ type Phase =
   | "pin_entry"     // PIN input — enter 6-digit code
   | "verifying"     // Waiting for verifyPin action
   | "loading_items" // PIN verified — loading decrypted vault items
-  | "revealed";     // Vault items visible
+  | "revealed"      // Vault items visible
+  | "access_denied"; // Trip inactive or sitter not registered
+
+type AccessDeniedReason = "TRIP_INACTIVE" | "NOT_REGISTERED" | "VAULT_ACCESS_DENIED";
+
+interface DecryptedVaultItem {
+  id: string;
+  label: string;
+  itemType: string;
+  instructions?: string;
+  value: string;
+  locationCard?: VaultItemLocationCard;
+}
 
 interface VaultTabProps {
   tripId: Id<"trips">;
@@ -66,6 +78,29 @@ function VaultSkeleton() {
   );
 }
 
+// ── Access denied empty state ──────────────────────────────────────────
+
+function AccessDeniedState({ reason }: { reason: AccessDeniedReason }) {
+  const message =
+    reason === "TRIP_INACTIVE"
+      ? "This handoff is not currently active"
+      : "You don't have access to secure items";
+  const detail =
+    reason === "TRIP_INACTIVE"
+      ? "The trip has ended or hasn't started yet. Vault access is only available during active trips."
+      : "Your phone number isn't registered for vault access on this trip. Check with your homeowner.";
+
+  return (
+    <div className="bg-bg-raised rounded-xl p-8 flex flex-col items-center text-center gap-4">
+      <VaultLockIcon />
+      <div className="flex flex-col gap-2">
+        <p className="font-body text-base font-semibold text-text-primary">{message}</p>
+        <p className="font-body text-sm text-text-muted max-w-[280px]">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main VaultTab component ────────────────────────────────────────────
 
 export function VaultTab({ tripId, propertyId }: VaultTabProps) {
@@ -85,7 +120,9 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const [pinSent, setPinSent] = useState(false); // tracks if we've ever sent a PIN this session
-  const [decryptedItems, setDecryptedItems] = useState<Record<string, string>>({});
+  const [decryptedItems, setDecryptedItems] = useState<DecryptedVaultItem[]>([]);
+  const [accessDeniedReason, setAccessDeniedReason] = useState<AccessDeniedReason | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Vault items list — always loaded (just labels, no sensitive data)
   const vaultItemsList = useQuery(api.vaultItems.listByPropertyId, { propertyId });
@@ -93,7 +130,7 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
   // Actions
   const sendPinAction = useAction(api.vaultActions.sendSmsPin);
   const verifyPinAction = useAction(api.vaultActions.verifyPin);
-  const getDecryptedAction = useAction(api.vaultActions.getDecryptedVaultItem);
+  const getDecryptedItemsAction = useAction(api.vaultActions.getDecryptedVaultItems);
 
   // Auto-load decrypted items when phase is loading_items and list is ready.
   // setState is called inside .then() callbacks, which is the allowed ESLint pattern.
@@ -103,36 +140,42 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
 
     let cancelled = false;
     const currentPhone = phone;
-    const currentItems = vaultItemsList;
 
-    // Resolve immediately for empty list; otherwise fetch all decrypted values.
-    // All setState calls happen inside .then() callbacks (required by ESLint rule).
-    const fetchPromise =
-      currentItems.length === 0
-        ? Promise.resolve([] as Awaited<ReturnType<typeof getDecryptedAction>>[])
-        : Promise.all(
-            currentItems.map((item) =>
-              getDecryptedAction({ vaultItemId: item._id, tripId, sitterPhone: currentPhone }),
-            ),
-          );
+    const fetchPromise = getDecryptedItemsAction({
+      propertyId,
+      tripId,
+      sitterPhone: currentPhone,
+    });
 
-    fetchPromise.then((results) => {
+    fetchPromise.then((result) => {
       if (cancelled) return;
-      const map: Record<string, string> = {};
-      for (let i = 0; i < currentItems.length; i++) {
-        const result = results[i];
-        if (result?.success) {
-          map[currentItems[i]._id] = result.value;
+      if (result.success) {
+        setDecryptedItems(result.items);
+        setPhase("revealed");
+      } else {
+        // Access denied — show typed empty state
+        if (
+          result.error === "TRIP_INACTIVE" ||
+          result.error === "NOT_REGISTERED" ||
+          result.error === "VAULT_ACCESS_DENIED"
+        ) {
+          setAccessDeniedReason(
+            result.error === "TRIP_INACTIVE" ? "TRIP_INACTIVE" : "NOT_REGISTERED",
+          );
+          setPhase("access_denied");
+        } else {
+          // NOT_VERIFIED — session expired; send back to gate
+          sessionStorage.removeItem(sessionKey);
+          setPhase("gate");
+          setError("Your verification session has expired. Please verify again.");
         }
       }
-      setDecryptedItems(map);
-      setPhase("revealed");
     });
 
     return () => {
       cancelled = true;
     };
-  }, [phase, vaultItemsList, tripId, phone, getDecryptedAction]);
+  }, [phase, vaultItemsList, tripId, propertyId, phone, getDecryptedItemsAction, sessionKey]);
 
   async function handleSendPin() {
     if (!phone.trim()) {
@@ -152,13 +195,11 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
       } else {
         setPhase("gate");
         if (result.error === "NOT_REGISTERED") {
-          setError(
-            "That phone number isn't registered for this trip. Check with your homeowner.",
-          );
+          setError("You don't have access to secure items. Check with your homeowner.");
         } else if (result.error === "VAULT_ACCESS_DENIED") {
           setError("You don't have vault access for this trip.");
         } else {
-          setError("This trip is no longer active.");
+          setError("This handoff is not currently active.");
         }
       }
     } catch {
@@ -231,9 +272,26 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
     }
   }
 
+  function handleCopy(itemId: string, value: string) {
+    void navigator.clipboard.writeText(value).then(() => {
+      setCopiedId(itemId);
+      setTimeout(() => setCopiedId(null), 1500);
+    });
+  }
+
   const isSending = phase === "sending";
   const isVerifying = phase === "verifying";
   const isLoadingItems = phase === "loading_items";
+
+  // ── Access denied state ────────────────────────────────────────────
+
+  if (phase === "access_denied" && accessDeniedReason) {
+    return (
+      <div className="flex flex-col gap-4">
+        <AccessDeniedState reason={accessDeniedReason} />
+      </div>
+    );
+  }
 
   // ── Revealed state ─────────────────────────────────────────────────
 
@@ -263,7 +321,7 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
 
         {vaultItemsList === undefined || isLoadingItems ? (
           <VaultSkeleton />
-        ) : vaultItemsList.length === 0 ? (
+        ) : decryptedItems.length === 0 ? (
           <div className="bg-bg-raised rounded-xl border border-dashed border-border-strong p-8 flex flex-col items-center text-center gap-3">
             <span className="text-3xl" aria-hidden="true">
               🔐
@@ -275,19 +333,19 @@ export function VaultTab({ tripId, propertyId }: VaultTabProps) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {vaultItemsList.map((item) => {
-              const decryptedValue = decryptedItems[item._id];
-              return (
-                <VaultItem
-                  key={item._id}
-                  state={decryptedValue !== undefined ? "revealed" : "locked"}
-                  icon={<ItemTypeIcon />}
-                  label={item.label}
-                  hint={item.instructions}
-                  value={decryptedValue}
-                />
-              );
-            })}
+            {decryptedItems.map((item) => (
+              <VaultItem
+                key={item.id}
+                state="revealed"
+                icon={<ItemTypeIcon />}
+                label={item.label}
+                hint={item.instructions}
+                value={item.value}
+                onCopy={() => handleCopy(item.id, item.value)}
+                copied={copiedId === item.id}
+                locationCard={item.locationCard}
+              />
+            ))}
           </div>
         )}
       </div>

@@ -1,0 +1,171 @@
+# Iteration 3 Log
+
+## Metadata
+
+- **Task ID**: US-050
+- **Task Title**: SMS PIN verification flow
+- **Description**: As a sitter, I want to verify my phone number via SMS PIN so I can access vault items securely.
+- **Status**: completed
+- **Task Completed**: Yes
+- **Promise Detected**: Yes
+- **Started At**: 2026-02-20T00:20:11.336Z
+- **Ended At**: 2026-02-20T00:45:26.143Z
+- **Duration**: 25m 14s
+- **Agent**: claude
+- **Sandbox Mode**: auto
+- **Sandbox Network**: Enabled
+--- RAW OUTPUT ---
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+
+[91m[Error: File content (30618 tokens) exceeds maximum allowed tokens (25000). Please use offset and limit parameters to read specific portions of the file, or use the GrepTool to search for specific content.][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/docs/handoff-tasks/epic-06-vault.json[0m
+
+[91m[Error: <tool_use_error>Sibling tool call errored</tool_use_error>][0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96mconvex/**/*.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/vaultActions.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/sitters.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/vaultItems.ts[0m
+Now let me look at the existing UI components and the API generated file:
+[94m[Glob][0m [95m/Users/john/Coding/handoff[0m pattern: [96msrc/**/*.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/_generated/api.d.ts[0m
+Let me look at the today page and vault UI components:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/VaultItem.tsx[0m
+Now let me look at the SitterLayout and existing trips internal query:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/layouts/SitterLayout.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/trips.ts[0m
+Let me check the BottomNav and TodayPageClient:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/BottomNav.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageClient.tsx[0m
+Let me check the todayView query and the authActions pattern for crypto:
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/todayView.ts[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/convex/authActions.ts[0m
+Let me check the Input component for styling:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Input.tsx[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/components/ui/Button.tsx[0m
+[94m[TodoWrite][0m
+[94m[TodoWrite][0m
+Now let me implement everything. Starting with the schema:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/schema.ts[0m edit: "  activityLog: defineTable({
+    tripId: v.id("tri..." → "  activityLog: defineTable({
+    tripId: v.id("tri..."
+[94m[TodoWrite][0m
+[94m[Write][0m [95m/Users/john/Coding/handoff/convex/vaultPins.ts[0m "import { internalMutation, internalQuery } from "./_generated/server";
+import { v } from "convex/values";
+
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — verified session validity
+
+/**
+ * I... (2655 chars)"
+Now add `_listByTrip` to sitters.ts:
+[94m[TodoWrite][0m
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/sitters.ts[0m edit: "// Internal: look up a sitter by trip + phone — us..." → "// Internal: list all sitters for a trip — used by..."
+[94m[TodoWrite][0m
+Now update vaultActions.ts to add the new actions and fix `getDecryptedVaultItem`:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/vaultActions.ts[0m edit: "import { randomBytes, createCipheriv, createDeciph..." → "import { randomBytes, createCipheriv, createDeciph..."
+Now add the PIN-related constants and actions, and update `getDecryptedVaultItem`. Let me append to the file:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/vaultActions.ts[0m edit: "/**
+ * Return a decrypted vault item value — only ..." → "// ── SMS PIN verification helpers ───────────────..."
+[94m[TodoWrite][0m
+Now update the API type definition file to include `vaultPins`:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/_generated/api.d.ts[0m edit: "import type * as vaultActions from "../vaultAction..." → "import type * as vaultActions from "../vaultAction..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/convex/_generated/api.d.ts[0m edit: "  vaultActions: typeof vaultActions;
+  vaultItems:..." → "  vaultActions: typeof vaultActions;
+  vaultItems:..."
+[94m[TodoWrite][0m
+Now create the PinInput component:
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/components/ui/PinInput.tsx[0m ""use client";
+
+import { useRef, type KeyboardEvent, type ClipboardEvent } from "react";
+import { cn } from "@/lib/utils";
+
+interface PinInputProps {
+  value: string; // up to 6 digit characters
+  onCh... (3486 chars)"
+[94m[TodoWrite][0m
+Now create the VaultTab component with the full verification flow:
+[94m[Write][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m ""use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useAction, useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import type { Id }... (14852 chars)"
+[94m[TodoWrite][0m
+Now update TodayPageInner to add tab switching and integrate the vault tab:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: ""use client";
+
+import { useState, useCallback } fr..." → ""use client";
+
+import { useState, useCallback } fr..."
+Now update the main component to handle tab switching. Find the main component:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "// ── Main component ─────────────────────────────..." → "// ── Main component ─────────────────────────────..."
+Now update the render to pass tab state and conditionally show the vault tab:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  if (data === undefined) return <LoadingSkeleton ..." → "  if (data === undefined) return <LoadingSkeleton ..."
+Now update the return statement to pass tab state and render vault tab:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/TodayPageInner.tsx[0m edit: "  return (
+    <SitterLayout activeTab="today">
+  ..." → "  return (
+    <SitterLayout activeTab={activeTab}..."
+[94m[TodoWrite][0m
+Now run typecheck to find any issues:
+[94m[Bash][0m Run TypeScript typecheck $ pnpm typecheck 2>&1 | head -100
+Clean typecheck. Now run lint:
+[94m[Bash][0m Run ESLint $ pnpm lint 2>&1 | head -80
+Two issues to fix: unused `type` variable and setState-in-effect pattern. Let me fix both:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m edit: "// ── Vault item type → icon mapping ─────────────..." → "// ── Vault item type → icon mapping ─────────────..."
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m edit: "              <VaultItem
+                  key={it..." → "              <VaultItem
+                  key={it..."
+Now fix the setState-in-effect issue by replacing `useCallback`+`useEffect` with an inline Promise chain:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m edit: "import { useState, useEffect, useCallback } from "..." → "import { useState, useEffect } from "react";"
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m edit: "  // Load decrypted items once vault items list + ..." → "  // Auto-load decrypted items when phase is loadi..."
+[94m[Bash][0m Run ESLint again $ pnpm lint 2>&1 | head -60
+The empty list case calls `setPhase` synchronously. Fix by putting it in a microtask:
+[94m[Edit][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m edit: "    if (vaultItemsList.length === 0) {
+      setPh..." → "    let cancelled = false;
+    const currentPhone ..."
+[94m[Bash][0m Run ESLint again after fixes $ pnpm lint 2>&1 | head -40
+Lint passes (the PetProfileCard warning is pre-existing). Let me confirm typecheck still passes:
+[94m[Bash][0m Run typecheck to confirm clean $ pnpm typecheck 2>&1
+[94m[Bash][0m Run production build to verify no build errors $ pnpm build 2>&1 | tail -30
+All three checks pass. Now let me verify the VaultTab component is correct by reviewing the final version:
+[94m[Read][0m [95m/Users/john/Coding/handoff/src/app/t/[tripId]/VaultTab.tsx[0m
+[94m[TodoWrite][0m
+Now let me append to the progress.md file:
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Bash][0m Check how many lines are in progress.md $ wc -l /Users/john/Coding/handoff/.ralph-tui/progress.md
+[94m[Read][0m [95m/Users/john/Coding/handoff/.ralph-tui/progress.md[0m
+[94m[Bash][0m Append US-050 learnings to progress.md $ instead unify all setState calls inside the `.then()`.   - **Conditional `useQuery` with skip**: Use...
+All checks pass. Let me do a final review of the key files:
+[94m[Bash][0m Final quality check $ pnpm typecheck && pnpm lint 2>&1 | grep -E "error|✓|✖" | head -20
+TypeScript: clean. ESLint: 0 errors, 1 pre-existing warning (PetProfileCard.tsx img tag, unrelated to this work). Build: passes.
+
+Here's what was implemented for US-050:
+
+## Summary
+
+### Backend (Convex)
+
+**`convex/schema.ts`** — Added `vaultPins` table with `by_trip_phone` index. Stores pending PINs and verified sessions in a single record that transitions on successful verification.
+
+**`convex/vaultPins.ts`** (new) — Internal mutations/queries: `_upsert`, `_getByTripAndPhone`, `_incrementAttempt`, `_markVerified`, `_delete`.
+
+**`convex/sitters.ts`** — Added `_listByTrip` internal query for normalized phone lookup.
+
+**`convex/vaultActions.ts`** — Added:
+- `sendSmsPin` — validates sitter, generates 6-digit PIN, hashes with SHA-256+salt, stores in DB, sends via Twilio SMS (or logs PIN to console in dev mode)
+- `verifyPin` — checks expiry/attempt count/hash match; on success marks record as verified session (24h)
+- Updated `getDecryptedVaultItem` — now enforces PIN verification as layer 3 (server-side), returns `NOT_VERIFIED` if no valid session exists
+
+### Frontend
+
+**`src/components/ui/PinInput.tsx`** (new) — 6-digit OTP input with auto-advance focus, backspace navigation, paste handling.
+
+**`src/app/t/[tripId]/VaultTab.tsx`** (new) — Full vault tab with state machine: phone entry → SMS send → PIN entry → verification → vault revealed. Session persisted in `sessionStorage`. Decrypts all items after verification via `Promise.all`.
+
+**`src/app/t/[tripId]/TodayPageInner.tsx`** — Added `activeTab` state + tab switching, integrates `VaultTab` component for the vault tab.
+
+<promise>COMPLETE</promise>

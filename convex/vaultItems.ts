@@ -58,6 +58,37 @@ export const _getById = internalQuery({
   },
 });
 
+// Internal: list all vault items for a property including encryptedValue.
+// Used by vaultActions.getDecryptedVaultItems for batch decryption.
+export const _listByPropertyFull = internalQuery({
+  args: { propertyId: v.id("properties") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("vaultItems")
+      .withIndex("by_property_sort", (q) => q.eq("propertyId", args.propertyId))
+      .order("asc")
+      .collect();
+  },
+});
+
+// Internal: log a vault access event to the activity log.
+export const _logVaultAccess = internalMutation({
+  args: {
+    tripId: v.id("trips"),
+    propertyId: v.id("properties"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.insert("activityLog", {
+      tripId: args.tripId,
+      propertyId: args.propertyId,
+      event: "vault_accessed",
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
 // Internal: replace the encryptedValue for an existing item (re-encrypt on edit).
 // Called by vaultActions.updateVaultItemValue after re-encryption.
 export const _patchEncrypted = internalMutation({

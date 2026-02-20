@@ -93,12 +93,13 @@
         "Access control verification — unauthorized users cannot access restricted data"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to implement the getDecryptedVaultItems action with a three-layer access check: (1) trip status === 'active', (2) sitter phone exists in Sitters table for this trip with vaultAccess === true, (3) PIN verification session is valid. If any check fails, return a typed error enum (TRIP_INACTIVE, NOT_REGISTERED, NOT_VERIFIED) — never throw generic errors that leak information. Call the logVaultAccess mutation after each successful item view. Load /tailwind-design-system to render the vault page using the VaultItem component in revealed state: monospace font (font-mono) for the code value, bg-vault text-on-vault for the code block, a copy-to-clipboard button using the Clipboard icon, instructions text below in font-body text-text-secondary, and the inline LocationCard if present. Show the correct access-denied empty states ('This handoff is not currently active', 'You don't have access to secure items') using bg-bg-raised rounded-xl p-8 text-center with vault lock icon. Use /dev-browser to verify: a verified sitter sees decrypted codes in monospace, copy-to-clipboard works, the location card renders with the code, an unverified sitter sees the gate message, and accessing with an expired trip shows the inactive message.",
       "dependsOn": [
         "US-050",
         "US-010"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-052",
@@ -211,6 +212,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T00:45:26.145Z"
+    "updatedAt": "2026-02-20T00:58:11.041Z"
   }
 }

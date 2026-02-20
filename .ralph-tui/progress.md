@@ -906,3 +906,20 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **Conditional `useQuery` with skip**: Use `useQuery(api.foo.bar, phase === "loading" ? { arg } : "skip")` to skip a Convex query until ready. In VaultTab, vault items list is always loaded (labels only, not sensitive) so no skip needed.
   - **Sitter tab switching in TodayPageInner**: The entire sitter experience lives in TodayPageInner. To add vault/manual/contacts tabs, add `activeTab` state + pass to SitterLayout's `onTabChange`. Conditionally render content per tab. No new routes needed — it's SPA-style in-page tab switching.
 ---
+
+## 2026-02-19 - US-051
+- Implemented vault access for verified sitters with decrypted codes, copy-to-clipboard, location cards, and access-denied states
+- **Files changed:**
+  - `convex/locationCards.ts` — Added `_getByIdWithUrl` internalQuery: fetches a location card and resolves `storageId`/`videoStorageId` to public URLs via `ctx.storage.getUrl()`
+  - `convex/vaultItems.ts` — Added `_listByPropertyFull` internalQuery (all items including `encryptedValue`) and `_logVaultAccess` internalMutation (inserts `vault_accessed` event into `activityLog`)
+  - `convex/vaultActions.ts` — Added `getDecryptedVaultItems` (plural) action: single call that does all 3 access checks, decrypts all vault items, resolves location card URLs in parallel, logs vault access, returns typed union
+  - `src/components/ui/VaultItem.tsx` — Redesigned "revealed" state to card-like `flex-col` layout: header row (icon + label), code block row (monospace + copy button), instructions below, LocationCard at bottom; added `onCopy`, `copied`, and `locationCard` optional props; locked/hidden states unchanged
+  - `src/app/t/[tripId]/VaultTab.tsx` — Replaced N individual `getDecryptedVaultItem` calls with single `getDecryptedVaultItems` call; added `access_denied` phase; `AccessDeniedState` component with vault lock icon for TRIP_INACTIVE/NOT_REGISTERED; updated error messages to spec ("This handoff is not currently active", "You don't have access to secure items"); added `copiedId` state + `handleCopy` using `navigator.clipboard.writeText` + `setTimeout` to clear after 1.5s; VaultItem now receives `onCopy`/`copied`/`locationCard` props
+- **Learnings:**
+  - **Batch decrypt action pattern**: A `getDecryptedVaultItems` (plural) action that does access checks once + decrypts all items is more efficient and provides better error UX (single typed error vs N possible partial failures) compared to N individual `getDecryptedVaultItem` calls. Use `Promise.all()` for parallel location card fetches within the action.
+  - **`ctx.storage.getUrl()` in internalQuery**: Storage URL resolution must happen in a query or mutation, not in a `"use node"` action. The action calls `ctx.runQuery(internal.locationCards._getByIdWithUrl, ...)` to get the resolved URLs — the internal query uses `ctx.storage.getUrl()` cleanly.
+  - **VaultItem flex-col revealed state**: When a component needs to expand vertically (to show code block + instructions + location card), change the outer `flex items-center` to `flex flex-col` in the specific state. The locked/hidden states can keep the horizontal layout since they don't have expanded content.
+  - **Copy button feedback without useEffect**: Use `handleCopy(id, value)` that calls `navigator.clipboard.writeText(value).then(() => { setCopiedId(id); setTimeout(() => setCopiedId(null), 1500); })` — no useEffect needed, avoids the `react-hooks/set-state-in-effect` lint rule entirely.
+  - **Access-denied phase in VaultTab**: Added `access_denied` as a Phase enum value with a `accessDeniedReason` string state. When `getDecryptedVaultItems` returns `TRIP_INACTIVE` or `NOT_REGISTERED`/`VAULT_ACCESS_DENIED`, set both states and render the `AccessDeniedState` component with the vault lock icon and specific message.
+  - **internalQuery in api.d.ts**: New internal functions (internalQuery/internalMutation) on existing modules are automatically typed via the `typeof locationCards` / `typeof vaultItems` pattern in `api.d.ts` — no manual api.d.ts update needed for functions on existing modules.
+---

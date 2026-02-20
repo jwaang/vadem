@@ -3,10 +3,10 @@
   "sessionId": "913330bb-95b7-486e-abb8-ad70e88a5dbf",
   "status": "running",
   "startedAt": "2026-02-19T23:44:47.854Z",
-  "updatedAt": "2026-02-20T00:45:26.147Z",
-  "currentIteration": 2,
+  "updatedAt": "2026-02-20T00:58:11.043Z",
+  "currentIteration": 3,
   "maxIterations": 10,
-  "tasksCompleted": 2,
+  "tasksCompleted": 3,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -29,8 +29,8 @@
       {
         "id": "US-050",
         "title": "SMS PIN verification flow",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-051",
@@ -90,6 +90,16 @@
       "durationMs": 1050206,
       "startedAt": "2026-02-20T00:02:40.988Z",
       "endedAt": "2026-02-20T00:20:11.194Z"
+    },
+    {
+      "iteration": 3,
+      "status": "completed",
+      "taskId": "US-050",
+      "taskTitle": "SMS PIN verification flow",
+      "taskCompleted": true,
+      "durationMs": 1514807,
+      "startedAt": "2026-02-20T00:20:11.336Z",
+      "endedAt": "2026-02-20T00:45:26.143Z"
     }
   ],
   "skippedTaskIds": [],

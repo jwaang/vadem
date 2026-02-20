@@ -321,6 +321,168 @@ export const verifyPin = action({
 });
 
 /**
+ * Return all decrypted vault items for a property — only for authorized, PIN-verified sitters.
+ *
+ * More efficient than calling getDecryptedVaultItem N times: performs the three-layer
+ * access check once, then decrypts all items and resolves location card URLs in a single call.
+ * Logs a vault_accessed event to the activity log on success.
+ *
+ * Access control (three-layer check):
+ *  1. Trip must have status === 'active' and belong to the given property.
+ *  2. Sitter phone must be registered for the trip with vaultAccess === true.
+ *  3. Sitter must have a valid, unexpired SMS PIN verification session.
+ */
+export const getDecryptedVaultItems = action({
+  args: {
+    propertyId: v.id("properties"),
+    tripId: v.id("trips"),
+    sitterPhone: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      success: v.literal(true),
+      items: v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+          itemType: vaultItemType,
+          instructions: v.optional(v.string()),
+          value: v.string(),
+          locationCard: v.optional(
+            v.object({
+              caption: v.string(),
+              roomTag: v.optional(v.string()),
+              photoUrl: v.optional(v.string()),
+              videoUrl: v.optional(v.string()),
+            }),
+          ),
+        }),
+      ),
+    }),
+    v.object({
+      success: v.literal(false),
+      error: v.union(
+        v.literal("TRIP_INACTIVE"),
+        v.literal("NOT_REGISTERED"),
+        v.literal("VAULT_ACCESS_DENIED"),
+        v.literal("NOT_VERIFIED"),
+      ),
+    }),
+  ),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<
+    | {
+        success: true;
+        items: Array<{
+          id: string;
+          label: string;
+          itemType:
+            | "door_code"
+            | "alarm_code"
+            | "wifi"
+            | "gate_code"
+            | "garage_code"
+            | "safe_combination"
+            | "custom";
+          instructions?: string;
+          value: string;
+          locationCard?: {
+            caption: string;
+            roomTag?: string;
+            photoUrl?: string;
+            videoUrl?: string;
+          };
+        }>;
+      }
+    | {
+        success: false;
+        error: "TRIP_INACTIVE" | "NOT_REGISTERED" | "VAULT_ACCESS_DENIED" | "NOT_VERIFIED";
+      }
+  > => {
+    const normalizedPhone = normalizePhone(args.sitterPhone);
+
+    // 1. Verify trip is active and belongs to the given property
+    const trip = await ctx.runQuery(internal.trips._getById, { tripId: args.tripId });
+    if (!trip || trip.propertyId !== args.propertyId || trip.status !== "active") {
+      return { success: false as const, error: "TRIP_INACTIVE" as const };
+    }
+
+    // 2. Verify sitter is registered for this trip with vault access
+    const allSitters = await ctx.runQuery(internal.sitters._listByTrip, { tripId: args.tripId });
+    const sitter = allSitters.find(
+      (s) => s.phone !== undefined && normalizePhone(s.phone) === normalizedPhone,
+    );
+    if (!sitter) {
+      return { success: false as const, error: "NOT_REGISTERED" as const };
+    }
+    if (!sitter.vaultAccess) {
+      return { success: false as const, error: "VAULT_ACCESS_DENIED" as const };
+    }
+
+    // 3. Verify SMS PIN session — must have a valid, non-expired verified session
+    const pinRecord = await ctx.runQuery(internal.vaultPins._getByTripAndPhone, {
+      tripId: args.tripId,
+      sitterPhone: normalizedPhone,
+    });
+    if (!pinRecord || !pinRecord.verified || Date.now() > pinRecord.expiresAt) {
+      return { success: false as const, error: "NOT_VERIFIED" as const };
+    }
+
+    // 4. Fetch all vault items for the property and decrypt each
+    const rawItems = await ctx.runQuery(internal.vaultItems._listByPropertyFull, {
+      propertyId: args.propertyId,
+    });
+
+    const items = await Promise.all(
+      rawItems.map(async (item) => {
+        let value: string;
+        try {
+          value = decryptValue(item.encryptedValue);
+        } catch {
+          throw new Error("Failed to decrypt vault item. Contact support if this persists.");
+        }
+
+        let locationCard:
+          | { caption: string; roomTag?: string; photoUrl?: string; videoUrl?: string }
+          | undefined;
+        if (item.locationCardId) {
+          const card = await ctx.runQuery(internal.locationCards._getByIdWithUrl, {
+            cardId: item.locationCardId,
+          });
+          if (card) {
+            locationCard = {
+              caption: card.caption,
+              roomTag: card.roomTag,
+              photoUrl: card.photoUrl,
+              videoUrl: card.videoUrl,
+            };
+          }
+        }
+
+        return {
+          id: item._id as string,
+          label: item.label,
+          itemType: item.itemType,
+          instructions: item.instructions,
+          value,
+          locationCard,
+        };
+      }),
+    );
+
+    // 5. Log vault access to the activity log
+    await ctx.runMutation(internal.vaultItems._logVaultAccess, {
+      tripId: args.tripId,
+      propertyId: args.propertyId,
+    });
+
+    return { success: true as const, items };
+  },
+});
+
+/**
  * Return a decrypted vault item value — only for authorized, PIN-verified sitters.
  *
  * Access control (three-layer check):

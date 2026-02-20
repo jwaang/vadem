@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
@@ -93,6 +93,29 @@ export const update = mutation({
       await ctx.db.patch(cardId, updates);
     }
     return null;
+  },
+});
+
+// Internal: fetch a location card by ID and resolve its storage URLs.
+// Used by vaultActions.getDecryptedVaultItems to include location card data
+// alongside decrypted vault values.
+export const _getByIdWithUrl = internalQuery({
+  args: { cardId: v.id("locationCards") },
+  handler: async (ctx, args) => {
+    const card = await ctx.db.get(args.cardId);
+    if (!card) return null;
+    const photoUrl = card.storageId
+      ? await ctx.storage.getUrl(card.storageId)
+      : card.photoUrl ?? null;
+    const videoUrl = card.videoStorageId
+      ? await ctx.storage.getUrl(card.videoStorageId)
+      : card.videoUrl ?? null;
+    return {
+      caption: card.caption ?? "",
+      roomTag: card.roomTag,
+      photoUrl: photoUrl ?? undefined,
+      videoUrl: videoUrl ?? undefined,
+    };
   },
 });
 

@@ -3,10 +3,10 @@
   "sessionId": "9070c191-048a-4b6a-a247-cfe20585c46e",
   "status": "running",
   "startedAt": "2026-02-20T15:57:01.355Z",
-  "updatedAt": "2026-02-20T16:02:33.749Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-02-20T16:30:37.152Z",
+  "currentIteration": 1,
   "maxIterations": 10,
-  "tasksCompleted": 0,
+  "tasksCompleted": 1,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -17,8 +17,8 @@
       {
         "id": "US-068",
         "title": "Activity feed data model",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-069",
@@ -64,7 +64,18 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-068",
+      "taskTitle": "Activity feed data model",
+      "taskCompleted": true,
+      "durationMs": 298917,
+      "startedAt": "2026-02-20T15:57:34.829Z",
+      "endedAt": "2026-02-20T16:02:33.746Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/john/Coding/handoff",
   "activeTaskIds": [],

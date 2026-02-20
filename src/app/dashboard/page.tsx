@@ -777,6 +777,7 @@ function eventToActivityType(event: string): ActivityType {
 }
 
 function eventToAction(event: string, vaultItemLabel?: string): string {
+  if (event === "link_opened") return "opened the sitter link";
   if (event === "vault_accessed") {
     return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
   }
@@ -788,7 +789,7 @@ function eventToAction(event: string, vaultItemLabel?: string): string {
 
 // ── Activity Feed (inner — uses Convex hooks) ──────────────────────────
 
-type FeedFilter = "all" | "task_completed" | "proof_uploaded";
+type FeedFilter = "all" | "task_completed" | "proof_uploaded" | "vault_accessed";
 
 function ActivityFeedSectionInner() {
   const { user } = useAuth();
@@ -811,28 +812,39 @@ function ActivityFeedSectionInner() {
     propertyId ? { propertyId, date: today } : "skip",
   );
 
-  const events = useQuery(
-    api.activityLog.getActivityFeed,
-    propertyId
+  const activeTrip = useQuery(
+    api.trips.getActiveTripForProperty,
+    propertyId ? { propertyId } : "skip",
+  );
+
+  const activityResult = useQuery(
+    api.activityLog.getActivityForTrip,
+    activeTrip
       ? {
-          propertyId,
-          limit: 20,
+          tripId: activeTrip._id,
           eventType: filter === "all" ? undefined : filter,
+          paginationOpts: { numItems: 5, cursor: null },
         }
       : "skip",
   );
+
+  const events = activityResult?.items;
 
   const chips: { label: string; value: FeedFilter }[] = [
     { label: "All", value: "all" },
     { label: "Tasks", value: "task_completed" },
     { label: "Proof", value: "proof_uploaded" },
+    { label: "Vault", value: "vault_accessed" },
   ];
+
+  // propertyId loaded but no active trip → show placeholder
+  const hasNoActiveTrip = propertyId !== undefined && activeTrip === null;
 
   return (
     <>
       {/* Filter chips row with today summary badge */}
       <div className="px-5 pt-4 pb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {chips.map((chip) => (
             <button
               key={chip.value}
@@ -857,19 +869,26 @@ function ActivityFeedSectionInner() {
       </div>
 
       {/* Feed items */}
-      {events === undefined ? (
+      {hasNoActiveTrip ? (
+        <div className="px-5 py-4 flex items-center gap-2">
+          <ClockIcon className="text-text-muted" />
+          <p className="font-body text-xs text-text-muted">
+            Sitter activity will appear here once your first trip is active
+          </p>
+        </div>
+      ) : events === undefined ? (
         <p className="font-body text-xs text-text-muted px-5 py-4">Loading activity…</p>
       ) : events.length === 0 ? (
         <div className="px-5 py-4 flex items-center gap-2">
           <ClockIcon className="text-text-muted" />
           <p className="font-body text-xs text-text-muted">
             {filter === "all"
-              ? "Sitter activity will appear here once your first trip is active"
-              : `No ${filter === "task_completed" ? "task" : "proof"} events yet`}
+              ? "No activity yet for this trip"
+              : `No ${chips.find((c) => c.value === filter)?.label.toLowerCase()} events yet`}
           </p>
         </div>
       ) : (
-        <div className="px-5 pt-1 pb-2">
+        <div className="px-5 pt-1">
           {events.map((event, index) => (
             <ActivityFeedItem
               key={event._id}
@@ -881,6 +900,16 @@ function ActivityFeedSectionInner() {
               proofPhotoUrl={event.proofPhotoUrl}
             />
           ))}
+          {activeTrip && (
+            <div className="py-2 border-t border-border-default">
+              <Link
+                href={`/trip/${activeTrip._id}/activity`}
+                className="font-body text-xs font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
+              >
+                View all activity →
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </>

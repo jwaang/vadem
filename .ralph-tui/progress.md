@@ -1198,3 +1198,16 @@ Full spec at `docs/handoff-design-system.md`. Aesthetic: **Warm Editorial** — 
   - **internalMutation for event logging**: Make logEvent `internalMutation` so actions can call it via `ctx.runMutation(internal.activityLog.logEvent, ...)`, while mutations continue using `ctx.db.insert` directly (mutations cannot call `ctx.runMutation`).
   - **Index compound field for time-sorted queries**: Index `["tripId", "createdAt"]` enables efficient chronological queries filtered by trip. Without `createdAt` in the index, Convex still sorts but scans all records for the tripId first.
 ---
+
+## 2026-02-20 - US-069
+- Implemented activity feed display — full trip activity page + dashboard compact feed with filter chips
+- **Files changed:**
+  - `src/app/trip/[tripId]/activity/page.tsx` (new) — server component with metadata
+  - `src/app/trip/[tripId]/activity/TripActivityPageClient.tsx` (new) — client wrapper with `dynamic(ssr:false)` following established pattern
+  - `src/app/trip/[tripId]/activity/TripActivityFeed.tsx` (new) — full paginated feed using `api.activityLog.getActivityForTrip`; filter chips All/Tasks/Proof/Vault; "Load more" button incrementing `numItems`; trip metadata strip (dates + status); color-coded dots via `ActivityFeedItem`
+  - `src/app/dashboard/page.tsx` — updated `ActivityFeedSectionInner`: added `vault_accessed` to `FeedFilter` type, added Vault chip, switched from `getActivityFeed` (property-wide) to `getActivityForTrip` (trip-specific, limit 5), added `api.trips.getActiveTripForProperty` query for trip ID, added "View all activity →" `Link` to trip activity page, added `hasNoActiveTrip` guard for graceful empty state
+- **Learnings:**
+  - **Convex "load more" without cursors**: Incrementing `numItems` while passing `cursor: null` works for simple "load more" — query reruns from beginning with more items. `isDone: true` when no more records. Simple and sufficient for activity feeds.
+  - **`hasNoActiveTrip` guard pattern**: Distinguish "loading" (propertyId === undefined) from "no active trip" (propertyId defined but activeTrip === null) to show the right empty state. Without this, the feed stays in "Loading..." forever when there's no active trip.
+  - **Filter chips with union type**: Define FeedFilter as `"all" | eventTypeString` — passing `filter === "all" ? undefined : filter` to `eventType` arg TypeScript-safely narrows to the valid event type subset.
+---

@@ -41,12 +41,13 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Load /convex-best-practices to wire useQuery(api.activity.getActivityForTrip, { tripId, eventType }) — Convex's reactive subscriptions provide real-time updates automatically when new logEvent mutations fire. Load /tailwind-design-system to render each event using the ActivityFeedItem component (src/components/ui, US-018): terracotta dot (bg-primary) for link_opened, sage (bg-secondary) for task_completed, amber (bg-accent) for proof_uploaded, slate (bg-vault) for vault_accessed. Render filter chips above the feed using rounded-pill chips (All / Tasks / Proof / Vault) that pass eventType to the query. Embed a compact feed on the dashboard card for the active trip (last 5 events), and a full paginated feed on the trip detail page. Use /dev-browser to verify: a new task completion appears in the feed in real-time without page reload, dots match the correct colors per event type, filter chips correctly narrow results, and the feed is accessible on the completed trip page.",
       "dependsOn": [
         "US-018",
         "US-068"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-070",
@@ -173,6 +174,6 @@
     }
   ],
   "metadata": {
-    "updatedAt": "2026-02-20T16:02:33.747Z"
+    "updatedAt": "2026-02-20T16:30:37.149Z"
   }
 }

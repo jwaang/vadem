@@ -99,7 +99,7 @@ function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
           <p className="font-body text-sm text-primary">
             {ownerName
               ? `You were ${ownerName}'s sitter — now make your own.`
-              : "You were a Handoff sitter — now make your own."}
+              : "You were a Vadem sitter — now make your own."}
           </p>
         </div>
       )}

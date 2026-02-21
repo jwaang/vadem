@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TodayPageClient } from "./TodayPageClient";
 
 export const metadata: Metadata = {
-  title: "Today | Handoff",
+  title: "Today | Vadem",
 };
 
 export default async function TodayPage({

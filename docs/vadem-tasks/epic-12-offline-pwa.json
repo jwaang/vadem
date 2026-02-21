@@ -6,7 +6,7 @@
     {
       "id": "US-080",
       "title": "Service worker caching for instructions and photos",
-      "description": "As a sitter, I want the Handoff to work offline after my first visit so I can access instructions without cell service.",
+      "description": "As a sitter, I want the Vadem to work offline after my first visit so I can access instructions without cell service.",
       "acceptanceCriteria": [
         "Service worker caches: app shell, all instruction text, pet profiles, location card photos, emergency contacts",
         "After first load, all cached content available offline",

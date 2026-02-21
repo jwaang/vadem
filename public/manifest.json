@@ -1,7 +1,7 @@
 {
-  "name": "Handoff",
-  "short_name": "Handoff",
-  "description": "Handoff — seamless task management",
+  "name": "Vadem",
+  "short_name": "Vadem",
+  "description": "Vadem — seamless task management",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#C2704A",

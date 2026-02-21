@@ -13,7 +13,7 @@
  *    Storage so it survives memory pressure on mobile.
  */
 
-const STORAGE_PREFIX = "handoff_trip_";
+const STORAGE_PREFIX = "vadem_trip_";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 interface PersistedTripData<T> {

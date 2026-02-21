@@ -30,14 +30,14 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Handoff",
+  title: "Vadem",
   description:
     "The warmth of a handwritten care note meets the precision of a beautifully designed cookbook.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Handoff",
+    title: "Vadem",
   },
   icons: {
     apple: "/icons/icon-192x192.png",

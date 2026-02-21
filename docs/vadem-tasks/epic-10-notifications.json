@@ -74,9 +74,9 @@
     {
       "id": "US-071",
       "title": "Push notification — sitter opened link",
-      "description": "As an owner, I want to be notified when the sitter first opens my Handoff so I know they received it.",
+      "description": "As an owner, I want to be notified when the sitter first opens my Vadem so I know they received it.",
       "acceptanceCriteria": [
-        "Push notification: 'Sarah opened your Handoff'",
+        "Push notification: 'Sarah opened your Vadem'",
         "Triggered once per sitter per trip (first open only)",
         "Activity log entry created simultaneously",
         "pnpm typecheck passes",
@@ -85,7 +85,7 @@
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Load /convex-best-practices to implement a recordFirstOpen Convex action (callable without auth from the sitter route) that: (1) checks the ActivityLog for any existing link_opened event with the same tripId + sitterPhone — if one exists, skip (deduplication); (2) calls logEvent internalMutation with eventType='link_opened'; (3) calls sendPushNotification internalAction with message 'Sarah opened your Handoff' to the property owner's stored push subscription. Call recordFirstOpen from the sitter route (src/app/t/[shareLink]/page.tsx) in a useEffect on first render, passing the sitterName from the registered Sitters table (looked up by tripId) if available, or 'Someone' as fallback. Deduplicate using a flag in session storage to avoid firing multiple times across page navigations.",
+      "notes": "Load /convex-best-practices to implement a recordFirstOpen Convex action (callable without auth from the sitter route) that: (1) checks the ActivityLog for any existing link_opened event with the same tripId + sitterPhone — if one exists, skip (deduplication); (2) calls logEvent internalMutation with eventType='link_opened'; (3) calls sendPushNotification internalAction with message 'Sarah opened your Vadem' to the property owner's stored push subscription. Call recordFirstOpen from the sitter route (src/app/t/[shareLink]/page.tsx) in a useEffect on first render, passing the sitterName from the registered Sitters table (looked up by tripId) if available, or 'Someone' as fallback. Deduplicate using a flag in session storage to avoid firing multiple times across page navigations.",
       "dependsOn": [
         "US-068",
         "US-070"

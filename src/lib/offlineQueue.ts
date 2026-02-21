@@ -11,7 +11,7 @@
  * is small (a handful of completions per trip), so localStorage is sufficient.
  */
 
-const QUEUE_PREFIX = "handoff_pending_completions_";
+const QUEUE_PREFIX = "vadem_pending_completions_";
 
 export interface PendingCompletion {
   /** Client-generated UUID for this queue entry. */

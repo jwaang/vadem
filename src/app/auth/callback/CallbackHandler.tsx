@@ -72,7 +72,7 @@ function CallbackHandlerInner({ provider }: CallbackHandlerProps) {
     return (
       <main className="min-h-dvh bg-bg flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center">
-          <p className="font-display text-2xl text-primary italic mb-6">Handoff</p>
+          <p className="font-display text-2xl text-primary italic mb-6">Vadem</p>
           <div className="bg-bg-raised rounded-xl shadow-md p-8">
             <div
               role="alert"
@@ -95,7 +95,7 @@ function CallbackHandlerInner({ provider }: CallbackHandlerProps) {
   return (
     <main className="min-h-dvh bg-bg flex items-center justify-center p-4">
       <div className="text-center">
-        <p className="font-display text-2xl text-primary italic mb-4">Handoff</p>
+        <p className="font-display text-2xl text-primary italic mb-4">Vadem</p>
         <p className="font-body text-sm text-text-muted">Signing you in…</p>
       </div>
     </main>

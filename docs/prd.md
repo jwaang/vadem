@@ -1,4 +1,4 @@
-# Handoff — Product Requirements Document
+# Vadem — Product Requirements Document
 
 **Version**: 1.0
 **Last Updated**: 2026-02-17
@@ -8,11 +8,11 @@
 
 ## 1. Product Overview
 
-**Handoff** is a web-based app that lets homeowners create structured, media-rich, searchable care manuals for anyone temporarily looking after their home and pets — then share them via a single link. The recipient (sitter) gets a contextual "today view" with time-slotted tasks, location cards showing exactly where things are, optional photo proof of task completion, and secure access to sensitive credentials — all without downloading an app or creating an account.
+**Vadem** is a web-based app that lets homeowners create structured, media-rich, searchable care manuals for anyone temporarily looking after their home and pets — then share them via a single link. The recipient (sitter) gets a contextual "today view" with time-slotted tasks, location cards showing exactly where things are, optional photo proof of task completion, and secure access to sensitive credentials — all without downloading an app or creating an account.
 
 ### Vision
 
-Replace the chaotic handoff experience (text threads, Google Docs, sticky notes, forgotten PDFs) with a single, living document that answers every question before the sitter asks it.
+Replace the chaotic vadem experience (text threads, Google Docs, sticky notes, forgotten PDFs) with a single, living document that answers every question before the sitter asks it.
 
 ### Target Persona
 
@@ -40,11 +40,11 @@ Replace the chaotic handoff experience (text threads, Google Docs, sticky notes,
 | Auth (sitter) | No account required — link-based access. Phone PIN verification for vault only. |
 | Notifications | Push notifications (web push API) + in-app activity feed |
 | Offline | Service worker caching — sitter can access instructions after first load |
-| Design System | **[handoff-design-system.md](./handoff-design-system.md)** — Warm Editorial aesthetic with full token spec, component library, and motion guidelines |
+| Design System | **[vadem-design-system.md](./vadem-design-system.md)** — Warm Editorial aesthetic with full token spec, component library, and motion guidelines |
 
 ### Design System
 
-All UI implementation must follow the Handoff Design System defined in **[handoff-design-system.md](./handoff-design-system.md)**. Key decisions:
+All UI implementation must follow the Vadem Design System defined in **[vadem-design-system.md](./vadem-design-system.md)**. Key decisions:
 
 - **Aesthetic**: Warm Editorial — "the warmth of a handwritten care note meets the precision of a beautifully designed cookbook"
 - **Fonts**: Instrument Serif (display/headings), Bricolage Grotesque (body/UI), Caveat (handwritten captions on location cards)
@@ -81,7 +81,7 @@ The design system includes full specs for: buttons, inputs, badges, location car
 |---|---|---|
 | **Anonymous (link only)** | View all instructions, location cards, today view, pet profiles, tap-to-call contacts. Check off tasks. | None — just the link |
 | **Phone-verified** | All of the above + view vault items (alarm codes, WiFi, lockbox). Upload proof photos with name attribution. | One-time SMS PIN to the phone number the owner registered |
-| **Optional full user** | All of the above + create their own Handoffs (conversion to creator) | Email signup (prompted naturally, never gated) |
+| **Optional full user** | All of the above + create their own Vadems (conversion to creator) | Email signup (prompted naturally, never gated) |
 
 ### Vault Access Rules
 
@@ -317,7 +317,7 @@ Post-trip summary available to the owner after the trip ends.
 ### 4.10 Owner Notifications + Activity Feed
 
 **Push notifications (web push) for:**
-- Sitter opened the Handoff link for the first time
+- Sitter opened the Vadem link for the first time
 - Sitter accessed a vault item (with timestamp)
 - Sitter completed a task (configurable: all / proof-only / digest)
 - Sitter uploaded a proof photo
@@ -341,7 +341,7 @@ Post-trip summary available to the owner after the trip ends.
 ## 5. Information Architecture
 
 ```
-Handoff (app)
+Vadem (app)
 ├── Creator Dashboard
 │   ├── My Property
 │   │   ├── Property Details (name, address, photo)
@@ -439,7 +439,7 @@ Property
 | Local recommendations / maps | Guidebook territory, not core value | Phase 2 |
 | Dual-audience views (cleaner, guest, emergency) | v1 is sitter-only; multi-view is Phase 2 | Phase 2 |
 | Native mobile apps (iOS/Android) | PWA first; native if adoption warrants | Phase 2 |
-| Sitter-to-sitter handoff | Complex; not v1 | Phase 3 |
+| Sitter-to-sitter vadem | Complex; not v1 | Phase 3 |
 | Payment / monetization | Free at launch; validate first | Post-validation |
 
 ---
@@ -455,7 +455,7 @@ Sign up (email/OAuth)
   → "Add access info" (wizard step 3: vault items — codes, WiFi)
   → "Emergency contacts" (wizard step 4: vet, neighbor, owner phone)
   → "House instructions" (wizard step 5: section-by-section, add location cards inline)
-  → "Review your Handoff" (wizard step 6: preview as sitter would see it)
+  → "Review your Vadem" (wizard step 6: preview as sitter would see it)
   → "Ready! Create your first trip when you're ready to travel."
 ```
 
@@ -471,7 +471,7 @@ Dashboard → "New Trip"
   → Trip auto-activates on start date
 ```
 
-### 8.3 Sitter: Opens the Handoff
+### 8.3 Sitter: Opens the Vadem
 
 ```
 Receives link via text/email
@@ -489,7 +489,7 @@ Receives link via text/email
 ### 8.4 Owner: During the Trip
 
 ```
-Push notification: "Sarah opened your Handoff"
+Push notification: "Sarah opened your Vadem"
 Push notification: "Sarah accessed alarm code at 2:34 PM"
 Push notification: "Sarah completed 'morning feeding' with photo at 7:12 AM"
   → Opens app → Activity Feed → sees chronological log
@@ -527,7 +527,7 @@ Trip end date arrives
 
 | Metric | Target |
 |---|---|
-| Sitter time on Handoff (first session) | >3 minutes |
+| Sitter time on Vadem (first session) | >3 minutes |
 | Sitter return visits per trip | >3 visits per trip |
 | Tasks checked off per trip | >50% of available tasks |
 | Proof photos uploaded (when enabled) | >70% completion rate |
@@ -539,7 +539,7 @@ Trip end date arrives
 | Metric | Target |
 |---|---|
 | Creator reuse (creates 2nd trip) | >50% within 6 months |
-| Sitter-to-creator conversion | >10% of sitters create their own Handoff |
+| Sitter-to-creator conversion | >10% of sitters create their own Vadem |
 | NPS (creator) | >50 |
 | NPS (sitter) | >40 |
 
@@ -558,7 +558,7 @@ pnpm build              # Next.js production build succeeds
 For UI stories, also include:
 
 - **Visual verification in browser** using the dev-browser skill — confirm the component renders correctly, matches the design system, and is responsive
-- **Design system compliance** — verify colors, typography, spacing, radius, and shadows match the tokens defined in `handoff-design-system.md`
+- **Design system compliance** — verify colors, typography, spacing, radius, and shadows match the tokens defined in `vadem-design-system.md`
 - **Mobile-first check** — verify at 375px (iPhone SE), 390px (iPhone 14), and 768px (iPad) viewports minimum
 
 For data/API stories:
@@ -625,7 +625,7 @@ Scaffolding, tooling, Convex setup, design tokens, and reusable UI components. E
 ---
 
 #### US-003: Implement design system tokens
-**Description:** As a developer, I need all design tokens from `handoff-design-system.md` implemented as CSS custom properties and/or Tailwind config so every component uses consistent styling.
+**Description:** As a developer, I need all design tokens from `vadem-design-system.md` implemented as CSS custom properties and/or Tailwind config so every component uses consistent styling.
 
 **Acceptance Criteria:**
 - [ ] All color tokens implemented (`--primary`, `--secondary`, `--accent`, `--vault`, backgrounds, text, borders, semantic)
@@ -689,7 +689,7 @@ Scaffolding, tooling, Convex setup, design tokens, and reusable UI components. E
 ---
 
 #### US-007: Build Location Card component
-**Description:** As a developer, I need the signature Location Card component — the polaroid-style photo card with handwritten caption that is Handoff's visual identity.
+**Description:** As a developer, I need the signature Location Card component — the polaroid-style photo card with handwritten caption that is Vadem's visual identity.
 
 **Acceptance Criteria:**
 - [ ] Card structure: photo (4:3 aspect ratio) + Caveat-font caption + room badge
@@ -873,7 +873,7 @@ Scaffolding, tooling, Convex setup, design tokens, and reusable UI components. E
 **Description:** As a developer, I need PWA configuration so the app is installable and supports offline access.
 
 **Acceptance Criteria:**
-- [ ] `manifest.json` with app name "Handoff", theme color `#C2704A`, background `#FAF6F1`
+- [ ] `manifest.json` with app name "Vadem", theme color `#C2704A`, background `#FAF6F1`
 - [ ] App icons at required sizes (192px, 512px)
 - [ ] Service worker registered with basic caching strategy
 - [ ] "Add to Home Screen" prompt works on iOS and Android
@@ -904,7 +904,7 @@ Signup, login, OAuth, session management. Required before any creator features.
 ---
 
 #### US-021: Creator signup with email and password
-**Description:** As a new user, I want to create an account with email and password so I can start building my Handoff.
+**Description:** As a new user, I want to create an account with email and password so I can start building my Vadem.
 
 **Acceptance Criteria:**
 - [ ] Signup form: email, password, confirm password
@@ -1068,7 +1068,7 @@ The core content creation flow. Creator builds the permanent manual through a gu
 ---
 
 #### US-032: Wizard step 6 — Review & publish
-**Description:** As a creator, I want to review my complete Handoff before publishing so I can catch any missing information.
+**Description:** As a creator, I want to review my complete Vadem before publishing so I can catch any missing information.
 
 **Acceptance Criteria:**
 - [ ] Preview renders the manual as the sitter would see it (read-only sitter view)
@@ -1286,7 +1286,7 @@ Trip creation, time-bound overlay content, and the sitter's contextual landing p
 ---
 
 #### US-046: Today View — sitter landing page
-**Description:** As a sitter, I want to land on the Today View when I open the Handoff link so I see only what's relevant right now.
+**Description:** As a sitter, I want to land on the Today View when I open the Vadem link so I see only what's relevant right now.
 
 **Acceptance Criteria:**
 - [ ] Today View is the default screen when sitter opens the link
@@ -1374,7 +1374,7 @@ Encrypted credential storage, SMS PIN verification, access logging, auto-expirat
 - [ ] After PIN verification, vault items display with Vault Item component (revealed state)
 - [ ] Monospace code display, copy-to-clipboard button
 - [ ] Instructions text and location card visible with the code
-- [ ] If trip is not active (before start or after end), vault returns "This handoff is not currently active"
+- [ ] If trip is not active (before start or after end), vault returns "This vadem is not currently active"
 - [ ] If sitter phone not registered for this trip, vault returns "You don't have access to secure items"
 
 **Dependencies:** US-050, US-010
@@ -1552,7 +1552,7 @@ Link generation, password protection, expiration, and the sitter routing experie
 
 **Acceptance Criteria:**
 - [ ] "Share" button on trip setup (final step) and on active trip dashboard
-- [ ] Generates unique URL (e.g., `handoff.app/t/[unique-id]`)
+- [ ] Generates unique URL (e.g., `vadem.app/t/[unique-id]`)
 - [ ] Copy-to-clipboard button with success toast
 - [ ] Share via native Web Share API (text, email, WhatsApp on mobile)
 - [ ] Link stored in Trips table
@@ -1562,7 +1562,7 @@ Link generation, password protection, expiration, and the sitter routing experie
 ---
 
 #### US-064: Link password protection
-**Description:** As a creator, I want to optionally password-protect the Handoff link so only intended recipients can view it.
+**Description:** As a creator, I want to optionally password-protect the Vadem link so only intended recipients can view it.
 
 **Acceptance Criteria:**
 - [ ] Toggle: "Require password to view" (default: off)
@@ -1581,7 +1581,7 @@ Link generation, password protection, expiration, and the sitter routing experie
 **Acceptance Criteria:**
 - [ ] Link expiration auto-set to trip end date
 - [ ] Creator can optionally adjust expiry (earlier, not later than trip end)
-- [ ] After expiry: link shows "This handoff has expired" message
+- [ ] After expiry: link shows "This vadem has expired" message
 - [ ] Expired links cannot access any content (manual, vault, tasks)
 
 **Dependencies:** US-063, US-045
@@ -1607,9 +1607,9 @@ Link generation, password protection, expiration, and the sitter routing experie
 **Acceptance Criteria:**
 - [ ] Link opens in browser, no app download prompt
 - [ ] If password-protected: password screen first → then Today View
-- [ ] If trip not yet started: "This handoff starts on [date]" with preview of property name and pet names
+- [ ] If trip not yet started: "This vadem starts on [date]" with preview of property name and pet names
 - [ ] If trip active: Today View (US-046)
-- [ ] If trip expired: "This handoff has ended" with friendly message
+- [ ] If trip expired: "This vadem has ended" with friendly message
 - [ ] Bottom navigation: Today, Manual, Vault, Contacts
 - [ ] Service worker caches on first load for offline access
 
@@ -1665,10 +1665,10 @@ Push notifications, in-app activity log, and notification preferences.
 ---
 
 #### US-071: Push notification — sitter opened link
-**Description:** As an owner, I want to be notified when the sitter first opens my Handoff so I know they received it.
+**Description:** As an owner, I want to be notified when the sitter first opens my Vadem so I know they received it.
 
 **Acceptance Criteria:**
-- [ ] Push notification: "Sarah opened your Handoff"
+- [ ] Push notification: "Sarah opened your Vadem"
 - [ ] Triggered once per sitter per trip (first open only)
 - [ ] Activity log entry created simultaneously
 
@@ -1767,7 +1767,7 @@ Post-trip summary with task completion, proof photos, and vault access log.
 **Acceptance Criteria:**
 - [ ] "Download PDF" button on trip report page
 - [ ] PDF includes: all report sections, proof photos (embedded), timestamps
-- [ ] PDF styled cleanly (doesn't need to match app design exactly, but branded with Handoff logo)
+- [ ] PDF styled cleanly (doesn't need to match app design exactly, but branded with Vadem logo)
 - [ ] Reasonable file size (compressed images)
 
 **Dependencies:** US-077
@@ -1781,7 +1781,7 @@ Post-trip summary with task completion, proof photos, and vault access log.
 - [ ] "Share Report" button generates a unique read-only link
 - [ ] Link shows the report without requiring login
 - [ ] Link can be revoked by owner
-- [ ] Report link is separate from the trip Handoff link
+- [ ] Report link is separate from the trip Vadem link
 
 **Dependencies:** US-077
 
@@ -1794,7 +1794,7 @@ Service worker caching, offline task completion, and sync.
 ---
 
 #### US-080: Service worker caching for instructions and photos
-**Description:** As a sitter, I want the Handoff to work offline after my first visit so I can access instructions without cell service.
+**Description:** As a sitter, I want the Vadem to work offline after my first visit so I can access instructions without cell service.
 
 **Acceptance Criteria:**
 - [ ] Service worker caches: app shell, all instruction text, pet profiles, location card photos, emergency contacts
@@ -1854,10 +1854,10 @@ The viral loop — sitters become creators.
 ---
 
 #### US-084: Sitter-to-creator prompt
-**Description:** As a sitter who has used Handoff, I want to be gently prompted to create my own so the product grows virally.
+**Description:** As a sitter who has used Vadem, I want to be gently prompted to create my own so the product grows virally.
 
 **Acceptance Criteria:**
-- [ ] After trip ends, sitter view shows: "Loved using Handoff? Create one for your own home." with CTA button
+- [ ] After trip ends, sitter view shows: "Loved using Vadem? Create one for your own home." with CTA button
 - [ ] CTA leads to signup page with context ("You were [Owner]'s sitter — now make your own")
 - [ ] Also shown as a subtle banner in the manual view during active trips (non-intrusive)
 - [ ] Never gates any sitter functionality behind signup
@@ -1915,7 +1915,7 @@ Epic 13 (Conversion)   depends on → Epic 2, Epic 9
 | **Consumer WTP is zero** (texts are free) | Free at launch to validate engagement first. Monetize based on data. Run landing page WTP tests in parallel. |
 | **Photo proof feels intrusive** | Owner controls it per-task. Default is OFF. Recommend 1-3 proof items max. Test with friends-as-sitters vs. paid sitters. |
 | **SMS PIN adds friction to vault** | PIN is only for vault (not general instructions). Pre-fill sitter info. One verification per session, not per item. |
-| **CareSheet captures the niche first** | Speed to MVP matters. CareSheet is very early stage (Feb 2026). Handoff's location cards + today view + vault are broader than CareSheet's feature set. |
+| **CareSheet captures the niche first** | Speed to MVP matters. CareSheet is very early stage (Feb 2026). Vadem's location cards + today view + vault are broader than CareSheet's feature set. |
 | **Offline sync complexity** | Queue actions locally, sync on reconnect. Vault stays online-only (security requirement). Limit video to 30s clips to manage cache size. |
 | **Push notification fatigue** | Owner configures notification preferences: all events / proof-only / daily digest. Default to proof + vault access only. |
 

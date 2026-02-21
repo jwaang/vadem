@@ -39,7 +39,7 @@ export function PasswordGate({ tripId, shareLink, onSuccess }: PasswordGateProps
       }
       // Store session token in a cookie (24h TTL)
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-      document.cookie = `hoff_trip_${shareLink}=${result.sessionToken}; path=/; expires=${expires}; SameSite=Lax`;
+      document.cookie = `vadem_trip_${shareLink}=${result.sessionToken}; path=/; expires=${expires}; SameSite=Lax`;
       onSuccess();
     } catch {
       setError("Something went wrong. Please try again.");
@@ -57,7 +57,7 @@ export function PasswordGate({ tripId, shareLink, onSuccess }: PasswordGateProps
       >
         {/* Wordmark */}
         <div className="flex flex-col gap-1 text-center">
-          <h1 className="font-display text-3xl text-text-primary">Handoff</h1>
+          <h1 className="font-display text-3xl text-text-primary">Vadem</h1>
           <p className="font-body text-sm text-text-secondary">
             This link is password protected.
           </p>

@@ -2,9 +2,9 @@
 
 // ── Cache bucket names ─────────────────────────────────────────────────────
 // Bump the version suffix to force a full cache purge on deploy.
-const APP_SHELL_CACHE = "handoff-app-shell-v1";
-const CONTENT_CACHE = "handoff-content-v1";
-const PHOTOS_CACHE = "handoff-photos-v1";
+const APP_SHELL_CACHE = "vadem-app-shell-v1";
+const CONTENT_CACHE = "vadem-content-v1";
+const PHOTOS_CACHE = "vadem-photos-v1";
 
 // Key used to persist the current manualVersion inside CONTENT_CACHE
 const VERSION_META_KEY = "__manual_version__";
@@ -318,10 +318,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "Handoff", body: event.data.text(), url: "/" };
+    data = { title: "Vadem", body: event.data.text(), url: "/" };
   }
 
-  const title = data.title ?? "Handoff";
+  const title = data.title ?? "Vadem";
   const options = {
     body: data.body ?? "",
     icon: "/icons/icon-192.png",

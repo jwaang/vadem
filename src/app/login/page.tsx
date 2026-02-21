@@ -6,7 +6,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Wordmark */}
         <div className="text-center mb-8">
-          <h1 className="font-display text-4xl text-primary">Handoff</h1>
+          <h1 className="font-display text-4xl text-primary">Vadem</h1>
           <p className="font-body text-sm text-text-secondary mt-2">
             Welcome back. Sign in to your account.
           </p>

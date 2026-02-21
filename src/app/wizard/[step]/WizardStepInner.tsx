@@ -43,7 +43,7 @@ function WizardLayout({
             href="/dashboard"
             className="font-display text-2xl text-primary italic hover:text-primary-hover transition-colors duration-150"
           >
-            Handoff
+            Vadem
           </Link>
         </div>
 

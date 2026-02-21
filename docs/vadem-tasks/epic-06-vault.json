@@ -84,7 +84,7 @@
         "After PIN verification, vault items display with Vault Item component (revealed state)",
         "Monospace code display, copy-to-clipboard button",
         "Instructions text and location card visible with the code",
-        "If trip is not active (before start or after end), vault returns 'This handoff is not currently active'",
+        "If trip is not active (before start or after end), vault returns 'This vadem is not currently active'",
         "If sitter phone not registered for this trip, vault returns 'You don't have access to secure items'",
         "pnpm typecheck passes",
         "pnpm lint passes",
@@ -94,7 +94,7 @@
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Load /convex-best-practices to implement the getDecryptedVaultItems action with a three-layer access check: (1) trip status === 'active', (2) sitter phone exists in Sitters table for this trip with vaultAccess === true, (3) PIN verification session is valid. If any check fails, return a typed error enum (TRIP_INACTIVE, NOT_REGISTERED, NOT_VERIFIED) — never throw generic errors that leak information. Call the logVaultAccess mutation after each successful item view. Load /tailwind-design-system to render the vault page using the VaultItem component in revealed state: monospace font (font-mono) for the code value, bg-vault text-on-vault for the code block, a copy-to-clipboard button using the Clipboard icon, instructions text below in font-body text-text-secondary, and the inline LocationCard if present. Show the correct access-denied empty states ('This handoff is not currently active', 'You don't have access to secure items') using bg-bg-raised rounded-xl p-8 text-center with vault lock icon. Use /dev-browser to verify: a verified sitter sees decrypted codes in monospace, copy-to-clipboard works, the location card renders with the code, an unverified sitter sees the gate message, and accessing with an expired trip shows the inactive message.",
+      "notes": "Load /convex-best-practices to implement the getDecryptedVaultItems action with a three-layer access check: (1) trip status === 'active', (2) sitter phone exists in Sitters table for this trip with vaultAccess === true, (3) PIN verification session is valid. If any check fails, return a typed error enum (TRIP_INACTIVE, NOT_REGISTERED, NOT_VERIFIED) — never throw generic errors that leak information. Call the logVaultAccess mutation after each successful item view. Load /tailwind-design-system to render the vault page using the VaultItem component in revealed state: monospace font (font-mono) for the code value, bg-vault text-on-vault for the code block, a copy-to-clipboard button using the Clipboard icon, instructions text below in font-body text-text-secondary, and the inline LocationCard if present. Show the correct access-denied empty states ('This vadem is not currently active', 'You don't have access to secure items') using bg-bg-raised rounded-xl p-8 text-center with vault lock icon. Use /dev-browser to verify: a verified sitter sees decrypted codes in monospace, copy-to-clipboard works, the location card renders with the code, an unverified sitter sees the gate message, and accessing with an expired trip shows the inactive message.",
       "dependsOn": [
         "US-050",
         "US-010"

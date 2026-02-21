@@ -157,7 +157,7 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   async function handleNativeShare() {
     if (!shareUrl || !canShare) return;
     try {
-      await navigator.share({ url: shareUrl, text: "Here is your Handoff!" });
+      await navigator.share({ url: shareUrl, text: "Here is your Vadem!" });
     } catch {
       // user dismissed — no-op
     }

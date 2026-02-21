@@ -9,7 +9,7 @@
       "description": "As a creator, I want to generate a unique shareable link for my trip so I can send it to the sitter.",
       "acceptanceCriteria": [
         "'Share' button on trip setup (final step) and on active trip dashboard",
-        "Generates unique URL (e.g., handoff.app/t/[unique-id])",
+        "Generates unique URL (e.g., vadem.app/t/[unique-id])",
         "Copy-to-clipboard button with success toast",
         "Share via native Web Share API (text, email, WhatsApp on mobile)",
         "Link stored in Trips table",
@@ -20,7 +20,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Load /convex-best-practices to implement generateShareLink mutation that creates a cryptographically random 12-char URL-safe slug (using crypto.randomBytes in a Convex action), stores it as shareLink in the Trips table, and returns the full URL. The sitter link route is /t/[shareLink] (already added to schema in US-040). Load /nextjs-best-practices to set up src/app/t/[shareLink]/page.tsx as the sitter entry point. Load /tailwind-design-system to build the share UI panel on the final trip setup step and dashboard: display the full URL in a read-only Input component (rounded-md border-border-default font-mono text-sm), a 'Copy link' button (btn-primary) that writes to clipboard and shows a success toast (bg-secondary-light text-secondary, bottom-right, 2s), and a 'Share' button that calls navigator.share({ url, text: 'Here is your Handoff!' }) on supported browsers with a fallback to copy-only. Use /dev-browser to verify: Share button generates and displays the link, Copy link writes to clipboard and shows the toast, the Web Share API is called on mobile (check via DevTools mobile emulation).",
+      "notes": "Load /convex-best-practices to implement generateShareLink mutation that creates a cryptographically random 12-char URL-safe slug (using crypto.randomBytes in a Convex action), stores it as shareLink in the Trips table, and returns the full URL. The sitter link route is /t/[shareLink] (already added to schema in US-040). Load /nextjs-best-practices to set up src/app/t/[shareLink]/page.tsx as the sitter entry point. Load /tailwind-design-system to build the share UI panel on the final trip setup step and dashboard: display the full URL in a read-only Input component (rounded-md border-border-default font-mono text-sm), a 'Copy link' button (btn-primary) that writes to clipboard and shows a success toast (bg-secondary-light text-secondary, bottom-right, 2s), and a 'Share' button that calls navigator.share({ url, text: 'Here is your Vadem!' }) on supported browsers with a fallback to copy-only. Use /dev-browser to verify: Share button generates and displays the link, Copy link writes to clipboard and shows the toast, the Web Share API is called on mobile (check via DevTools mobile emulation).",
       "dependsOn": [
         "US-040",
         "US-041"
@@ -30,7 +30,7 @@
     {
       "id": "US-064",
       "title": "Link password protection",
-      "description": "As a creator, I want to optionally password-protect the Handoff link so only intended recipients can view it.",
+      "description": "As a creator, I want to optionally password-protect the Vadem link so only intended recipients can view it.",
       "acceptanceCriteria": [
         "Toggle: 'Require password to view' (default: off)",
         "If on: creator sets a simple password (separate from vault PIN)",
@@ -45,7 +45,7 @@
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Load /convex-best-practices to implement setLinkPassword mutation that hashes the password with bcrypt (or pbkdf2Sync from Node.js crypto, matching the authActions.ts pattern already in the codebase) and stores the hash in Trips.linkPassword. Write a verifyLinkPassword Convex action that compares the submitted password against the hash and returns a short-lived session token (store in a TripSessions table with tripId + sessionToken + expiresAt). Load /nextjs-best-practices to implement the password gate in the sitter route src/app/t/[shareLink]/page.tsx: check for a valid session token in a cookie, show the password prompt if missing or invalid. Load /tailwind-design-system to render the password prompt page using bg-bg, a centered bg-bg-raised rounded-xl shadow-md card with the Handoff wordmark in font-display, a password Input component, and a btn-primary 'Enter' button. Show incorrect password errors inline below the input in text-danger font-body. Use /dev-browser to verify: a password-protected link shows the prompt before any content, entering wrong password shows an error and allows retry, correct password reveals the Today View, and accessing the URL directly without a session shows the prompt again.",
+      "notes": "Load /convex-best-practices to implement setLinkPassword mutation that hashes the password with bcrypt (or pbkdf2Sync from Node.js crypto, matching the authActions.ts pattern already in the codebase) and stores the hash in Trips.linkPassword. Write a verifyLinkPassword Convex action that compares the submitted password against the hash and returns a short-lived session token (store in a TripSessions table with tripId + sessionToken + expiresAt). Load /nextjs-best-practices to implement the password gate in the sitter route src/app/t/[shareLink]/page.tsx: check for a valid session token in a cookie, show the password prompt if missing or invalid. Load /tailwind-design-system to render the password prompt page using bg-bg, a centered bg-bg-raised rounded-xl shadow-md card with the Vadem wordmark in font-display, a password Input component, and a btn-primary 'Enter' button. Show incorrect password errors inline below the input in text-danger font-body. Use /dev-browser to verify: a password-protected link shows the prompt before any content, entering wrong password shows an error and allows retry, correct password reveals the Today View, and accessing the URL directly without a session shows the prompt again.",
       "dependsOn": [
         "US-063"
       ],
@@ -58,7 +58,7 @@
       "acceptanceCriteria": [
         "Link expiration auto-set to trip end date",
         "Creator can optionally adjust expiry (earlier, not later than trip end)",
-        "After expiry: link shows 'This handoff has expired' message",
+        "After expiry: link shows 'This vadem has expired' message",
         "Expired links cannot access any content (manual, vault, tasks)",
         "pnpm typecheck passes",
         "pnpm lint passes",
@@ -67,7 +67,7 @@
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Load /convex-best-practices to implement expiry as a query-level guard in the getTripByShareLink query: if Trips.linkExpiry < Date.now() or trip.status === 'expired', return { status: 'EXPIRED' } instead of trip data. Store linkExpiry defaulting to the trip endDate in createTrip mutation; add a setLinkExpiry mutation that validates the new expiry is ≤ trip.endDate. The sitter route src/app/t/[shareLink]/page.tsx reads the status field and renders the appropriate expired state. Load /tailwind-design-system to style the expired state: centered card (bg-bg-raised rounded-xl shadow-md p-8) with a muted clock icon, 'This handoff has expired' in font-display, and a brief message in font-body text-text-muted — matching the brand aesthetic without leaking trip details. The creator UI should show the current expiry date on the share panel with an 'Adjust expiry' date picker capped at trip.endDate.",
+      "notes": "Load /convex-best-practices to implement expiry as a query-level guard in the getTripByShareLink query: if Trips.linkExpiry < Date.now() or trip.status === 'expired', return { status: 'EXPIRED' } instead of trip data. Store linkExpiry defaulting to the trip endDate in createTrip mutation; add a setLinkExpiry mutation that validates the new expiry is ≤ trip.endDate. The sitter route src/app/t/[shareLink]/page.tsx reads the status field and renders the appropriate expired state. Load /tailwind-design-system to style the expired state: centered card (bg-bg-raised rounded-xl shadow-md p-8) with a muted clock icon, 'This vadem has expired' in font-display, and a brief message in font-body text-text-muted — matching the brand aesthetic without leaking trip details. The creator UI should show the current expiry date on the share panel with an 'Adjust expiry' date picker capped at trip.endDate.",
       "dependsOn": [
         "US-063",
         "US-045"
@@ -103,9 +103,9 @@
       "acceptanceCriteria": [
         "Link opens in browser, no app download prompt",
         "If password-protected: password screen first -> then Today View",
-        "If trip not yet started: 'This handoff starts on [date]' with preview of property name and pet names",
+        "If trip not yet started: 'This vadem starts on [date]' with preview of property name and pet names",
         "If trip active: Today View (US-046)",
-        "If trip expired: 'This handoff has ended' with friendly message",
+        "If trip expired: 'This vadem has ended' with friendly message",
         "Bottom navigation: Today, Manual, Vault, Contacts",
         "Service worker caches on first load for offline access",
         "pnpm typecheck passes",

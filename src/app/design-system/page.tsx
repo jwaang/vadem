@@ -67,7 +67,7 @@ export default function DesignSystemPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 pb-[calc(var(--spacing-8)+80px)]">
       <h1 className="font-display text-5xl leading-tight tracking-tight text-text-primary mb-2">
-        Handoff
+        Vadem
       </h1>
       <p className="font-body text-lg leading-normal text-text-secondary mb-8">
         Component showcase
@@ -402,7 +402,7 @@ export default function DesignSystemPage() {
           <Textarea
             label="Notes"
             placeholder="Add notes..."
-            error="Notes are required for this handoff"
+            error="Notes are required for this vadem"
           />
         </div>
       </section>

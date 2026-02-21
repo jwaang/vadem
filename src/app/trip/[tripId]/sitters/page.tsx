@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SittersPageClient } from "./SittersPageClient";
 
 export const metadata: Metadata = {
-  title: "Trip Setup — Sitters | Handoff",
+  title: "Trip Setup — Sitters | Vadem",
 };
 
 export default async function TripSittersPage({

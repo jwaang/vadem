@@ -232,7 +232,7 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
   async function handleNativeShare() {
     if (!shareUrl || !canShare) return;
     try {
-      await navigator.share({ url: shareUrl, text: "Here is your Handoff!" });
+      await navigator.share({ url: shareUrl, text: "Here is your Vadem!" });
     } catch {
       // dismissed
     }

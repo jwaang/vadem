@@ -148,12 +148,12 @@ function getTripLength(startDate: string, endDate: string): number {
 
 function getSitterName(): string {
   if (typeof window === "undefined") return "";
-  return sessionStorage.getItem("handoff_sitter_name") ?? "";
+  return sessionStorage.getItem("vadem_sitter_name") ?? "";
 }
 
 function setSitterName(name: string): void {
   if (typeof window !== "undefined") {
-    sessionStorage.setItem("handoff_sitter_name", name);
+    sessionStorage.setItem("vadem_sitter_name", name);
   }
 }
 
@@ -637,11 +637,11 @@ function OfflineBanner() {
 
 // ── Sitter conversion banner ───────────────────────────────────────────
 
-const CONVERSION_BANNER_KEY = "handoff_conversion_banner_dismissed";
+const CONVERSION_BANNER_KEY = "vadem_conversion_banner_dismissed";
 
 /**
  * Slim, non-intrusive banner shown during active trips encouraging the sitter
- * to create their own Handoff. Dismissible for the session.
+ * to create their own Vadem. Dismissible for the session.
  * Positioned above the bottom nav; hidden when offline banner is visible.
  */
 function SitterConversionBanner({ tripId }: { tripId: string }) {
@@ -667,10 +667,10 @@ function SitterConversionBanner({ tripId }: { tripId: string }) {
   return (
     <div
       role="complementary"
-      aria-label="Create your own Handoff"
+      aria-label="Create your own Vadem"
       className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] left-0 right-0 z-30 flex items-center justify-between gap-3 bg-primary-subtle text-primary font-body text-xs rounded-t-lg px-4 py-2"
     >
-      <span className="shrink-0">Want your own Handoff?</span>
+      <span className="shrink-0">Want your own Vadem?</span>
       <Link
         href={`/signup?ref=${tripId}`}
         className="font-semibold underline underline-offset-2 hover:text-primary-hover shrink-0"

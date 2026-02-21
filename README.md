@@ -1,4 +1,4 @@
-# Handoff
+# Vadem
 
 Web-based app for homeowners to create structured, media-rich care manuals for anyone temporarily looking after their home and pets.
 

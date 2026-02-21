@@ -31,13 +31,13 @@ if (section) {
 ```
 
 ### SW multi-bucket caching pattern
-Three cache buckets: `handoff-app-shell-v1` (cache-first for `_next/static/*`), `handoff-photos-v1` (cache-first for Convex storage images, cache-on-play for video), `handoff-content-v1` (network-first with fallback). Version metadata stored in `handoff-content-v1` as synthetic responses under `/__version__/{propertyId}`.
+Three cache buckets: `vadem-app-shell-v1` (cache-first for `_next/static/*`), `vadem-photos-v1` (cache-first for Convex storage images, cache-on-play for video), `vadem-content-v1` (network-first with fallback). Version metadata stored in `vadem-content-v1` as synthetic responses under `/__version__/{propertyId}`.
 
 ### Offline Convex data fallback
 Since Convex uses WebSocket (not interceptable by SW), persist live query data to `localStorage` via `saveTripData()`. On mount, `loadTripData()` hydrates `cachedData`. Render uses `liveData ?? cachedData` — skeleton only shown when both are null/undefined.
 
 ### SW postMessage for cache invalidation
-Page calls `notifySwManualVersion(propertyId, version)` after each Convex data load. SW compares version to stored meta; on mismatch, evicts `handoff-photos-v1` and cached trip data, then stores new version.
+Page calls `notifySwManualVersion(propertyId, version)` after each Convex data load. SW compares version to stored meta; on mismatch, evicts `vadem-photos-v1` and cached trip data, then stores new version.
 
 ---
 
@@ -47,8 +47,8 @@ Page calls `notifySwManualVersion(propertyId, version)` after each Convex data l
   - `convex/schema.ts` — added `conversions` table `{ sitterUserId, originTripId, convertedAt }` with `by_user` index
   - `convex/trips.ts` — added `getPropertyOwnerName` query (public, `v.string()` arg with try/catch for invalid IDs); added `recordConversionInternal` internalMutation (idempotent); updated `getTripByShareLink` to return `tripId` with EXPIRED state; imported `Id` type
   - `convex/authActions.ts` — added optional `originTripId: v.optional(v.string())` to `signUp` action; calls `recordConversionInternal` on success (non-critical, wrapped in try/catch)
-  - `src/app/t/[tripId]/TodayPageClient.tsx` — added `ConversionCard` component; updated `ExpiredState` to accept and show conversion card above "handoff has ended"; `TodayPageResolver` stores `tripId` to sessionStorage on ACTIVE state; `PostAuthTripView` passes tripId to ExpiredState
-  - `src/app/t/[tripId]/TodayPageInner.tsx` — added `SitterConversionBanner` (dismissible via sessionStorage `handoff_conversion_banner_dismissed`); renders above bottom nav when online
+  - `src/app/t/[tripId]/TodayPageClient.tsx` — added `ConversionCard` component; updated `ExpiredState` to accept and show conversion card above "vadem has ended"; `TodayPageResolver` stores `tripId` to sessionStorage on ACTIVE state; `PostAuthTripView` passes tripId to ExpiredState
+  - `src/app/t/[tripId]/TodayPageInner.tsx` — added `SitterConversionBanner` (dismissible via sessionStorage `vadem_conversion_banner_dismissed`); renders above bottom nav when online
   - `src/app/signup/page.tsx` — reads `ref` search param, passes `originTripId` to `SignupPageClient`; shows contextual tagline
   - `src/app/signup/SignupPageClient.tsx` — passes `originTripId` prop to SignupForm
   - `src/app/signup/SignupForm.tsx` — accepts `originTripId`; queries `getPropertyOwnerName` for context banner ("You were X's sitter"); passes `originTripId` to `signUp` action
@@ -56,7 +56,7 @@ Page calls `notifySwManualVersion(propertyId, version)` after each Convex data l
   - Convex `v.id("trips")` validator rejects malformed strings at the API boundary — use `v.string()` with a try/catch around `ctx.db.get()` for public queries that accept user-supplied IDs
   - `getTripByShareLink` returning `{ status: "EXPIRED" }` without a tripId means downstream ExpiredState components can't use the tripId for CTAs; solution is to add `tripId: v.optional(v.id("trips"))` to the EXPIRED union branch
   - When using `npx convex dev --run-sh '...'` and the sub-command fails due to a port conflict, the Convex functions still get pushed (watch for "Convex functions ready!" before the failure) — but it's safer to run `npx convex dev --once` to explicitly push after code changes
-  - Attribution stored in sessionStorage (`handoff_origin_trip_id`) from TodayPageResolver's useEffect when state becomes ACTIVE — this fires before TodayPageInner mounts, so the value is available when the sitter navigates to the signup page later
+  - Attribution stored in sessionStorage (`vadem_origin_trip_id`) from TodayPageResolver's useEffect when state becomes ACTIVE — this fires before TodayPageInner mounts, so the value is available when the sitter navigates to the signup page later
 ---
 
 ## 2026-02-20 - US-083

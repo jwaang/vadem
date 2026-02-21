@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NotificationsSettingsPageClient } from "./NotificationsSettingsPageClient";
 
 export const metadata: Metadata = {
-  title: "Notification Preferences | Handoff",
+  title: "Notification Preferences | Vadem",
 };
 
 export default function NotificationsSettingsPage() {

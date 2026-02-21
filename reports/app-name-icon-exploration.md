@@ -1,4 +1,4 @@
-# Context: Vadem (formerly “Handoff”) — app naming + icon exploration
+# Context: Vadem (formerly “Vadem”) — app naming + icon exploration
 
 ## Product (high level)
 - Web-first PWA (Next.js + Tailwind v4 + Convex) that lets homeowners create structured, media-rich, searchable care manuals for anyone temporarily caring for their home/property (and initially pets), shared via a single link (no download/no sitter account).

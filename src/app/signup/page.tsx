@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { SignupPageClient } from "./SignupPageClient";
 
 export const metadata: Metadata = {
-  title: "Create account – Handoff",
+  title: "Create account – Vadem",
   description: "Sign up to start building your home care manual.",
 };
 
@@ -19,7 +19,7 @@ export default async function SignupPage({
     <main className="min-h-dvh bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <p className="font-display text-2xl text-primary mb-1 italic">Handoff</p>
+          <p className="font-display text-2xl text-primary mb-1 italic">Vadem</p>
           <h1 className="font-display text-4xl text-text-primary mb-3">
             Create your account
           </h1>

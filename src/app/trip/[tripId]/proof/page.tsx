@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ProofPageClient } from "./ProofPageClient";
 
 export const metadata: Metadata = {
-  title: "Trip Setup — Proof Settings | Handoff",
+  title: "Trip Setup — Proof Settings | Vadem",
 };
 
 export default async function TripProofPage({

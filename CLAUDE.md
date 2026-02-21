@@ -18,7 +18,7 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 
 ## Architecture
 
-**Handoff** is a PWA for homeowners to create care manuals for house/pet sitters. Mobile-first, warm editorial aesthetic.
+**Vadem** is a PWA for homeowners to create care manuals for house/pet sitters. Mobile-first, warm editorial aesthetic.
 
 ### Stack
 - **Next.js 16** (App Router) + **React 19** + **TypeScript** (strict)
@@ -34,19 +34,19 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 - `src/components/layouts/` — `CreatorLayout` (desktop sidebar + mobile bottom nav) and `SitterLayout` (full-width mobile-first)
 - `convex/` — Backend functions and schema (mostly scaffolding currently)
 - `docs/prd.md` — Full product requirements document
-- `docs/handoff-design-system.md` — Design token specifications
-- `docs/handoff-tasks/` — Epic/story breakdowns as JSON
+- `docs/vadem-design-system.md` — Design token specifications
+- `docs/vadem-tasks/` — Epic/story breakdowns as JSON
 
 ### Path Alias
 `@/*` maps to `./src/*` (configured in `tsconfig.json`)
 
 ## Design System
 
-**Reference docs:** `docs/handoff-design-system.md` (spec), `docs/handoff-design-system.html` (visual reference implementation)
+**Reference docs:** `docs/vadem-design-system.md` (spec), `docs/vadem-design-system.html` (visual reference implementation)
 
 ### Fonts
 Three fonts registered on `<html>` as CSS variables in `layout.tsx`:
-- `--font-display` / `font-display` (Instrument Serif) — headings, hero text, the "Handoff" wordmark
+- `--font-display` / `font-display` (Instrument Serif) — headings, hero text, the "Vadem" wordmark
 - `--font-body` / `font-body` (Bricolage Grotesque) — body text, buttons, inputs, labels
 - `--font-handwritten` / `font-handwritten` (Caveat) — location card captions, personality notes
 

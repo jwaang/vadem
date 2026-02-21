@@ -115,7 +115,7 @@ function CreatorLayout({
         aria-label="Creator navigation"
       >
         <div className="px-6 pb-6 border-b border-border-default mb-4">
-          <span className="font-display text-2xl text-primary italic">Handoff</span>
+          <span className="font-display text-2xl text-primary italic">Vadem</span>
         </div>
         <nav className="flex flex-col gap-1 px-3">
           {sidebarItems.map((item) => {

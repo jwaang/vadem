@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TripReportPageClient } from "./TripReportPageClient";
 
 export const metadata: Metadata = {
-  title: "Trip Report | Handoff",
+  title: "Trip Report | Vadem",
 };
 
 export default async function TripReportPage({

@@ -1,4 +1,4 @@
-# Handoff — Design System
+# Vadem — Design System
 
 **Aesthetic**: Warm Editorial
 **Philosophy**: The warmth of a handwritten care note meets the precision of a beautifully designed cookbook.
@@ -24,7 +24,7 @@ Three fonts, three jobs.
 
 | Role | Font | Usage |
 |---|---|---|
-| **Display** | Instrument Serif | Headings, hero text, the "Handoff" wordmark. Warm, editorial, with beautiful italics. |
+| **Display** | Instrument Serif | Headings, hero text, the "Vadem" wordmark. Warm, editorial, with beautiful italics. |
 | **Body / UI** | Bricolage Grotesque | Body text, buttons, inputs, labels, captions. Clean, friendly, geometric with personality. |
 | **Handwritten** | Caveat | Location card captions, personality notes, personal annotations. Adds the "care note" warmth. |
 
@@ -241,7 +241,7 @@ Gentle, reassuring, never flashy. The check-off animation is the most satisfying
 
 | Variant | Background | Text | Usage |
 |---|---|---|---|
-| **Primary** | `--primary` (Terracotta) | White | Main actions: Share Handoff, Create Trip, Save |
+| **Primary** | `--primary` (Terracotta) | White | Main actions: Share Vadem, Create Trip, Save |
 | **Secondary** | `--secondary` (Sage) | White | Confirmations: Mark Complete, Confirm |
 | **Vault** | `--vault` (Slate) | White | Security actions: Unlock Vault, Verify Phone |
 | **Ghost** | Transparent + border | `--text-secondary` | Cancel, secondary actions, back |

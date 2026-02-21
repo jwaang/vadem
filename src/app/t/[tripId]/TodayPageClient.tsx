@@ -78,7 +78,7 @@ function ConversionCard({ tripId }: { tripId?: Id<"trips"> }) {
       style={{ boxShadow: "var(--shadow-md)" }}
     >
       <h2 className="font-display text-2xl text-text-primary italic">
-        Loved using Handoff?
+        Loved using Vadem?
       </h2>
       <p className="font-body text-sm text-text-secondary">
         Create one for your own home.
@@ -87,7 +87,7 @@ function ConversionCard({ tripId }: { tripId?: Id<"trips"> }) {
         href={signupHref}
         className="btn btn-primary inline-flex items-center justify-center font-body text-sm font-medium text-text-on-primary bg-primary rounded-lg px-6 py-3 w-full max-w-[220px]"
       >
-        Create your Handoff
+        Create your Vadem
       </Link>
     </div>
   );
@@ -126,7 +126,7 @@ function ExpiredState({ tripId }: { tripId?: Id<"trips"> }) {
         </div>
 
         <h1 className="font-display text-2xl text-text-primary">
-          This handoff has ended
+          This vadem has ended
         </h1>
         <p className="font-body text-sm text-text-muted">
           This link is no longer active. Please contact the homeowner if you
@@ -243,7 +243,7 @@ interface PasswordProtectedResolverProps {
 }
 
 function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResolverProps) {
-  const cookieName = `hoff_trip_${shareLink}`;
+  const cookieName = `vadem_trip_${shareLink}`;
   const storedToken = getCookie(cookieName);
 
   const [verified, setVerified] = useState(false);
@@ -287,7 +287,7 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
   useEffect(() => {
     if (state && "tripId" in state && state.tripId && state.status === "ACTIVE") {
       try {
-        sessionStorage.setItem("handoff_origin_trip_id", state.tripId);
+        sessionStorage.setItem("vadem_origin_trip_id", state.tripId);
       } catch {
         // sessionStorage may be unavailable in private browsing
       }

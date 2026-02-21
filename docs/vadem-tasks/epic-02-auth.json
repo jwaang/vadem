@@ -6,7 +6,7 @@
     {
       "id": "US-021",
       "title": "Creator signup with email and password",
-      "description": "As a new user, I want to create an account with email and password so I can start building my Handoff.",
+      "description": "As a new user, I want to create an account with email and password so I can start building my Vadem.",
       "acceptanceCriteria": [
         "Signup form: email, password, confirm password",
         "Password validation: minimum 8 characters",

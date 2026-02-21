@@ -51,7 +51,7 @@ export function ServiceWorkerRegistrar() {
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-[9999] flex items-center justify-between gap-4 bg-text-primary text-white px-5 py-3 font-body text-sm">
-      <span>A new version of Handoff is available.</span>
+      <span>A new version of Vadem is available.</span>
       <button
         onClick={handleUpdate}
         className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"

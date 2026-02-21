@@ -9,7 +9,7 @@
  * storage natively — localStorage is limited to strings.
  */
 
-const DB_NAME = "handoff_photo_uploads";
+const DB_NAME = "vadem_photo_uploads";
 const DB_VERSION = 1;
 const STORE_NAME = "pending_uploads";
 

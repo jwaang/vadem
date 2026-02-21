@@ -320,7 +320,7 @@ export default function Step6Review() {
           Review & publish
         </h1>
         <p className="font-body text-sm text-text-secondary">
-          Check everything looks good, then publish to make your Handoff shareable.
+          Check everything looks good, then publish to make your Vadem shareable.
         </p>
       </div>
 
@@ -483,7 +483,7 @@ export default function Step6Review() {
           onClick={handlePublish}
           disabled={isPublishing || isLoading || noProperty || !summary?.hasPropertyName}
         >
-          {isPublishing ? "Publishing…" : "Publish Handoff"}
+          {isPublishing ? "Publishing…" : "Publish Vadem"}
         </Button>
         {summary && !summary.hasPropertyName && !isLoading && (
           <p className="font-body text-xs text-text-muted text-center">

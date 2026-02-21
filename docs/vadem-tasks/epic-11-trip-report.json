@@ -56,7 +56,7 @@
       "acceptanceCriteria": [
         "'Download PDF' button on trip report page",
         "PDF includes: all report sections, proof photos (embedded), timestamps",
-        "PDF styled cleanly (doesn't need to match app design exactly, but branded with Handoff logo)",
+        "PDF styled cleanly (doesn't need to match app design exactly, but branded with Vadem logo)",
         "Reasonable file size (compressed images)",
         "pnpm typecheck passes",
         "pnpm lint passes",
@@ -64,7 +64,7 @@
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Load /convex-best-practices to write a generateTripReportPdf Convex action (convex/reportActions.ts, 'use node') that calls getTripReport internally, uses the @react-pdf/renderer or puppeteer npm package to generate a PDF, and returns the PDF as a base64 string or uploads it to Convex file storage and returns a download URL. Use @react-pdf/renderer if adding a new dependency, as it works in Node.js without a browser runtime. The PDF should include: a Handoff wordmark header, trip summary section, task list with ✓/✗ symbols and timestamps, proof photos scaled to fit (compress to max 800px wide using sharp or canvas before embedding), and vault access log. The 'Download PDF' button in the trip report page calls this action, shows a loading spinner while generating, then triggers a browser download via an <a href='[dataUrl]' download='trip-report.pdf'> click.",
+      "notes": "Load /convex-best-practices to write a generateTripReportPdf Convex action (convex/reportActions.ts, 'use node') that calls getTripReport internally, uses the @react-pdf/renderer or puppeteer npm package to generate a PDF, and returns the PDF as a base64 string or uploads it to Convex file storage and returns a download URL. Use @react-pdf/renderer if adding a new dependency, as it works in Node.js without a browser runtime. The PDF should include: a Vadem wordmark header, trip summary section, task list with ✓/✗ symbols and timestamps, proof photos scaled to fit (compress to max 800px wide using sharp or canvas before embedding), and vault access log. The 'Download PDF' button in the trip report page calls this action, shows a loading spinner while generating, then triggers a browser download via an <a href='[dataUrl]' download='trip-report.pdf'> click.",
       "dependsOn": [
         "US-077"
       ],
@@ -78,7 +78,7 @@
         "'Share Report' button generates a unique read-only link",
         "Link shows the report without requiring login",
         "Link can be revoked by owner",
-        "Report link is separate from the trip Handoff link",
+        "Report link is separate from the trip Vadem link",
         "pnpm typecheck passes",
         "pnpm lint passes",
         "pnpm build passes"

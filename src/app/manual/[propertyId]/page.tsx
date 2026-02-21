@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ManualPageClient } from "./ManualPageClient";
 
 export const metadata: Metadata = {
-  title: "Home Manual | Handoff",
+  title: "Home Manual | Vadem",
 };
 
 export default async function ManualPage({

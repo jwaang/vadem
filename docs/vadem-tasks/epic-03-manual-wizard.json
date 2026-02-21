@@ -174,7 +174,7 @@
     {
       "id": "US-032",
       "title": "Wizard step 6 — Review & publish",
-      "description": "As a creator, I want to review my complete Handoff before publishing so I can catch any missing information.",
+      "description": "As a creator, I want to review my complete Vadem before publishing so I can catch any missing information.",
       "acceptanceCriteria": [
         "Preview renders the manual as the sitter would see it (read-only sitter view)",
         "Summary checklist: property, X pets, X vault items, X contacts, X sections with Y instructions",

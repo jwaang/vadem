@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
-const STORAGE_KEY = "handoff_session";
+const STORAGE_KEY = "vadem_session";
 
 interface AuthUser {
   token: string;

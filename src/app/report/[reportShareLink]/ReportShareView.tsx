@@ -240,7 +240,7 @@ function ReportShareViewInner({
     <div className="min-h-dvh bg-bg">
       {/* Simple header */}
       <header className="bg-bg-raised border-b border-border-default px-4 sm:px-6 py-3">
-        <span className="font-display text-xl text-text-primary">Handoff</span>
+        <span className="font-display text-xl text-text-primary">Vadem</span>
       </header>
 
       <main className="max-w-[640px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">

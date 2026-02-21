@@ -19,7 +19,7 @@ function formatTime12h(ms: number): string {
 function configureVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:hello@handoff.app";
+  const subject = process.env.VAPID_SUBJECT ?? "mailto:hello@vadem.app";
   if (!publicKey || !privateKey) return false;
   webpush.setVapidDetails(subject, publicKey, privateKey);
   return true;
@@ -64,7 +64,7 @@ export const sendPushNotification = internalAction({
       subscriptionJson,
     ) as webpush.PushSubscription;
     const payload = JSON.stringify({
-      title: "Handoff",
+      title: "Vadem",
       body: args.message,
       url: args.deepLinkUrl,
     });

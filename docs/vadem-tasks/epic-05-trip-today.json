@@ -148,7 +148,7 @@
     {
       "id": "US-046",
       "title": "Today View — sitter landing page",
-      "description": "As a sitter, I want to land on the Today View when I open the Handoff link so I see only what's relevant right now.",
+      "description": "As a sitter, I want to land on the Today View when I open the Vadem link so I see only what's relevant right now.",
       "acceptanceCriteria": [
         "Today View is the default screen when sitter opens the link",
         "Header: greeting with sitter name (if registered) or generic, trip dates, day X of Y, task summary stats",

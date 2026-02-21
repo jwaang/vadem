@@ -1,12 +1,12 @@
-# Trip Pack / Handoff Manual App: Merged Research Report
+# Trip Pack / Vadem Manual App: Merged Research Report
 
 ## Executive Summary
 
-The biggest opportunity in the instruction-sharing landscape isn't building a better Airbnb guidebook -- it's creating the first structured, media-rich, searchable handoff manual that works for anyone temporarily caring for someone else's home, pets, or property. The market today is fragmented across ~25 tools that each serve a narrow slice: STR digital guidebooks (Touch Stay, Hostfully) focus on guest-facing local recommendations; STR operations tools (Breezeway, Turno) focus on cleaner checklists and photo proof; pet-care apps (Rover, Wag) bury care instructions inside marketplace platforms; and high-end household management software (Nines) targets estates. No single product combines structured per-step instructions with photos/videos, location cards ("where is it?"), time-bound secure sharing, task check-off with proof, and a contextual "today view."
+The biggest opportunity in the instruction-sharing landscape isn't building a better Airbnb guidebook -- it's creating the first structured, media-rich, searchable vadem manual that works for anyone temporarily caring for someone else's home, pets, or property. The market today is fragmented across ~25 tools that each serve a narrow slice: STR digital guidebooks (Touch Stay, Hostfully) focus on guest-facing local recommendations; STR operations tools (Breezeway, Turno) focus on cleaner checklists and photo proof; pet-care apps (Rover, Wag) bury care instructions inside marketplace platforms; and high-end household management software (Nines) targets estates. No single product combines structured per-step instructions with photos/videos, location cards ("where is it?"), time-bound secure sharing, task check-off with proof, and a contextual "today view."
 
 The consumer side is even more barren: pet and house sitters overwhelmingly receive text message threads, Google Docs they can't find by day two, and sticky notes on the fridge. MindMyHouse explicitly recommends creating an "information pack" for sitters -- essentially a manual Trip Pack concept, implemented by hand.
 
-**The clearest MVP wedge is consumer home + pets handoff** (friends/family sitters, paid house sitters, hybrid pet/house care) -- not another STR guidebook. The STR guidebook market is crowded with low-priced web-link products ($7-$10/property/month) and upsell-driven guest portals. STR ops platforms already own checklists + photo proof + issue reporting. A consumer-first tool exploits a product/price umbrella that high-end household software (Nines) validates but doesn't serve at mainstream price points.
+**The clearest MVP wedge is consumer home + pets vadem** (friends/family sitters, paid house sitters, hybrid pet/house care) -- not another STR guidebook. The STR guidebook market is crowded with low-priced web-link products ($7-$10/property/month) and upsell-driven guest portals. STR ops platforms already own checklists + photo proof + issue reporting. A consumer-first tool exploits a product/price umbrella that high-end household software (Nines) validates but doesn't serve at mainstream price points.
 
 ---
 
@@ -51,12 +51,12 @@ Optimize for consistent ops outcomes with checklists, photo proof, and issue rep
 
 An almost empty category:
 
-- **CareSheet** (launched ~early 2026): The only purpose-built pet-to-sitter handoff tool found. Shareable links with tap-to-call contacts, offline access, and link expiration. Very early stage.
+- **CareSheet** (launched ~early 2026): The only purpose-built pet-to-sitter vadem tool found. Shareable links with tap-to-call contacts, offline access, and link expiration. Very early stage.
 - **PetPort**: Framing is "paper notes get lost; texts get buried." Browser-based LiveLink that reflects updates instantly, aimed at sitters/family/emergency contacts. No app download required. **$1.99/month or $14.99/year** (plus add-on pets). Caretakers cannot update care notes (read-only).
 - **TrustedHousesitters**: Includes a "Welcome Guide" but locks it inside their marketplace. Documented usability complaints.
-- **Rover & Wag**: Store pet profiles with basic freeform text. Neither supports per-instruction photos, location guidance, or structured handoffs outside their platforms.
+- **Rover & Wag**: Store pet profiles with basic freeform text. Neither supports per-instruction photos, location guidance, or structured vadems outside their platforms.
 - **Time To Pet**: Professional pet-care business software with structured client/pet info, custom fields, field visibility controls, required fields. Explicitly calls out "access instructions" and emergency contacts as essential data.
-- **11pets**: Granular sharing permissions (choose data, pet, person, duration) for health records but not designed for daily care handoffs.
+- **11pets**: Granular sharing permissions (choose data, pet, person, duration) for health records but not designed for daily care vadems.
 - **Pet Sitter Dashboard / Every Wag / others**: Customer/pet databases, routine/health details, key management -- operationally focused on paid care businesses.
 
 ### 5. Home Knowledge, Household Manuals & Estate Management
@@ -64,7 +64,7 @@ An almost empty category:
 Validate "searchable household SOPs + tasks + permissions" but priced above mainstream consumer:
 
 - **Nines**: Positions itself as a "centralized household manual" plus an OS for managing staff, tasks, and sharing information securely with permissions and revocable access. Emphasizes search ("search for answers"), templates, turning notes into tasks/checklists. "Enterprise-grade security and permission settings." Targets estates and UHNW households. Pricing not public.
-- **HomeZada**: Home maintenance schedules, broader home management. Adjacent as a "home OS" but not optimized for caretaker handoffs.
+- **HomeZada**: Home maintenance schedules, broader home management. Adjacent as a "home OS" but not optimized for caretaker vadems.
 
 ### 6. General Alternatives (Dominant Actual Behavior)
 
@@ -229,16 +229,16 @@ Every trip creates a new user: the homeowner builds the manual, then shares a li
 **Community-driven (highest ROI):**
 - **Reddit**: r/pets (2.8M members), r/dogs, r/cats, r/housesitting -- people regularly ask "what should I include in my pet sitter instructions?"
 - **SEO**: Optimized templates and checklists (free, hosted on app blog) capturing search demand for "pet sitter instruction template," "house sitter checklist," "house sitter info pack template," "what to leave for a sitter"
-- **Social**: TikTok and Instagram Reels showing "before vs. after" of chaotic text threads vs. clean handoff manual (high shareability in pet-owner demographic)
+- **Social**: TikTok and Instagram Reels showing "before vs. after" of chaotic text threads vs. clean vadem manual (high shareability in pet-owner demographic)
 - **Facebook Groups**: Pet owners, house-sitting communities, travel groups -- high-intent distribution
 - **House-sitting forums**: MindMyHouse, TrustedHousesitters community discussions show ongoing interest in better welcome pack checklists
 
 ### Partnership Opportunities (Ranked by Leverage)
 
-1. **Rover & Wag** (integration): When a pet owner books a sitter, prompt them to share a Trip Pack link. Both platforms have basic care instruction fields that users complain about; a richer handoff tool adds value without competing with core business.
+1. **Rover & Wag** (integration): When a pet owner books a sitter, prompt them to share a Trip Pack link. Both platforms have basic care instruction fields that users complain about; a richer vadem tool adds value without competing with core business.
 2. **TrustedHousesitters**: Welcome Guide feature has documented usability complaints; an external tool that integrates serves their users better. Co-branded templates or "exportable welcome pack" as a wedge.
 3. **Veterinary clinics** (via PetDesk's 8,000+ clinic network): Recommend to clients traveling with complex medication schedules.
-4. **Professional pet-sitting businesses** (Time To Pet, Pet Sitter Plus): Position as *pre-visit handoff + trip overlay* while they remain *booking + operations + client portal*.
+4. **Professional pet-sitting businesses** (Time To Pet, Pet Sitter Plus): Position as *pre-visit vadem + trip overlay* while they remain *booking + operations + client portal*.
 5. **Smart-lock / key access ecosystem** (secondary, future): Secure time-bounded access is already a theme (e.g., KeyNest markets time-restricted codes and logged access).
 6. **For STR expansion**: Hospitable (352+ user votes requesting a native guidebook), mid-tier PMS platforms without native guidebooks.
 
@@ -318,9 +318,9 @@ Report A anchored lower, closer to PetPort's price point. Report B anchored high
 
 ### Differentiation Features
 
-- Report A listed **4 differentiators**: Trip Overlay, Location Cards, Secure Vault, Exportable Handoff Report.
+- Report A listed **4 differentiators**: Trip Overlay, Location Cards, Secure Vault, Exportable Vadem Report.
 - Report B listed **5 differentiators**: Location Cards, Today View, Secure Vault, Photo Proof for Any Persona, Dual-Audience Content (one property, multiple views).
-- **"Exportable handoff report"** was emphasized as a standalone differentiator only in Report A. Report B included it as a feature within the proof/accountability point.
+- **"Exportable vadem report"** was emphasized as a standalone differentiator only in Report A. Report B included it as a feature within the proof/accountability point.
 - **"Dual-audience content" (one property, multiple views)** was a standalone differentiator only in Report B. Report A mentioned the concept briefly in the "dual-sided product" section but did not frame it as a core differentiator.
 
 ### Gaps Identified

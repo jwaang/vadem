@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SharePageClient } from "./SharePageClient";
 
 export const metadata: Metadata = {
-  title: "Trip Setup — Share | Handoff",
+  title: "Trip Setup — Share | Vadem",
 };
 
 export default async function TripSharePage({

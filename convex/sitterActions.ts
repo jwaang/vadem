@@ -72,7 +72,7 @@ export const recordFirstOpen = action({
           {
             userId: property.ownerId,
             tripId: args.tripId,
-            message: `${sitterName} opened your Handoff`,
+            message: `${sitterName} opened your Vadem`,
             deepLinkUrl: "/dashboard",
           },
         );

@@ -1,6 +1,6 @@
 # Design System Audit — Component vs Spec Alignment
 
-**Audited against:** `docs/handoff-design-system.md` (spec), `docs/handoff-design-system.html` (reference implementation), `src/app/globals.css` (tokens)
+**Audited against:** `docs/vadem-design-system.md` (spec), `docs/vadem-design-system.html` (reference implementation), `src/app/globals.css` (tokens)
 
 **Status:** Read-only audit. No changes made.
 

@@ -87,7 +87,7 @@ function VaultSkeleton() {
 function AccessDeniedState({ reason }: { reason: AccessDeniedReason }) {
   const message =
     reason === "TRIP_INACTIVE"
-      ? "This handoff is not currently active"
+      ? "This vadem is not currently active"
       : reason === "VAULT_ACCESS_REVOKED"
         ? "Your access has been revoked"
         : "You don't have access to secure items";

@@ -8,6 +8,8 @@ import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { LockIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PhoneIcon } from "@/components/ui/icons";
 import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -24,121 +26,6 @@ const CONTACT_ROLES = [
 // Shared styles matching Input component's fieldBase
 const selectBase =
   "w-full font-body text-base leading-normal text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md p-3 outline-none transition-[border-color,box-shadow,background-color] duration-150 ease-out hover:border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)] appearance-none";
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function LockIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
-function ChevronUpIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function PhoneIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.72 16l.2.92z" />
-    </svg>
-  );
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -199,7 +86,7 @@ function LockedContactCard({ contact }: { contact: ContactDoc }) {
           href={`tel:${contact.phone.replace(/\D/g, "")}`}
           className="inline-flex items-center gap-1 font-body text-sm text-secondary hover:text-secondary-hover transition-colors duration-150 mt-1"
         >
-          <PhoneIcon />
+          <PhoneIcon size={13} />
           {formatPhone(contact.phone)}
         </a>
       </div>
@@ -298,32 +185,27 @@ function EditableContactCard({
           {form.role || "Contact"}
         </p>
         <div className="flex items-center gap-0.5 shrink-0">
-          <button
-            type="button"
+          <IconButton
+            icon={<ChevronUpIcon size={14} />}
+            aria-label="Move up"
+            size="sm"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move up"
-          >
-            <ChevronUpIcon />
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={<ChevronDownIcon size={14} />}
+            aria-label="Move down"
+            size="sm"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move down"
-          >
-            <ChevronDownIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="p-1.5 text-text-muted hover:text-danger rounded transition-colors duration-150"
+          />
+          <IconButton
+            icon={<TrashIcon size={14} />}
             aria-label={`Remove ${form.role || "contact"}`}
-          >
-            <TrashIcon />
-          </button>
+            variant="danger"
+            size="sm"
+            onClick={() => setShowDeleteConfirm(true)}
+          />
         </div>
       </div>
 
@@ -334,20 +216,12 @@ function EditableContactCard({
           <div className="bg-danger-light rounded-lg px-4 py-3 flex items-center justify-between gap-3">
             <p className="font-body text-sm text-danger font-semibold">Remove this contact?</p>
             <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="font-body text-xs font-semibold text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-md transition-colors duration-150"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onRemove}
-                className="font-body text-xs font-semibold text-danger hover:text-danger bg-bg-raised border border-danger rounded-md px-3 py-1.5 transition-colors duration-150"
-              >
+              </Button>
+              <Button variant="danger" size="sm" onClick={onRemove}>
                 Yes, remove
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -355,7 +229,7 @@ function EditableContactCard({
         {saveError && (
           <div
             role="alert"
-            className="bg-danger-light text-danger rounded-lg px-3 py-2 font-body text-xs"
+            className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
           >
             {saveError}
           </div>

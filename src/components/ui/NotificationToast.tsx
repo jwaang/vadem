@@ -4,6 +4,7 @@ import { type HTMLAttributes, useState, useEffect, useCallback, useRef } from "r
 import { createPortal } from "react-dom";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { XIcon } from "@/components/ui/icons";
 
 const toastVariants = cva(
   "flex items-start gap-3 max-w-[380px] w-full py-4 px-5 bg-bg-raised rounded-lg border border-border-default border-l-[3px] shadow-lg animate-toast-slide-in",
@@ -85,23 +86,6 @@ function WarningIcon() {
       <path d="M10 3 L18 17 H2 Z" />
       <line x1="10" y1="8" x2="10" y2="12" />
       <circle cx="10" cy="14.5" r="0.5" fill="var(--color-warning)" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    >
-      <line x1="3" y1="3" x2="11" y2="11" />
-      <line x1="11" y1="3" x2="3" y2="11" />
     </svg>
   );
 }
@@ -190,7 +174,7 @@ function NotificationToast({
         onClick={dismiss}
         aria-label="Dismiss notification"
       >
-        <CloseIcon />
+        <XIcon size={14} />
       </button>
     </div>
   );

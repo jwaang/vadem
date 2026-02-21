@@ -9,8 +9,10 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { ChevronLeftIcon, PlusIcon, EyeIcon, EyeOffIcon, PencilIcon, TrashIcon, LockIcon } from "@/components/ui/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,120 +34,6 @@ interface VaultItemLabel {
   instructions?: string;
   locationCardId?: Id<"locationCards">;
   sortOrder: number;
-}
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function EyeIcon({ off }: { off?: boolean }) {
-  return off ? (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  ) : (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
 }
 
 // ── Vault type icon components ─────────────────────────────────────────────────
@@ -214,15 +102,6 @@ function SafeIcon() {
 }
 
 function CustomIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
-function LockIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -300,7 +179,7 @@ function ValueInput({ label, id, value, onChange, hint, error, placeholder }: Va
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors duration-150"
           aria-label={revealed ? "Hide value" : "Show value"}
         >
-          <EyeIcon off={revealed} />
+          {revealed ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
         </button>
       </div>
       {error && (
@@ -397,22 +276,19 @@ function VaultItemCard({
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-sunken transition-colors duration-150"
+          <IconButton
+            icon={<PencilIcon />}
             aria-label={`Edit ${item.label}`}
-          >
-            <PencilIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-danger hover:bg-danger-light transition-colors duration-150"
+            size="sm"
+            onClick={onEdit}
+          />
+          <IconButton
+            icon={<TrashIcon />}
             aria-label={`Delete ${item.label}`}
-          >
-            <TrashIcon />
-          </button>
+            variant="danger"
+            size="sm"
+            onClick={onDelete}
+          />
         </div>
       </div>
 
@@ -604,7 +480,7 @@ function EmptyVault({ onAdd }: { onAdd: () => void }) {
       className="bg-bg-raised rounded-xl p-6 flex flex-col items-center text-center gap-4 border border-dashed border-border-strong"
     >
       <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-vault-subtle">
-        <LockIcon />
+        <LockIcon size={22} />
       </div>
       <div className="flex flex-col gap-1">
         <p className="font-body text-sm font-semibold text-text-primary">No vault items yet</p>
@@ -777,7 +653,7 @@ export default function VaultEditor() {
             className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-text-secondary transition-colors duration-150 mb-2"
           >
             <ChevronLeftIcon />
-            My Property
+            Dashboard
           </Link>
           <h1 className="font-display text-4xl text-text-primary leading-tight">Vault</h1>
           <p className="font-body text-sm text-text-secondary">
@@ -788,7 +664,7 @@ export default function VaultEditor() {
         {/* Security note */}
         <div className="flex items-start gap-3 bg-vault-subtle rounded-lg border border-vault-light px-4 py-3">
           <div className="w-8 h-8 rounded-md flex items-center justify-center bg-vault text-text-on-vault shrink-0 mt-0.5">
-            <LockIcon />
+            <LockIcon size={18} />
           </div>
           <p className="font-body text-xs text-vault leading-relaxed">
             All values are encrypted with AES-256 before being saved. Your codes are never stored in plain text.

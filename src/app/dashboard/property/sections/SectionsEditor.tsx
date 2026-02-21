@@ -9,9 +9,11 @@ import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { LocationCard } from "@/components/ui/LocationCard";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, PencilIcon, XIcon } from "@/components/ui/icons";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -40,139 +42,6 @@ const TIME_SLOT_OPTIONS: { value: TimeSlot; label: string }[] = [
   { value: "afternoon", label: "Afternoon" },
   { value: "evening", label: "Evening" },
 ];
-
-// ── SVG Icons ──────────────────────────────────────────────────────────────────
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function ChevronUpIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
-}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -233,25 +102,19 @@ function InstructionRow({
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Top row: reorder + text + delete */}
       <div className="flex items-start gap-2 p-3 pb-2">
-        <div className="flex flex-col gap-0.5 shrink-0 mt-1">
-          <button
-            type="button"
+        <div className="flex flex-col gap-0.5 shrink-0 mt-0.5">
+          <IconButton
+            icon={<ChevronUpIcon />}
+            aria-label="Move instruction up"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="p-1 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move instruction up"
-          >
-            <ChevronUpIcon />
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={<ChevronDownIcon />}
+            aria-label="Move instruction down"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="p-1 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move instruction down"
-          >
-            <ChevronDownIcon />
-          </button>
+          />
         </div>
 
         <textarea
@@ -263,14 +126,13 @@ function InstructionRow({
           className="flex-1 resize-none font-body text-sm text-text-primary bg-transparent outline-none placeholder:text-text-muted leading-relaxed min-h-[44px]"
         />
 
-        <button
-          type="button"
-          onClick={onRemove}
-          className="p-1.5 text-text-muted hover:text-danger rounded transition-colors duration-150 shrink-0 mt-0.5"
+        <IconButton
+          icon={<TrashIcon />}
           aria-label="Remove instruction"
-        >
-          <TrashIcon />
-        </button>
+          variant="danger"
+          onClick={onRemove}
+          className="shrink-0 mt-0.5"
+        />
       </div>
 
       {/* Controls row: time slot + proof toggle + card placeholder */}
@@ -333,16 +195,14 @@ function InstructionRow({
                   tilt="neutral"
                   className="w-[200px]"
                 />
-                <button
-                  type="button"
-                  onClick={() => void removeLocationCard({ cardId: card._id })}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-round bg-danger text-white flex items-center justify-center hover:bg-red-700 transition-[opacity,background-color] duration-150 shadow-sm z-10 opacity-0 group-hover:opacity-100"
+                <IconButton
+                  icon={<XIcon size={10} />}
                   aria-label="Remove location card"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
+                  variant="danger"
+                  size="sm"
+                  onClick={() => void removeLocationCard({ cardId: card._id })}
+                  className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 shadow-sm z-10"
+                />
               </div>
             ))}
           </div>
@@ -386,7 +246,7 @@ function SectionEditPanel({
   onMoveUp,
   onMoveDown,
 }: SectionEditPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(section.title);
   const [editIcon, setEditIcon] = useState(section.icon);
@@ -476,32 +336,10 @@ function SectionEditPanel({
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Section header */}
-      <div className="flex items-center gap-2 px-3 py-3 bg-bg-sunken border-b border-border-default">
-        {/* Section reorder arrows */}
-        <div className="flex flex-col gap-0.5 shrink-0">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={!canMoveUp}
-            className="p-1 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label={`Move ${section.title} section up`}
-          >
-            <ChevronUpIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={!canMoveDown}
-            className="p-1 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label={`Move ${section.title} section down`}
-          >
-            <ChevronDownIcon />
-          </button>
-        </div>
-
+      <div className={`flex items-center bg-bg-sunken ${isExpanded ? "border-b border-border-default" : ""}`}>
         {isEditing ? (
           /* Inline edit form */
-          <div className="flex-1 flex flex-col gap-3 min-w-0 py-1">
+          <div className="flex-1 flex flex-col gap-3 min-w-0 px-3 py-3">
             <input
               type="text"
               value={editTitle}
@@ -543,54 +381,74 @@ function SectionEditPanel({
             </div>
           </div>
         ) : (
-          /* Normal header */
           <>
-            <span className="text-xl leading-none shrink-0" aria-hidden="true">
-              {section.icon}
-            </span>
-            <p className="font-body text-sm font-semibold text-text-primary flex-1 min-w-0 truncate">
-              {section.title}
-            </p>
-            <div className="flex items-center gap-1 shrink-0">
+            {/* Clickable title area — toggles expand */}
+            <button
+              type="button"
+              onClick={() => setIsExpanded((v) => !v)}
+              aria-expanded={isExpanded}
+              className="flex items-center gap-2.5 flex-1 min-w-0 px-3 py-3 text-left"
+            >
+              <span className="text-xl leading-none shrink-0" aria-hidden="true">
+                {section.icon}
+              </span>
+              <p className="font-body text-sm font-semibold text-text-primary truncate flex-1 min-w-0">
+                {section.title}
+              </p>
               {instructionCount > 0 && (
-                <span className="font-body text-xs text-text-muted tabular-nums">
+                <span className="font-body text-xs text-text-muted tabular-nums shrink-0">
                   {instructionCount}
                 </span>
               )}
-              <button
-                type="button"
+            </button>
+
+            {/* Right-side actions */}
+            <div className="flex items-center gap-0.5 pr-2 shrink-0">
+              {/* Reorder */}
+              <IconButton
+                icon={<ChevronUpIcon />}
+                aria-label={`Move ${section.title} up`}
+                onClick={onMoveUp}
+                disabled={!canMoveUp}
+              />
+              <IconButton
+                icon={<ChevronDownIcon />}
+                aria-label={`Move ${section.title} down`}
+                onClick={onMoveDown}
+                disabled={!canMoveDown}
+              />
+              {/* Divider */}
+              <div className="w-px h-4 bg-border-default mx-1" />
+              {/* Edit + delete */}
+              <IconButton
+                icon={<PencilIcon />}
+                aria-label={`Edit ${section.title}`}
                 onClick={() => {
                   setEditTitle(section.title);
                   setEditIcon(section.icon);
                   setIsEditing(true);
                   setShowDeleteConfirm(false);
                 }}
-                className="p-1.5 text-text-muted hover:text-text-primary rounded transition-colors duration-150"
-                aria-label={`Edit ${section.title} section`}
-              >
-                <PencilIcon />
-              </button>
-              <button
-                type="button"
+              />
+              <IconButton
+                icon={<TrashIcon />}
+                aria-label={`Delete ${section.title}`}
+                variant="danger"
                 onClick={() => {
                   setShowDeleteConfirm((v) => !v);
                   setIsEditing(false);
                 }}
-                className="p-1.5 text-text-muted hover:text-danger rounded transition-colors duration-150"
-                aria-label={`Delete ${section.title} section`}
-              >
-                <TrashIcon />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsExpanded((v) => !v)}
-                className="p-1.5 text-text-muted hover:text-text-primary rounded transition-[rotate] duration-150"
-                style={{ rotate: isExpanded ? "90deg" : "0deg" }}
+              />
+              {/* Divider */}
+              <div className="w-px h-4 bg-border-default mx-1" />
+              {/* Expand toggle */}
+              <IconButton
+                icon={<ChevronRightIcon />}
                 aria-label={isExpanded ? "Collapse section" : "Expand section"}
-                aria-expanded={isExpanded}
-              >
-                <ChevronRightIcon />
-              </button>
+                onClick={() => setIsExpanded((v) => !v)}
+                className="transition-[rotate] duration-150"
+                style={{ rotate: isExpanded ? "90deg" : "0deg" }}
+              />
             </div>
           </>
         )}
@@ -604,20 +462,12 @@ function SectionEditPanel({
             {instructionCount > 0 ? `${instructionCount} ` : ""}
             instruction{instructionCount !== 1 ? "s" : ""}?
           </p>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(false)}
-            className="font-body text-xs font-semibold text-text-secondary hover:text-text-primary px-2.5 py-1.5 rounded-md bg-bg-raised border border-border-default transition-colors duration-150 shrink-0"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)} className="shrink-0">
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="font-body text-xs font-semibold text-white bg-danger hover:bg-red-700 px-2.5 py-1.5 rounded-md transition-colors duration-150 shrink-0"
-          >
+          </Button>
+          <Button variant="danger" size="sm" onClick={handleDelete} className="shrink-0">
             Delete
-          </button>
+          </Button>
         </div>
       )}
 
@@ -625,7 +475,7 @@ function SectionEditPanel({
       {error && (
         <div
           role="alert"
-          className="bg-danger-light text-danger px-4 py-2 font-body text-xs border-b border-border-default"
+          className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
         >
           {error}
         </div>
@@ -861,7 +711,7 @@ export default function SectionsEditor() {
   };
 
   return (
-    <CreatorLayout activeNav="property" onNavChange={() => router.push("/dashboard")}>
+    <CreatorLayout activeNav="property">
       <div className="flex flex-col gap-6">
         {/* Back link */}
         <Link
@@ -875,7 +725,7 @@ export default function SectionsEditor() {
         {/* Header */}
         <div>
           <h1 className="font-display text-3xl text-text-primary leading-tight">
-            House sections
+            Home sections
           </h1>
           <p className="font-body text-sm text-text-secondary mt-1">
             Add, edit, reorder, or delete sections and instructions in your manual.

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
+import { ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, CheckIcon } from "@/components/ui/icons";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -38,120 +39,6 @@ const TIME_SLOT_OPTIONS: { value: TimeSlot; label: string }[] = [
 ];
 
 const PREBUILT_TITLES = new Set(PREBUILT_SECTIONS.map((p) => p.title));
-
-// ── SVG Icons ──────────────────────────────────────────────────────────────────
-
-function ChevronUpIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -431,7 +318,7 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
           {error && (
             <div
               role="alert"
-              className="bg-danger-light text-danger rounded-lg px-3 py-2 font-body text-xs"
+              className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
             >
               {error}
             </div>
@@ -644,7 +531,7 @@ export default function Step5Sections() {
       {/* Header */}
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-3xl text-text-primary leading-tight">
-          House instructions
+          Home instructions
         </h1>
         <p className="font-body text-sm text-text-secondary">
           Choose which areas to document. Your sitter can browse each section in the manual.

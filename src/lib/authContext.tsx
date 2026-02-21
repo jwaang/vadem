@@ -7,6 +7,7 @@ const STORAGE_KEY = "vadem_session";
 interface AuthUser {
   token: string;
   email: string;
+  emailVerified: boolean;
 }
 
 interface AuthContextValue {
@@ -24,7 +25,9 @@ function readStoredUser(): AuthUser | null {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored) as AuthUser;
-    return parsed.token && parsed.email ? parsed : null;
+    return parsed.token && parsed.email
+      ? { ...parsed, emailVerified: parsed.emailVerified ?? false }
+      : null;
   } catch {
     return null;
   }

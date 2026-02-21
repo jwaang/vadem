@@ -30,7 +30,7 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 - `src/app/layout.tsx` — Root layout, registers 3 Google Fonts as CSS variables, wraps in `ConvexClientProvider`
 - `src/app/globals.css` — **All design tokens** live here (colors, typography, spacing, shadows, motion). This is the source of truth for the design system.
 - `src/app/page.tsx` — Component showcase page (living docs for all UI components)
-- `src/components/ui/` — Reusable presentational components (Button, Input, Badge, TaskItem, PetProfileCard, etc.)
+- `src/components/ui/` — Reusable presentational components (Button, IconButton, Input, Badge, TaskItem, PetProfileCard, icons, etc.)
 - `src/components/layouts/` — `CreatorLayout` (desktop sidebar + mobile bottom nav) and `SitterLayout` (full-width mobile-first)
 - `convex/` — Backend functions and schema (fully built out, ~15 tables)
 - `docs/prd.md` — Full product requirements document
@@ -39,8 +39,9 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 
 ### Route Structure
 Two distinct user modes with separate route trees:
-- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/wizard/[step]`, `/manual/[propertyId]`, `/report`
+- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/dashboard/settings`, `/wizard/[step]`, `/manual/[propertyId]`, `/report`
 - **Sitter routes** (unauthenticated, link-based): `/t/[tripId]` — password-gated today view with tabs (tasks, vault, activity); `/trip/[tripId]` — owner's authenticated view of the same trip
+- **Auth routes**: `/login`, `/signup`, `/verify-email`, `/auth/callback`
 
 ### Auth Architecture
 Custom auth — NOT Convex Auth library. Sessions stored in the `sessions` table with a random token; the token is set as an HTTP-only cookie via Next.js server actions in `convex/authActions.ts`. OAuth (Google, Apple) goes through `/auth/callback`. Sitter access uses a separate `tripSessions` table with its own token, keyed to a share link + optional password.
@@ -116,6 +117,40 @@ The `@utility btn` in globals.css uses raw CSS `transform: translateY(-1px)` dir
 - `"use client"` directive on interactive components
 - Styling: prefer CSS classes in `globals.css` (BEM-like: `.btn-primary`, `.task-item-checkbox`) over inline Tailwind for complex components; use Tailwind utilities for layout (flex, grid, spacing)
 - `forwardRef` on components that need ref access
+
+### Icons
+
+All icons live in `src/components/ui/icons.tsx` — **never define inline SVG functions in feature files**.
+
+```tsx
+import { TrashIcon, PlusIcon, ChevronDownIcon } from "@/components/ui/icons";
+```
+
+- **Action icons** (default `size={16}`): `ChevronUpIcon`, `ChevronDownIcon`, `ChevronLeftIcon`, `ChevronRightIcon`, `TrashIcon`, `PlusIcon`, `PencilIcon`, `CheckIcon`, `XIcon`, `EyeIcon`, `EyeOffIcon`, `CopyIcon`, `ClipboardIcon`, `ShareIcon`, `RefreshIcon`, `LockIcon`, `PhoneIcon`, `CameraIcon`, `UploadIcon`
+- **Feature icons** (default `size={20}`): `HomeIcon`, `CalendarIcon`, `ClockIcon`, `BellIcon`, `SettingsIcon`, `ShareNetworkIcon`
+- All icons accept `size?: number` and spread `SVGAttributes` — pass `style` directly for animations (e.g. chevron rotation)
+- **Exception**: Vault-type icons (DoorIcon, AlarmIcon, WifiIcon, GateIcon, GarageIcon, SafeIcon, CustomIcon) are context-specific and stay local in `VaultEditor.tsx`
+
+### Button & IconButton usage
+
+- Use `<Button>` variants: `primary`, `secondary`, `vault`, `ghost`, `soft`, `danger`; sizes: `lg`, `default`, `sm`
+- Use `<IconButton>` for icon-only actions — variants: `default` (muted → primary hover), `danger` (muted → red hover), `secondary`, `vault`; sizes: `sm`, `md`, `lg`
+- **Never** use raw `<button>` for edit/delete/reorder actions in list cards — always use `IconButton`
+- Delete confirmation banners: `<Button variant="ghost" size="sm">Cancel</Button>` + `<Button variant="danger" size="sm">Delete</Button>`
+
+### Error alert pattern
+
+Inline error alerts use a consistent style across all editors:
+
+```tsx
+<div role="alert" className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm">
+  {error}
+</div>
+```
+
+### List-item card header pattern
+
+Card headers in property editors (`PetsEditor`, `SectionsEditor`, `ContactsEditor`, `VaultEditor`) use `px-4 py-3` padding on a `bg-bg-sunken border-b border-border-default` header row.
 
 ## Responsive Breakpoints
 

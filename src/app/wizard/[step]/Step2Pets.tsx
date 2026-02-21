@@ -11,60 +11,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { PetProfileCard } from "@/components/ui/PetProfileCard";
 import { validatePhone, normalizePhone, formatPhoneInput } from "@/lib/phone";
-
-// ── Icons ────────────────────────────────────────────────────────────────────
-
-function UploadIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{
-        transform: open ? "rotate(180deg)" : "rotate(0deg)",
-        transition: "transform 250ms var(--ease-out)",
-      }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
+import { UploadIcon, TrashIcon, PlusIcon, ChevronDownIcon } from "@/components/ui/icons";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -160,11 +107,6 @@ function SavedPetCard({ pet }: { pet: Doc<"pets"> }) {
     />
   );
 }
-
-// ── Inline input (compact, no wrapper div) used in medication rows ────────────
-
-const inputFieldClass =
-  "w-full font-body text-sm leading-normal text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)]";
 
 // ── Pet form ─────────────────────────────────────────────────────────────────
 
@@ -426,7 +368,7 @@ function PetForm({ onSave, onCancel, isSaving, generalError }: PetFormProps) {
           className="flex items-center gap-2 font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 py-1 -mx-1 px-1 rounded"
           aria-expanded={showMoreDetails}
         >
-          <ChevronDownIcon open={showMoreDetails} />
+          <ChevronDownIcon size={16} style={{ transform: showMoreDetails ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 250ms var(--ease-out)" }} />
           {showMoreDetails ? "Hide additional details" : "Add more details"}
         </button>
 
@@ -488,62 +430,10 @@ function PetForm({ onSave, onCancel, isSaving, generalError }: PetFormProps) {
                         </button>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-body text-xs font-semibold text-text-primary">
-                            Name
-                          </label>
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="e.g. Apoquel"
-                            value={med.name}
-                            onChange={(e) =>
-                              updateMedication(i, "name", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-body text-xs font-semibold text-text-primary">
-                            Dosage
-                          </label>
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="e.g. 16mg"
-                            value={med.dosage}
-                            onChange={(e) =>
-                              updateMedication(i, "dosage", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-body text-xs font-semibold text-text-primary">
-                            Frequency
-                          </label>
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="e.g. Once daily"
-                            value={med.frequency}
-                            onChange={(e) =>
-                              updateMedication(i, "frequency", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-body text-xs font-semibold text-text-primary">
-                            Time
-                          </label>
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="e.g. With breakfast"
-                            value={med.time}
-                            onChange={(e) =>
-                              updateMedication(i, "time", e.target.value)
-                            }
-                          />
-                        </div>
+                        <Input label="Name" placeholder="e.g. Apoquel" value={med.name} onChange={(e) => updateMedication(i, "name", e.target.value)} />
+                        <Input label="Dosage" placeholder="e.g. 16mg" value={med.dosage} onChange={(e) => updateMedication(i, "dosage", e.target.value)} />
+                        <Input label="Frequency" placeholder="e.g. Once daily" value={med.frequency} onChange={(e) => updateMedication(i, "frequency", e.target.value)} />
+                        <Input label="Time" placeholder="e.g. With breakfast" value={med.time} onChange={(e) => updateMedication(i, "time", e.target.value)} />
                       </div>
                     </div>
                   ))}

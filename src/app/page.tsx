@@ -5,7 +5,7 @@ export default function HomePage() {
     <div className="min-h-dvh bg-bg flex flex-col items-center justify-center p-6 text-center">
       <h1 className="font-display text-5xl text-text-primary mb-3">Vadem</h1>
       <p className="font-body text-lg text-text-secondary mb-8">
-        The care manual for your home.
+        The care manual for your pets and home.
       </p>
       <div className="flex gap-3">
         <Link

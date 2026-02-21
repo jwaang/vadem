@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as authActions from "../authActions.js";
 import type * as crons from "../crons.js";
 import type * as devClearAll from "../devClearAll.js";
+import type * as email from "../email.js";
 import type * as emergencyContacts from "../emergencyContacts.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as instructions from "../instructions.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   authActions: typeof authActions;
   crons: typeof crons;
   devClearAll: typeof devClearAll;
+  email: typeof email;
   emergencyContacts: typeof emergencyContacts;
   healthCheck: typeof healthCheck;
   instructions: typeof instructions;

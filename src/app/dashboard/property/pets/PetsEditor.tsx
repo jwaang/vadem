@@ -9,88 +9,11 @@ import type { Id, Doc } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { PetProfileCard } from "@/components/ui/PetProfileCard";
 import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
-
-// ── Icons ────────────────────────────────────────────────────────────────────
-
-function ChevronLeftIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function ArrowUpIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ArrowDownIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function UploadIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{
-        transform: open ? "rotate(180deg)" : "rotate(0deg)",
-        transition: "transform 250ms var(--ease-out)",
-      }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PencilIcon, UploadIcon, XIcon } from "@/components/ui/icons";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -162,11 +85,6 @@ function petToFormValues(pet: Doc<"pets">): PetFormValues {
   };
 }
 
-// ── Shared input field class ──────────────────────────────────────────────────
-
-const inputFieldClass =
-  "w-full font-body text-sm leading-normal text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)]";
-
 // ── Existing photo thumbnail (resolves storage ID to URL) ─────────────────────
 
 function ExistingPhotoThumb({
@@ -187,14 +105,13 @@ function ExistingPhotoThumb({
       ) : (
         <div className="w-full h-full bg-primary-light" />
       )}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-1 right-1 bg-bg-raised border border-border-default rounded p-1 text-text-secondary hover:text-danger hover:border-danger transition-colors duration-150"
+      <IconButton
+        icon={<XIcon size={12} />}
         aria-label={`Remove existing photo ${index + 1}`}
-      >
-        <TrashIcon />
-      </button>
+        size="sm"
+        onClick={onRemove}
+        className="absolute top-1 right-1"
+      />
     </div>
   );
 }
@@ -327,7 +244,7 @@ function PetForm({
 
   return (
     <div className="border border-border-default rounded-xl bg-bg-raised overflow-hidden">
-      <div className="px-5 py-4 border-b border-border-default bg-bg-sunken">
+      <div className="px-4 py-3 border-b border-border-default bg-bg-sunken">
         <h3 className="font-body text-base font-semibold text-text-primary">
           {title}
         </h3>
@@ -373,14 +290,13 @@ function PetForm({
                     alt={`New photo ${i + 1}`}
                     className="w-full h-full object-cover block"
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveNewPhoto(i)}
-                    className="absolute top-1 right-1 bg-bg-raised border border-border-default rounded p-1 text-text-secondary hover:text-danger hover:border-danger transition-colors duration-150"
+                  <IconButton
+                    icon={<XIcon size={12} />}
                     aria-label={`Remove new photo ${i + 1}`}
-                  >
-                    <TrashIcon />
-                  </button>
+                    size="sm"
+                    onClick={() => handleRemoveNewPhoto(i)}
+                    className="absolute top-1 right-1"
+                  />
                 </div>
               ))}
               {/* Add more */}
@@ -493,7 +409,7 @@ function PetForm({
           className="flex items-center gap-2 font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 py-1 -mx-1 px-1 rounded"
           aria-expanded={showMoreDetails}
         >
-          <ChevronDownIcon open={showMoreDetails} />
+          <ChevronDownIcon size={16} style={{ transform: showMoreDetails ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 250ms var(--ease-out)" }} />
           {showMoreDetails ? "Hide additional details" : "Add more details"}
         </button>
 
@@ -562,20 +478,13 @@ function PetForm({
                             { field: "time" as const, label: "Time", placeholder: "e.g. With breakfast" },
                           ] as const
                         ).map(({ field, label, placeholder }) => (
-                          <div key={field} className="flex flex-col gap-1.5">
-                            <label className="font-body text-xs font-semibold text-text-primary">
-                              {label}
-                            </label>
-                            <input
-                              type="text"
-                              className={inputFieldClass}
-                              placeholder={placeholder}
-                              value={med[field]}
-                              onChange={(e) =>
-                                updateMedication(i, field, e.target.value)
-                              }
-                            />
-                          </div>
+                          <Input
+                            key={field}
+                            label={label}
+                            placeholder={placeholder}
+                            value={med[field]}
+                            onChange={(e) => updateMedication(i, field, e.target.value)}
+                          />
                         ))}
                       </div>
                     </div>
@@ -681,103 +590,79 @@ function PetCardView({
     pet.photos.length > 0 ? { storageId: pet.photos[0] } : "skip",
   );
 
-  const details = [];
-  if (pet.feedingInstructions) {
-    details.push({ emoji: "🍽️", label: "Feeding", value: pet.feedingInstructions });
-  }
-  if (pet.vetName) {
-    details.push({
-      emoji: "🏥",
-      label: "Vet",
-      value: pet.vetName,
-      phone: pet.vetPhone,
-    });
-  }
-  if (pet.medications.length > 0) {
-    details.push({
-      emoji: "💊",
-      label: "Medications",
-      value: pet.medications.map((m) => m.name).join(", "),
-    });
-  }
+  const subtitle = [pet.species, pet.breed].filter(Boolean).join(" · ");
+  const hint = pet.feedingInstructions ?? pet.vetName ?? pet.personalityNotes ?? null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <PetProfileCard
-        src={photoUrl ?? undefined}
-        name={pet.name}
-        breed={[pet.species, pet.breed].filter(Boolean).join(" · ")}
-        age={pet.age ?? ""}
-        details={details}
-        personalityNote={pet.personalityNotes}
-        className="max-w-full"
-      />
-
-      {/* Action row */}
-      <div className="flex items-center gap-2">
-        <Button variant="soft" size="sm" onClick={onEdit}>
-          Edit
-        </Button>
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            type="button"
-            disabled={isFirst}
-            onClick={onMoveUp}
-            className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary border border-border-default bg-bg-raised hover:bg-bg-sunken hover:border-border-strong transition-[background-color,border-color] duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label={`Move ${pet.name} up`}
-          >
-            <ArrowUpIcon />
-          </button>
-          <button
-            type="button"
-            disabled={isLast}
-            onClick={onMoveDown}
-            className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary border border-border-default bg-bg-raised hover:bg-bg-sunken hover:border-border-strong transition-[background-color,border-color] duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label={`Move ${pet.name} down`}
-          >
-            <ArrowDownIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-md text-danger border border-danger bg-danger-light hover:bg-danger hover:text-text-on-primary transition-[background-color,color] duration-150"
-            aria-label={`Delete ${pet.name}`}
-          >
-            <TrashIcon />
-          </button>
-        </div>
-      </div>
-
-      {/* Inline delete confirmation */}
+    <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
+      {/* Delete confirmation banner */}
       {confirmDelete && (
-        <div className="bg-danger-light rounded-lg px-4 py-3 flex flex-col gap-3 border border-[rgba(176,68,68,0.2)]">
-          <p className="font-body text-sm text-danger font-semibold">
-            Delete {pet.name}?
-          </p>
-          <p className="font-body text-xs text-danger opacity-80">
-            This will permanently remove {pet.name}&rsquo;s profile. This action cannot be undone.
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setConfirmDelete(false)}
-            >
+        <div className="bg-danger-light px-4 py-3 flex items-center justify-between gap-3 border-b border-[rgba(176,68,68,0.15)]">
+          <p className="font-body text-sm text-danger font-semibold">Delete {pet.name}?</p>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
               Cancel
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => {
-                setConfirmDelete(false);
-                onDelete();
-              }}
-            >
-              Delete
+            <Button variant="danger" size="sm" onClick={() => { setConfirmDelete(false); onDelete(); }}>
+              Yes, delete
             </Button>
           </div>
         </div>
       )}
+
+      <div className="flex items-start gap-3 py-4 px-4">
+        {/* Photo thumbnail */}
+        <div className="w-16 h-16 min-w-[64px] rounded-md overflow-hidden shrink-0">
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt={pet.name} className="w-full h-full object-cover block" />
+          ) : (
+            <div className="w-full h-full bg-[linear-gradient(135deg,var(--color-primary-light),var(--color-accent-light))]" />
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-body text-sm font-semibold text-text-primary">{pet.name}</p>
+          <p className="font-body text-xs text-text-muted mt-0.5">
+            {subtitle}{pet.age ? ` · ${pet.age}` : ""}
+          </p>
+          {hint && (
+            <p className="font-body text-xs text-text-secondary mt-1 line-clamp-1">{hint}</p>
+          )}
+        </div>
+
+        {/* Actions — edit+delete top, reorder bottom */}
+        <div className="flex flex-col items-end justify-between self-stretch shrink-0 py-0.5">
+          <div className="flex items-center gap-0.5">
+            <IconButton
+              icon={<PencilIcon />}
+              aria-label={`Edit ${pet.name}`}
+              onClick={onEdit}
+            />
+            <IconButton
+              icon={<TrashIcon />}
+              aria-label={`Delete ${pet.name}`}
+              variant="danger"
+              onClick={() => setConfirmDelete(true)}
+            />
+          </div>
+          <div className="flex items-center gap-0.5">
+            <IconButton
+              icon={<ChevronUpIcon size={14} />}
+              aria-label={`Move ${pet.name} up`}
+              onClick={onMoveUp}
+              disabled={isFirst}
+            />
+            <IconButton
+              icon={<ChevronDownIcon size={14} />}
+              aria-label={`Move ${pet.name} down`}
+              onClick={onMoveDown}
+              disabled={isLast}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -975,7 +860,7 @@ export default function PetsEditor() {
   const petList = pets ?? [];
 
   return (
-    <CreatorLayout activeNav="property" onNavChange={() => {}}>
+    <CreatorLayout activeNav="property">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col gap-1">

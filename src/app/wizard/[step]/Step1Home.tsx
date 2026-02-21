@@ -193,7 +193,7 @@ export default function Step1Home() {
           Add your home
         </h1>
         <p className="font-body text-sm text-text-secondary">
-          Give your property a name so sitters know what they&rsquo;re caring for.
+          Name your home — it appears at the top of your sitter&rsquo;s care manual.
         </p>
       </div>
 
@@ -269,7 +269,7 @@ export default function Step1Home() {
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="font-body text-sm font-semibold text-text-primary">
-                  Tap to upload a photo
+                  Upload a photo
                 </span>
                 <span className="font-body text-xs text-text-muted">
                   JPG, PNG or HEIC — shown on the manual cover

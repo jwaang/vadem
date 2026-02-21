@@ -9,7 +9,9 @@ import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, LockIcon, TrashIcon, PlusIcon, PencilIcon, PhoneIcon } from "@/components/ui/icons";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -24,139 +26,6 @@ const CONTACT_ROLES = [
 
 const selectBase =
   "w-full font-body text-base leading-normal text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md p-3 outline-none transition-[border-color,box-shadow,background-color] duration-150 ease-out hover:border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)] appearance-none";
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function LockIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
-function ChevronUpIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function PhoneIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.59a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.72 16l.2.92z" />
-    </svg>
-  );
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -206,7 +75,7 @@ function LockedContactCard({ contact }: { contact: ContactDoc }) {
   return (
     <div className="flex items-start gap-3 py-4 px-4 rounded-lg border border-border-default bg-bg-raised">
       <div className="flex items-center justify-center w-9 h-9 min-w-[36px] rounded-md bg-secondary-light text-secondary">
-        <LockIcon size={18} />
+        <LockIcon size={18} className="text-secondary" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-body text-sm font-semibold text-text-primary">
@@ -217,13 +86,20 @@ function LockedContactCard({ contact }: { contact: ContactDoc }) {
           href={`tel:${contact.phone.replace(/\D/g, "")}`}
           className="inline-flex items-center gap-1 font-body text-sm text-secondary hover:text-secondary-hover transition-colors duration-150 mt-1"
         >
-          <PhoneIcon />
+          <PhoneIcon size={13} />
           {formatPhone(contact.phone)}
         </a>
       </div>
-      <div className="shrink-0 flex items-center gap-1 text-text-muted">
+      <div className="shrink-0 group relative flex items-center gap-1 text-text-muted cursor-default">
         <LockIcon size={12} />
         <span className="font-body text-xs">Locked</span>
+        <div className="absolute right-0 top-full mt-1.5 w-56 rounded-lg bg-text-primary px-3 py-2
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                        pointer-events-none z-10 shadow-md">
+          <p className="font-body text-xs text-white leading-relaxed">
+            Always included — cannot be removed from your contacts.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -250,6 +126,8 @@ function EditableContactCard({
   canMoveUp,
   canMoveDown,
 }: EditableContactCardProps) {
+  const hasBeenSaved = contact.name !== "" || contact.phone !== "";
+  const [isEditing, setIsEditing] = useState(!hasBeenSaved);
   const [form, setForm] = useState<ContactFormState>({
     name: contact.name,
     role: contact.role,
@@ -297,6 +175,7 @@ function EditableContactCard({
     try {
       await onUpdate({ ...form, phone: normalizePhone(form.phone) });
       setJustSaved(true);
+      setIsEditing(false);
       setTimeout(() => setJustSaved(false), 2000);
     } catch {
       setSaveError("Failed to save. Please try again.");
@@ -307,6 +186,85 @@ function EditableContactCard({
 
   const cid = contact._id;
 
+  // Read mode: show compact card for saved contacts
+  if (!isEditing && hasBeenSaved) {
+    return (
+      <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
+        {showDeleteConfirm && (
+          <div className="bg-danger-light px-4 py-3 flex items-center justify-between gap-3">
+            <p className="font-body text-sm text-danger font-semibold">Remove this contact?</p>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" size="sm" onClick={onRemove}>
+                Yes, remove
+              </Button>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start gap-3 py-4 px-4">
+          {/* Avatar: first initial */}
+          <div className="flex items-center justify-center w-9 h-9 min-w-[36px] rounded-md
+                          bg-primary-subtle text-primary font-body text-sm font-semibold">
+            {contact.name.charAt(0).toUpperCase()}
+          </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm font-semibold text-text-primary">{contact.name}</p>
+            <p className="font-body text-xs text-text-muted mt-0.5">{contact.role}</p>
+            {contact.phone && (
+              <a
+                href={`tel:${contact.phone}`}
+                className="inline-flex items-center gap-1 font-body text-sm text-secondary
+                           hover:text-secondary-hover transition-colors duration-150 mt-1"
+              >
+                <PhoneIcon size={13} />
+                {formatPhone(contact.phone)}
+              </a>
+            )}
+            {contact.notes && (
+              <p className="font-body text-xs text-text-muted italic mt-1">{contact.notes}</p>
+            )}
+          </div>
+          {/* Actions */}
+          <div className="flex flex-col items-end justify-between self-stretch shrink-0 py-0.5">
+            {/* Top: edit + delete */}
+            <div className="flex items-center gap-0.5">
+              <IconButton
+                icon={<PencilIcon />}
+                aria-label="Edit contact"
+                onClick={() => setIsEditing(true)}
+              />
+              <IconButton
+                icon={<TrashIcon />}
+                aria-label="Remove contact"
+                variant="danger"
+                onClick={() => setShowDeleteConfirm(true)}
+              />
+            </div>
+            {/* Bottom: reorder */}
+            <div className="flex items-center gap-0.5">
+              <IconButton
+                icon={<ChevronUpIcon />}
+                aria-label="Move up"
+                onClick={onMoveUp}
+                disabled={!canMoveUp}
+              />
+              <IconButton
+                icon={<ChevronDownIcon />}
+                aria-label="Move down"
+                onClick={onMoveDown}
+                disabled={!canMoveDown}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Edit mode
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Card header */}
@@ -314,65 +272,14 @@ function EditableContactCard({
         <p className="font-body text-sm font-semibold text-text-secondary flex-1 truncate">
           {form.role || "Contact"}
         </p>
-        <div className="flex items-center gap-0.5 shrink-0">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={!canMoveUp}
-            className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move up"
-          >
-            <ChevronUpIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={!canMoveDown}
-            className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors duration-150"
-            aria-label="Move down"
-          >
-            <ChevronDownIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="p-1.5 text-text-muted hover:text-danger rounded transition-colors duration-150"
-            aria-label={`Remove ${form.role || "contact"}`}
-          >
-            <TrashIcon />
-          </button>
-        </div>
       </div>
 
       {/* Form fields */}
       <div className="p-4 flex flex-col gap-3">
-        {/* Delete confirmation */}
-        {showDeleteConfirm && (
-          <div className="bg-danger-light rounded-lg px-4 py-3 flex items-center justify-between gap-3">
-            <p className="font-body text-sm text-danger font-semibold">Remove this contact?</p>
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="font-body text-xs font-semibold text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-md transition-colors duration-150"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onRemove}
-                className="font-body text-xs font-semibold text-danger bg-bg-raised border border-danger rounded-md px-3 py-1.5 transition-colors duration-150"
-              >
-                Yes, remove
-              </button>
-            </div>
-          </div>
-        )}
-
         {saveError && (
           <div
             role="alert"
-            className="bg-danger-light text-danger rounded-lg px-3 py-2 font-body text-xs"
+            className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
           >
             {saveError}
           </div>
@@ -412,7 +319,24 @@ function EditableContactCard({
           hint="Optional"
         />
 
-        <div className="flex justify-end pt-1">
+        <div className="flex justify-end gap-2 pt-1">
+          {hasBeenSaved && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setForm({
+                  name: contact.name,
+                  role: contact.role,
+                  phone: formatPhone(contact.phone),
+                  notes: contact.notes ?? "",
+                });
+                setIsEditing(false);
+              }}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
             size="sm"
             variant={justSaved ? "soft" : "primary"}
@@ -550,7 +474,7 @@ function ContactsEditorInner() {
             className="inline-flex items-center gap-1.5 font-body text-sm text-text-muted hover:text-text-primary transition-colors duration-150 self-start"
           >
             <ChevronLeftIcon />
-            My Property
+            Dashboard
           </button>
           <div className="flex flex-col gap-1">
             <h1 className="font-display text-4xl text-text-primary leading-tight">
@@ -614,12 +538,7 @@ function ContactsEditorInner() {
           </button>
         )}
 
-        {/* ASPCA note */}
-        {!isLoading && (
-          <p className="font-body text-xs text-text-muted text-center">
-            🔒 ASPCA Animal Poison Control is always included and cannot be removed.
-          </p>
-        )}
+
       </div>
     </CreatorLayout>
   );

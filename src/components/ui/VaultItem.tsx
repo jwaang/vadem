@@ -1,6 +1,7 @@
 import { type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
+import { IconButton } from "./IconButton";
 import { LocationCard } from "./LocationCard";
 
 type VaultItemState = "revealed" | "locked" | "hidden";
@@ -120,19 +121,13 @@ function VaultItem({
               {value}
             </code>
             {onCopy && (
-              <button
-                type="button"
-                onClick={onCopy}
+              <IconButton
+                icon={copied ? <CheckIcon /> : <ClipboardIcon />}
                 aria-label={copied ? "Copied!" : "Copy to clipboard"}
-                className={cn(
-                  "flex items-center justify-center w-10 h-10 min-w-[40px] rounded-md border-none cursor-pointer transition-[background-color,color] duration-150 ease-out",
-                  copied
-                    ? "bg-secondary text-text-on-primary"
-                    : "bg-vault text-text-on-vault hover:bg-vault-hover",
-                )}
-              >
-                {copied ? <CheckIcon /> : <ClipboardIcon />}
-              </button>
+                onClick={onCopy}
+                variant={copied ? "secondary" : "vault"}
+                size="lg"
+              />
             )}
           </div>
 

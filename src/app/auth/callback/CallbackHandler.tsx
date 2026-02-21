@@ -58,7 +58,7 @@ function CallbackHandlerInner({ provider }: CallbackHandlerProps) {
 
     exchangeCode({ provider, code, redirectUri })
       .then(({ token, email }) => {
-        setUser({ token, email });
+        setUser({ token, email, emailVerified: true });
         router.replace("/dashboard");
       })
       .catch((err: unknown) => {

@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { randomBytes, pbkdf2Sync, sign as cryptoSign } from "node:crypto";
 import type { Id } from "./_generated/dataModel";
+import { sendVerificationEmail } from "./email";
 
 function generateSalt(): string {
   return randomBytes(32).toString("hex");
@@ -23,7 +24,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // Sign up: create a new user account and return a session token
 export const signUp = action({
   args: { email: v.string(), password: v.string(), originTripId: v.optional(v.string()) },
-  handler: async (ctx, args): Promise<{ token: string; email: string }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
     const existing = await ctx.runQuery(internal.auth._getUserByEmail, {
       email: args.email,
     });
@@ -45,6 +46,19 @@ export const signUp = action({
       expiresAt: Date.now() + SESSION_TTL_MS,
     });
 
+    // Send verification email
+    const verifyToken = generateToken();
+    await ctx.runMutation(internal.auth._createEmailVerificationToken, {
+      userId,
+      token: verifyToken,
+    });
+    try {
+      await sendVerificationEmail(args.email, verifyToken);
+    } catch (err) {
+      console.error("[Email] Failed to send verification email:", err);
+      // Non-fatal — user can resend from dashboard
+    }
+
     // Record sitter-to-creator conversion if originTripId is provided
     if (args.originTripId) {
       try {
@@ -57,14 +71,14 @@ export const signUp = action({
       }
     }
 
-    return { token, email: args.email };
+    return { token, email: args.email, emailVerified: false };
   },
 });
 
 // Sign in: validate credentials and return a session token
 export const signIn = action({
   args: { email: v.string(), password: v.string() },
-  handler: async (ctx, args): Promise<{ token: string; email: string }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
     const user = await ctx.runQuery(internal.auth._getUserByEmail, {
       email: args.email,
     });
@@ -83,7 +97,7 @@ export const signIn = action({
       expiresAt: Date.now() + SESSION_TTL_MS,
     });
 
-    return { token, email: user.email };
+    return { token, email: user.email, emailVerified: user.emailVerified ?? false };
   },
 });
 
@@ -95,7 +109,7 @@ export const exchangeOAuthCode = action({
     code: v.string(),
     redirectUri: v.string(),
   },
-  handler: async (ctx, args): Promise<{ token: string; email: string }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
     let email: string;
     let providerId: string;
 
@@ -164,13 +178,14 @@ export const exchangeOAuthCode = action({
         }
       }
 
+      await ctx.runMutation(internal.auth._markEmailVerified, { userId });
       const token = generateToken();
       await ctx.runMutation(internal.auth._createSession, {
         userId,
         token,
         expiresAt: Date.now() + SESSION_TTL_MS,
       });
-      return { token, email };
+      return { token, email, emailVerified: true };
     }
 
     if (args.provider === "apple") {
@@ -264,15 +279,43 @@ export const exchangeOAuthCode = action({
         }
       }
 
+      await ctx.runMutation(internal.auth._markEmailVerified, { userId });
       const token = generateToken();
       await ctx.runMutation(internal.auth._createSession, {
         userId,
         token,
         expiresAt: Date.now() + SESSION_TTL_MS,
       });
-      return { token, email };
+      return { token, email, emailVerified: true };
     }
 
     throw new Error("Unknown OAuth provider");
+  },
+});
+
+// Resend verification email for the currently signed-in user
+export const resendVerificationEmail = action({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, args): Promise<void> => {
+    const session = await ctx.runQuery(internal.auth._getSessionByToken, {
+      token: args.sessionToken,
+    });
+    if (!session || session.expiresAt < Date.now()) throw new Error("Unauthorized");
+    const user = await ctx.runQuery(internal.auth._getUserById, {
+      userId: session.userId,
+    });
+    if (!user) throw new Error("User not found");
+    if (user.emailVerified) return; // Already verified, no-op
+
+    // Delete stale tokens and create a fresh one
+    await ctx.runMutation(internal.auth._deleteUserVerificationTokens, {
+      userId: session.userId,
+    });
+    const token = generateToken();
+    await ctx.runMutation(internal.auth._createEmailVerificationToken, {
+      userId: session.userId,
+      token,
+    });
+    await sendVerificationEmail(user.email, token);
   },
 });

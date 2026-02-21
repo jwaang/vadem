@@ -26,7 +26,7 @@ export function LoginForm() {
 
     try {
       const result = await doSignIn({ email: email.trim(), password });
-      setUser({ token: result.token, email: result.email });
+      setUser({ token: result.token, email: result.email, emailVerified: result.emailVerified });
       router.push("/dashboard");
     } catch (err) {
       const raw = err instanceof Error ? err.message : "";

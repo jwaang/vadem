@@ -94,6 +94,9 @@ self.addEventListener("fetch", (event) => {
   // Never intercept OAuth callbacks — must hit the server directly
   if (url.pathname.startsWith("/auth/callback")) return;
 
+  // Never intercept email verification — token is one-time-use, must always hit the server
+  if (url.pathname.startsWith("/verify-email")) return;
+
   // ── Vault: never cache vault-related requests — security-critical ─────
   // Convex actions (POST) are already excluded by the method check above.
   // This guard handles any GET requests whose URL mentions vault endpoints,

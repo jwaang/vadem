@@ -31,6 +31,7 @@ export default defineSchema({
         // vaultAccess is always on; not user-configurable
       }),
     ), // Full notification preferences; defaults applied server-side when absent
+    emailVerified: v.optional(v.boolean()),
   })
     .index("by_email", ["email"])
     .index("by_google_id", ["googleId"])
@@ -41,6 +42,14 @@ export default defineSchema({
     token: v.string(),
     expiresAt: v.number(),
   }).index("by_token", ["token"]),
+
+  emailVerificationTokens: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(), // Date.now() + 24h
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"]),
 
   properties: defineTable({
     name: v.string(),

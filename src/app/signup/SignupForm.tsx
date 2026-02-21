@@ -78,7 +78,7 @@ function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
         password,
         ...(originTripId ? { originTripId } : {}),
       });
-      setUser({ token, email: userEmail });
+      setUser({ token, email: userEmail, emailVerified: false });
       router.push("/wizard");
     } catch (err) {
       if (err instanceof Error && err.message.includes("already exists")) {

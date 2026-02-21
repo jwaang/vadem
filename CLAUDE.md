@@ -23,7 +23,7 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 ### Stack
 - **Next.js 16** (App Router) + **React 19** + **TypeScript** (strict)
 - **Tailwind CSS v4** via `@tailwindcss/postcss` — theme mapped to CSS custom properties in `globals.css`
-- **Convex** for backend (real-time sync, auth) — schema not yet built out (`convex/schema.ts` is empty)
+- **Convex** for backend (real-time sync, custom auth via session tokens)
 - **pnpm** package manager
 
 ### Layout
@@ -32,10 +32,21 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 - `src/app/page.tsx` — Component showcase page (living docs for all UI components)
 - `src/components/ui/` — Reusable presentational components (Button, Input, Badge, TaskItem, PetProfileCard, etc.)
 - `src/components/layouts/` — `CreatorLayout` (desktop sidebar + mobile bottom nav) and `SitterLayout` (full-width mobile-first)
-- `convex/` — Backend functions and schema (mostly scaffolding currently)
+- `convex/` — Backend functions and schema (fully built out, ~15 tables)
 - `docs/prd.md` — Full product requirements document
 - `docs/vadem-design-system.md` — Design token specifications
 - `docs/vadem-tasks/` — Epic/story breakdowns as JSON
+
+### Route Structure
+Two distinct user modes with separate route trees:
+- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/wizard/[step]`, `/manual/[propertyId]`, `/report`
+- **Sitter routes** (unauthenticated, link-based): `/t/[tripId]` — password-gated today view with tabs (tasks, vault, activity); `/trip/[tripId]` — owner's authenticated view of the same trip
+
+### Auth Architecture
+Custom auth — NOT Convex Auth library. Sessions stored in the `sessions` table with a random token; the token is set as an HTTP-only cookie via Next.js server actions in `convex/authActions.ts`. OAuth (Google, Apple) goes through `/auth/callback`. Sitter access uses a separate `tripSessions` table with its own token, keyed to a share link + optional password.
+
+### Vault Encryption
+Vault item values are encrypted **client-side** with AES-256-GCM before being stored. `encryptedValue` in the DB is a base64 JSON blob `{ iv, ciphertext }`. Convex never receives or transmits plaintext — only labels are sent to clients. Sitters must verify via SMS OTP (Prelude) to unlock; successful verifications create a `vaultPins` record valid 24h.
 
 ### Path Alias
 `@/*` maps to `./src/*` (configured in `tsconfig.json`)

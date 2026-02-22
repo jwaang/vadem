@@ -206,7 +206,7 @@ function NotStartedState({ startDate, propertyName, petNames }: NotStartedStateP
 // ── Post-auth trip view — used after password verification ─────────────
 // Determines NOT_STARTED vs ACTIVE without checking password again.
 
-function PostAuthTripView({ tripId }: { tripId: Id<"trips"> }) {
+function PostAuthTripView({ tripId, shareLink }: { tripId: Id<"trips">; shareLink: string }) {
   const state = useQuery(api.trips.getSitterTripState, { tripId });
 
   if (state === undefined) {
@@ -232,7 +232,7 @@ function PostAuthTripView({ tripId }: { tripId: Id<"trips"> }) {
   }
 
   // ACTIVE
-  return <TodayPageInner tripId={tripId} />;
+  return <TodayPageInner tripId={tripId} shareLink={shareLink} />;
 }
 
 // ── Password-protected resolver ────────────────────────────────────────
@@ -265,7 +265,7 @@ function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResol
 
   // Valid stored session OR just verified via password form
   if (verified || sessionValid === true) {
-    return <PostAuthTripView tripId={tripId} />;
+    return <PostAuthTripView tripId={tripId} shareLink={shareLink} />;
   }
 
   // No valid session — show password gate
@@ -358,7 +358,7 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
   }
 
   // ACTIVE
-  return <TodayPageInner tripId={state.tripId} />;
+  return <TodayPageInner tripId={state.tripId} shareLink={shareLink} />;
 }
 
 // ── Client shell ──────────────────────────────────────────────────────

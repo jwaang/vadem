@@ -40,12 +40,12 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
       {/* OAuth sign-in buttons */}
       {hasOAuthProviders && (
         <>
-          <OAuthButtons className="flex flex-col gap-3" />
-          <div className="oauth-divider">or</div>
+          <OAuthButtons className="flex flex-col gap-3 mb-6" />
+          <div className="oauth-divider mb-6">or</div>
         </>
       )}
 
@@ -75,9 +75,8 @@ export function LoginForm() {
 
         {error && (
           <div
-            className="rounded-lg px-4 py-3 font-body text-sm text-danger"
-            style={{ backgroundColor: "var(--color-danger-light)" }}
             role="alert"
+            className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
           >
             {error}
           </div>
@@ -93,6 +92,6 @@ export function LoginForm() {
           {isSubmitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-    </div>
+    </>
   );
 }

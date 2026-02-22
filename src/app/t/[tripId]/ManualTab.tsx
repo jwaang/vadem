@@ -1,0 +1,648 @@
+"use client";
+
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { SearchBar } from "@/components/ui/SearchBar";
+import { SectionNav } from "@/components/ui/SectionNav";
+import { Badge } from "@/components/ui/Badge";
+import { PetProfileCard, type PetDetail } from "@/components/ui/PetProfileCard";
+import { LocationCard } from "@/components/ui/LocationCard";
+import { cn } from "@/lib/utils";
+import { formatPhone } from "@/lib/phone";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface SearchResult {
+  type: "instruction" | "section" | "pet" | "location_card";
+  id: string;
+  snippet: string;
+  sectionName: string;
+  sectionId?: string;
+  propertyId: string;
+}
+
+interface LocationCardData {
+  _id: string;
+  photoUrl?: string;
+  resolvedVideoUrl?: string | null;
+  caption: string;
+  roomTag?: string;
+}
+
+interface InstructionData {
+  _id: string;
+  text: string;
+  timeSlot?: string;
+  locationCards: LocationCardData[];
+}
+
+interface SectionData {
+  _id: string;
+  title: string;
+  icon?: string;
+  instructions: InstructionData[];
+}
+
+interface PetData {
+  _id: string;
+  name: string;
+  breed?: string;
+  age?: string;
+  feedingInstructions?: string;
+  vetName?: string;
+  vetPhone?: string;
+  personalityNotes?: string;
+  walkingRoutine?: string;
+  resolvedPhotoUrl: string | null;
+}
+
+interface ContactData {
+  _id: string;
+  name: string;
+  role: string;
+  phone: string;
+  notes?: string;
+}
+
+interface FullManualData {
+  property: { _id: string; name: string; address?: string };
+  sections: SectionData[];
+  pets: PetData[];
+  emergencyContacts: ContactData[];
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function buildPetDetails(pet: PetData): PetDetail[] {
+  const details: PetDetail[] = [];
+  if (pet.feedingInstructions) {
+    const val =
+      pet.feedingInstructions.length > 60
+        ? pet.feedingInstructions.slice(0, 57) + "…"
+        : pet.feedingInstructions;
+    details.push({ emoji: "🍽️", label: "Feeding", value: val });
+  }
+  if (pet.vetName) {
+    details.push({
+      emoji: "🏥",
+      label: "Vet",
+      value: pet.vetName,
+      ...(pet.vetPhone ? { phone: formatPhone(pet.vetPhone) } : {}),
+    });
+  }
+  if (pet.walkingRoutine) {
+    const val =
+      pet.walkingRoutine.length > 60
+        ? pet.walkingRoutine.slice(0, 57) + "…"
+        : pet.walkingRoutine;
+    details.push({ emoji: "🚶", label: "Walks", value: val });
+  }
+  return details;
+}
+
+// ── Search result row ─────────────────────────────────────────────────────────
+
+interface ResultRowProps {
+  result: SearchResult;
+  query: string;
+  onClick: () => void;
+}
+
+function ResultRow({ result, query, onClick }: ResultRowProps) {
+  function highlightSnippet(text: string): React.ReactNode {
+    if (!query.trim()) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase().trim());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <span className="font-medium text-text-primary">
+          {text.slice(idx, idx + query.trim().length)}
+        </span>
+        {text.slice(idx + query.trim().length)}
+      </>
+    );
+  }
+
+  const typeLabel: Record<SearchResult["type"], string> = {
+    instruction: "Instruction",
+    section: "Section",
+    pet: "Pet",
+    location_card: "Photo",
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left bg-bg-raised border border-border-default rounded-lg p-4 hover:bg-bg-sunken transition-[background-color,box-shadow] duration-150 ease-out active:shadow-inner cursor-pointer"
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-body text-sm text-text-muted mb-1">
+            {result.sectionName}
+            <span className="mx-1.5 text-border-default">·</span>
+            <span className="capitalize">{typeLabel[result.type]}</span>
+          </p>
+          <p className="font-body text-sm text-text-secondary leading-relaxed">
+            {highlightSnippet(result.snippet)}
+          </p>
+        </div>
+        <svg
+          className="shrink-0 text-text-muted mt-0.5"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M6 3l5 5-5 5" />
+        </svg>
+      </div>
+    </button>
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({ query }: { query: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-12 h-12 rounded-full bg-bg-sunken flex items-center justify-center mb-4">
+        <svg
+          className="text-text-muted"
+          width="22"
+          height="22"
+          viewBox="0 0 22 22"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="10" cy="10" r="7" />
+          <line x1="15" y1="15" x2="20" y2="20" />
+        </svg>
+      </div>
+      <p className="font-body text-base text-text-secondary">
+        No results for{" "}
+        <span className="font-medium text-text-primary">
+          &ldquo;{query}&rdquo;
+        </span>
+      </p>
+      <p className="font-body text-sm text-text-muted mt-1">
+        Try a different word or phrase
+      </p>
+    </div>
+  );
+}
+
+// ── ManualTab ─────────────────────────────────────────────────────────────────
+
+export interface ManualTabProps {
+  propertyId: Id<"properties">;
+}
+
+export function ManualTab({ propertyId }: ManualTabProps) {
+  // ── Data ─────────────────────────────────────────────────────────────────
+  const fullManual = useQuery(
+    api.manualView.getFullManual,
+    { propertyId },
+  ) as FullManualData | null | undefined;
+
+  // ── Search state ──────────────────────────────────────────────────────────
+  const [query, setQuery] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") ?? "";
+  });
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [highlightedInstruction, setHighlightedInstruction] = useState<
+    string | null
+  >(null);
+
+  // ── Debounce query ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Sync query to URL (replaceState — no history entry)
+  const prevQueryRef = useRef(query);
+  useEffect(() => {
+    if (query === prevQueryRef.current) return;
+    prevQueryRef.current = query;
+    const params = new URLSearchParams(window.location.search);
+    if (query) {
+      params.set("q", query);
+    } else {
+      params.delete("q");
+    }
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      qs ? `?${qs}` : window.location.pathname,
+    );
+  }, [query]);
+
+  // Restore query on browser back/forward
+  useEffect(() => {
+    function onPopState() {
+      const restored =
+        new URLSearchParams(window.location.search).get("q") ?? "";
+      setQuery(restored);
+      prevQueryRef.current = restored;
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Scroll highlighted instruction into view after search cleared
+  useEffect(() => {
+    if (!highlightedInstruction) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(
+        `instruction-${highlightedInstruction}`,
+      );
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const clear = setTimeout(() => setHighlightedInstruction(null), 2500);
+      return () => clearTimeout(clear);
+    }, 80);
+    return () => clearTimeout(t);
+  }, [highlightedInstruction]);
+
+  // ── Convex search ─────────────────────────────────────────────────────────
+  const convexResults = useQuery(
+    api.search.searchManual,
+    debouncedQuery.trim()
+      ? { propertyId, query: debouncedQuery.trim() }
+      : "skip",
+  );
+
+  // ── Client-side fallback search (uses fullManual cache) ───────────────────
+  const clientResults = useMemo<SearchResult[]>(() => {
+    if (!debouncedQuery.trim() || convexResults !== undefined || !fullManual)
+      return [];
+    const q = debouncedQuery.toLowerCase().trim();
+    const out: SearchResult[] = [];
+    for (const section of fullManual.sections) {
+      if (section.title.toLowerCase().includes(q)) {
+        out.push({
+          type: "section",
+          id: section._id,
+          snippet: section.title,
+          sectionName: section.title,
+          sectionId: section._id,
+          propertyId: propertyId as string,
+        });
+      }
+      for (const inst of section.instructions) {
+        if (inst.text.toLowerCase().includes(q)) {
+          const snippet =
+            inst.text.length > 120 ? inst.text.slice(0, 120) + "…" : inst.text;
+          out.push({
+            type: "instruction",
+            id: inst._id,
+            snippet,
+            sectionName: section.title,
+            sectionId: section._id,
+            propertyId: propertyId as string,
+          });
+        }
+      }
+    }
+    for (const pet of fullManual.pets) {
+      if (pet.name.toLowerCase().includes(q)) {
+        out.push({
+          type: "pet",
+          id: pet._id,
+          snippet: pet.name,
+          sectionName: "Pets",
+          propertyId: propertyId as string,
+        });
+      }
+    }
+    return out;
+  }, [debouncedQuery, convexResults, fullManual, propertyId]);
+
+  const results: SearchResult[] | null = debouncedQuery.trim()
+    ? (convexResults ?? clientResults)
+    : null;
+  const isSearchLoading =
+    !!debouncedQuery.trim() &&
+    convexResults === undefined &&
+    clientResults.length === 0;
+
+  // ── Section nav ───────────────────────────────────────────────────────────
+  const navSections = useMemo(() => {
+    if (!fullManual) return [];
+    const secs = fullManual.sections.map((s) => ({
+      id: s._id,
+      emoji: s.icon ?? "📋",
+      label: s.title,
+    }));
+    if (fullManual.pets.length > 0) {
+      secs.push({ id: "pets", emoji: "🐾", label: "Pets" });
+    }
+    if (fullManual.emergencyContacts.length > 0) {
+      secs.push({ id: "contacts", emoji: "📞", label: "Contacts" });
+    }
+    return secs;
+  }, [fullManual]);
+
+  const handleSectionScroll = useCallback((id: string) => {
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  // ── Search result click ───────────────────────────────────────────────────
+  function handleResultClick(result: SearchResult) {
+    // Clear search (add history entry so browser back works)
+    const params = new URLSearchParams(window.location.search);
+    params.delete("q");
+    const qs = params.toString();
+    window.history.pushState(
+      null,
+      "",
+      qs ? `?${qs}` : window.location.pathname,
+    );
+    setQuery("");
+    prevQueryRef.current = "";
+    setDebouncedQuery("");
+
+    if (result.type === "instruction") {
+      setHighlightedInstruction(result.id);
+    } else {
+      let targetId: string;
+      if (result.type === "pet") {
+        targetId = "pets";
+      } else if (result.type === "section") {
+        targetId = result.id;
+      } else {
+        targetId = result.sectionId ?? result.id;
+      }
+      setTimeout(() => {
+        document
+          .getElementById(targetId)
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  }
+
+  // ── Not found state ───────────────────────────────────────────────────────
+  if (fullManual === null) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <p className="font-body text-lg text-text-secondary">
+          Manual not found
+        </p>
+        <p className="font-body text-sm text-text-muted mt-2">
+          This property may not have a manual yet.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Property header */}
+      <div className="mb-5">
+        <p className="font-body text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+          Home Manual
+        </p>
+        <h1 className="font-display text-2xl text-text-primary">
+          {fullManual ? fullManual.property.name : "Loading\u2026"}
+        </h1>
+      </div>
+
+      {/* Search bar */}
+      <SearchBar
+        placeholder="Search manual\u2026"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        aria-label="Search manual"
+      />
+
+      {/* Search results */}
+      {debouncedQuery.trim() ? (
+        <div className="mt-4">
+          {isSearchLoading || !results ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className="h-16 bg-bg-sunken rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          ) : results.length === 0 ? (
+            <EmptyState query={debouncedQuery} />
+          ) : (
+            <div className="space-y-2">
+              {results.map((result) => (
+                <ResultRow
+                  key={`${result.type}-${result.id}`}
+                  result={result}
+                  query={debouncedQuery}
+                  onClick={() => handleResultClick(result)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Section navigation — sticky so pills stay visible while scrolling */}
+          {navSections.length > 0 && (
+            <div className="sticky top-0 z-10 bg-bg pt-1 pb-2 -mx-4 px-4 md:-mx-6 md:px-6 mt-5">
+              <SectionNav
+                sections={navSections}
+                onSectionChange={handleSectionScroll}
+              />
+            </div>
+          )}
+
+          {/* Loading skeleton */}
+          {!fullManual && (
+            <div className="mt-5 space-y-2">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className="h-10 bg-bg-sunken rounded-pill animate-pulse"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Full manual browse — all sections visible, scroll-to on nav tap */}
+          {fullManual && (
+            <div className="flex flex-col gap-8 mt-4 pb-4">
+              {/* Manual sections */}
+              {fullManual.sections.map((section) => (
+                <div
+                  key={section._id}
+                  id={section._id}
+                  className="scroll-mt-24"
+                >
+                  <h2 className="font-body text-base font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                    {section.icon && (
+                      <span aria-hidden="true">{section.icon}</span>
+                    )}
+                    {section.title}
+                  </h2>
+
+                  {section.instructions.length === 0 ? (
+                    <p className="font-body text-sm text-text-muted text-center py-6">
+                      No instructions yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {section.instructions.map((instruction) => {
+                        const isHighlighted =
+                          instruction._id === highlightedInstruction;
+                        return (
+                          <div
+                            key={instruction._id}
+                            id={`instruction-${instruction._id}`}
+                          >
+                            {/* Instruction card */}
+                            <div
+                              className={cn(
+                                "bg-bg-raised rounded-lg border p-4 transition-[background-color,box-shadow] duration-250 ease-out",
+                                isHighlighted
+                                  ? "border-primary shadow-[0_0_0_3px_var(--color-primary-subtle)] bg-primary-subtle"
+                                  : "border-border-default",
+                              )}
+                            >
+                              <p className="font-body text-base text-text-primary leading-relaxed">
+                                {instruction.text}
+                              </p>
+                              {instruction.timeSlot &&
+                                instruction.timeSlot !== "anytime" && (
+                                  <div className="mt-2">
+                                    <Badge variant="time">
+                                      {instruction.timeSlot
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                        instruction.timeSlot.slice(1)}
+                                    </Badge>
+                                  </div>
+                                )}
+                            </div>
+
+                            {/* Inline location cards — horizontal scroll */}
+                            {instruction.locationCards.length > 0 && (
+                              <div className="flex gap-4 overflow-x-auto pb-2 mt-3 -mx-4 px-4 [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
+                                {instruction.locationCards.map((card) => (
+                                  <LocationCard
+                                    key={card._id}
+                                    src={card.photoUrl}
+                                    caption={card.caption}
+                                    room={card.roomTag}
+                                    tilt="neutral"
+                                    className="shrink-0 w-[200px]"
+                                    videoSrc={card.resolvedVideoUrl ?? undefined}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Pets section */}
+              {fullManual.pets.length > 0 && (
+                <div id="pets" className="scroll-mt-24">
+                  <h2 className="font-body text-base font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                    <span aria-hidden="true">🐾</span>
+                    Pets
+                  </h2>
+                  <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
+                    {fullManual.pets.map((pet) => (
+                      <PetProfileCard
+                        key={pet._id}
+                        src={pet.resolvedPhotoUrl ?? undefined}
+                        name={pet.name}
+                        breed={pet.breed ?? ""}
+                        age={pet.age ?? ""}
+                        details={buildPetDetails(pet)}
+                        personalityNote={pet.personalityNotes}
+                        className="shrink-0 w-[280px]"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Emergency contacts section */}
+              {fullManual.emergencyContacts.length > 0 && (
+                <div id="contacts" className="scroll-mt-24">
+                  <h2 className="font-body text-base font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                    <span aria-hidden="true">📞</span>
+                    Emergency Contacts
+                  </h2>
+                  <div className="space-y-2">
+                    {fullManual.emergencyContacts.map((contact) => (
+                      <div
+                        key={contact._id}
+                        className="bg-bg-raised rounded-lg border border-border-default p-4"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="font-body text-sm font-semibold text-text-primary">
+                              {contact.name}
+                            </p>
+                            <p className="font-body text-xs text-text-muted mt-0.5">
+                              {contact.role}
+                            </p>
+                          </div>
+                          <a
+                            href={`tel:${contact.phone}`}
+                            className="font-body text-sm font-semibold text-secondary no-underline hover:text-secondary-hover transition-colors duration-150 shrink-0"
+                          >
+                            {formatPhone(contact.phone)}
+                          </a>
+                        </div>
+                        {contact.notes && (
+                          <p className="font-body text-sm text-text-secondary mt-2">
+                            {contact.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty manual state */}
+              {fullManual.sections.length === 0 &&
+                fullManual.pets.length === 0 &&
+                fullManual.emergencyContacts.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="font-body text-base text-text-secondary">
+                      This manual is empty.
+                    </p>
+                    <p className="font-body text-sm text-text-muted mt-1">
+                      Ask the homeowner to add content to their manual.
+                    </p>
+                  </div>
+                )}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}

@@ -448,8 +448,8 @@ export function UtensilsIcon({ size = 20, className, ...props }: IconProps) {
 export function PillIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} {...props}>
-      <path d="m10.5 1.5 3 3L4 14a2.83 2.83 0 1 1-4-4l9.5-8.5Z" transform="translate(5 3) scale(1.1)" />
-      <line x1="12" y1="12" x2="14.5" y2="9.5" />
+      <rect x="3" y="8" width="18" height="8" rx="4" />
+      <line x1="12" y1="8" x2="12" y2="16" />
     </svg>
   );
 }
@@ -457,12 +457,7 @@ export function PillIcon({ size = 20, className, ...props }: IconProps) {
 export function PawIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} {...props}>
-      <circle cx="11" cy="4" r="2" />
-      <circle cx="18" cy="8" r="2" />
-      <circle cx="4" cy="8" r="2" />
-      <circle cx="7" cy="12" r="2" />
-      <circle cx="15" cy="12" r="2" />
-      <path d="M8 14a4 4 0 0 0-1 3c0 2 2 4 4 4s4-2 4-4a4 4 0 0 0-1-3" />
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
 }
@@ -470,9 +465,9 @@ export function PawIcon({ size = 20, className, ...props }: IconProps) {
 export function StethoscopeIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} {...props}>
-      <path d="M4.8 2.3A8 8 0 1 0 16 14a2 2 0 1 0 4 0 8 8 0 0 0-4-6.9" />
-      <path d="M8 2v4" />
-      <path d="M12 2v4" />
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="16" />
+      <line x1="8" y1="12" x2="16" y2="12" />
     </svg>
   );
 }
@@ -480,9 +475,8 @@ export function StethoscopeIcon({ size = 20, className, ...props }: IconProps) {
 export function WalkingIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} {...props}>
-      <circle cx="14" cy="4" r="2" />
-      <path d="M10 8l-2 8 4 2 1 4" />
-      <path d="M12 8l4 2-1 8" />
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
     </svg>
   );
 }

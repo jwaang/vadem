@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -17,6 +18,7 @@ import { LocationCard } from "@/components/ui/LocationCard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { VaultTab } from "./VaultTab";
+import { ManualTab } from "./ManualTab";
 import { formatPhone } from "@/lib/phone";
 import {
   saveTripData,
@@ -694,8 +696,22 @@ function SitterConversionBanner({ tripId }: { tripId: string }) {
 
 // ── Main component ────────────────────────────────────────────────────
 
-export default function TodayPageInner({ tripId }: { tripId: string }) {
-  const [activeTab, setActiveTab] = useState<TabId>("today");
+export default function TodayPageInner({ tripId, shareLink }: { tripId: string; shareLink: string }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab: TabId = (() => {
+    const tab = searchParams.get("tab");
+    if (tab === "manual" || tab === "vault" || tab === "contacts") return tab;
+    return "today";
+  })();
+  const setActiveTab = useCallback((tab: TabId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "today") params.delete("tab");
+    else params.set("tab", tab);
+    if (tab !== "manual") params.delete("q");
+    const qs = params.toString();
+    router.replace(`/t/${shareLink}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [searchParams, router, shareLink]);
 
   // Compute today's date as YYYY-MM-DD in local timezone
   const today = new Date().toLocaleDateString("en-CA");
@@ -1402,14 +1418,8 @@ export default function TodayPageInner({ tripId }: { tripId: string }) {
       )}
 
       {/* ── Manual tab ─────────────────────────────────────────────── */}
-      {activeTab === "manual" && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <span className="text-3xl" aria-hidden="true">🚧</span>
-          <p className="font-body text-sm font-semibold text-text-primary">Coming soon</p>
-          <p className="font-body text-xs text-text-muted max-w-[220px]">
-            This section is being built. Check back soon.
-          </p>
-        </div>
+      {activeTab === "manual" && property && (
+        <ManualTab propertyId={property._id} />
       )}
     </SitterLayout>
   );

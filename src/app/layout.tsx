@@ -44,7 +44,8 @@ export const metadata: Metadata = {
     title: "Vadem",
   },
   icons: {
-    apple: "/icons/icon-192x192.png",
+    icon: "/icons/icon-192x192.png",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "Vadem — Pet & House Sitter Care Manuals",

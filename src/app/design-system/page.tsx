@@ -224,6 +224,51 @@ export default function DesignSystemPage() {
         </div>
       </section>
 
+      {/* ── App Icon (1024×1024) ── */}
+      <section className="mb-12">
+        <h2 className="font-display text-2xl mb-2">App Icon</h2>
+        <p className="text-sm text-text-muted mb-4">
+          1024&times;1024px — screenshot and crop for app icon
+        </p>
+        <div className="overflow-auto border border-border-default rounded-lg inline-block">
+          <div
+            style={{
+              width: 1024,
+              height: 1024,
+              background: "linear-gradient(145deg, #3D2418 0%, #8B4A2B 35%, #C2704A 65%, #D4943A 100%)",
+            }}
+            className="relative overflow-hidden shrink-0 flex items-center justify-center"
+          >
+            {/* Soft glow */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: -100,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 700,
+                height: 700,
+                borderRadius: "50%",
+                background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)",
+              }}
+            />
+            {/* Grain */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")`,
+              }}
+            />
+            <span
+              className="font-display text-white relative"
+              style={{ fontSize: 480, lineHeight: 1 }}
+            >
+              V
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* ── Layout Shells ── */}
       <section className="mb-8">
         <h2 className="font-display text-2xl mb-4">Layout Shells</h2>

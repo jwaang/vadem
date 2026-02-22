@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
 function buildRedirectUrl(request: NextRequest, params: URLSearchParams): string {
-  // Use X-Forwarded-Host / Host header to build a reliable origin on Vercel,
-  // since request.url can sometimes contain internal routing URLs.
-  const host =
+  // x-forwarded-* headers can contain comma-separated values from multiple
+  // proxies. Take only the first (leftmost = original client-facing) value.
+  const rawHost =
     request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto =
-    request.headers.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : new URL(request.url).origin;
+  const rawProto = request.headers.get("x-forwarded-proto");
 
+  const host = rawHost?.split(",")[0]?.trim();
+  const proto = rawProto?.split(",")[0]?.trim() || "https";
+
+  const origin = host ? `${proto}://${host}` : new URL(request.url).origin;
   const qs = params.toString();
   return `${origin}/auth/callback/apple/complete${qs ? `?${qs}` : ""}`;
 }

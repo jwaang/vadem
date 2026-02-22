@@ -2,9 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckIcon,
@@ -671,23 +668,10 @@ function Footer() {
    ────────────────────────────────────────────── */
 
 function LocationCardMock() {
-  const photoUrl = useQuery(api.storage.getUrl, {
-    storageId:
-      "kg22v326xffeg1kpd10c5dzb9d81n39b" as Id<"_storage">,
-  });
-
   return (
     <div className="bg-bg-raised rounded-lg p-2 shadow-polaroid w-64 -rotate-1">
       <div className="aspect-[4/3] rounded-md overflow-hidden bg-primary-light mb-3">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt="Pills on bottom shelf behind cereal"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary-light to-accent-light" />
-        )}
+        <div className="w-full h-full bg-gradient-to-br from-primary-light to-accent-light" />
       </div>
       <p className="font-handwritten text-xl text-text-primary px-1 mb-2">
         Bottom shelf, next to the cereal

@@ -690,8 +690,7 @@ function Footer() {
           </nav>
         </div>
         <p className="font-body text-sm text-text-muted text-center sm:text-left">
-          &copy; {new Date().getFullYear()} Vadem. Made with care for people who
-          care.
+          &copy; 2026 Vadem. Made with care for people who care.
         </p>
       </div>
     </footer>

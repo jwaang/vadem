@@ -2,9 +2,9 @@
 
 // ── Cache bucket names ─────────────────────────────────────────────────────
 // Bump the version suffix to force a full cache purge on deploy.
-const APP_SHELL_CACHE = "vadem-app-shell-v1";
-const CONTENT_CACHE = "vadem-content-v1";
-const PHOTOS_CACHE = "vadem-photos-v1";
+const APP_SHELL_CACHE = "vadem-app-shell-v2";
+const CONTENT_CACHE = "vadem-content-v2";
+const PHOTOS_CACHE = "vadem-photos-v2";
 
 // Key used to persist the current manualVersion inside CONTENT_CACHE
 const VERSION_META_KEY = "__manual_version__";
@@ -169,16 +169,18 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful HTML/JSON responses for offline fallback
+        // Cache successful HTML/JSON responses for offline fallback.
+        // Clone BEFORE the body is consumed by the browser.
         if (
           response.ok &&
           (response.headers.get("content-type") ?? "").match(
             /text\/html|application\/json/,
           )
         ) {
+          const cloned = response.clone();
           caches
             .open(CONTENT_CACHE)
-            .then((cache) => cache.put(event.request, response.clone()));
+            .then((cache) => cache.put(event.request, cloned));
         }
         return response;
       })

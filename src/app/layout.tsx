@@ -31,6 +31,7 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vadem.app"),
+  applicationName: "Vadem",
   title: {
     default: "Vadem — Pet & House Sitter Care Manuals",
     template: "%s | Vadem",

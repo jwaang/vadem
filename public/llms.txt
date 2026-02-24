@@ -1,0 +1,80 @@
+# Vadem
+
+> Vadem is a free web app that lets pet owners and homeowners create care manuals for their sitters and share them via a single link. No app download needed for sitters.
+
+## About
+
+Vadem replaces scattered text threads, Google Docs, and sticky notes with a single, structured care manual your sitter opens in any browser. You build it once and reuse it every time you travel.
+
+The target user is a pet-owning homeowner who travels 2-6 times per year and leaves their pets or home with a friend, family member, or hired sitter. Vadem solves the recurring problem of sitters not knowing where things are, missing feeding times, or not having access to important codes and contacts.
+
+Vadem is free during early access. It works on any device with a browser. Sitters never need to create an account.
+
+Website: https://vadem.app
+
+## How It Works
+
+1. **Create your manual**: Add your property details, pet profiles, care instructions, location photos, emergency contacts, and secure codes through a guided wizard.
+2. **Set up a trip**: Add trip dates, any trip-specific instructions (temporary medication changes, scheduled visitors, one-time tasks), and register your sitter by name and phone number.
+3. **Share one link**: Send the link via text, email, or any messaging app. Your sitter opens it and sees a "today view" with only what's relevant right now.
+
+The manual is permanent and reusable. Each trip adds a temporary overlay for anything that's different that week, which auto-expires when the trip ends.
+
+## Features
+
+**Pet Profiles**
+Rich, structured profiles for each pet including photo, breed, age, feeding instructions (what, how much, when, where food is stored), medications with dosage and schedule, vet info (tap-to-call), personality notes, behavioral quirks, walking routine, allergies, and comfort items. Each field can have an attached location photo showing where things are.
+
+**Daily Task Checklists**
+Time-slotted tasks for morning, afternoon, evening, and any-time. Sitters check off tasks as they complete them. Owners see a real-time activity feed with timestamps. Optional photo proof of task completion for accountability.
+
+**Location Cards**
+Photo cards attached to any instruction showing exactly where things are. Polaroid-style with short captions. Solves the "where is the dog food?" problem. Examples: photo of the pill bottle on the kitchen counter, photo of the circuit breaker in the basement, photo of the spare key under the fake rock.
+
+**Encrypted Vault**
+Secure storage for sensitive credentials: door codes, alarm codes, WiFi passwords, gate codes, garage codes, safe combinations. Encrypted end-to-end on the user's device with AES-256-GCM before being stored. Sitters verify via SMS to decrypt. Access auto-expires when the trip ends. Owners are notified with a timestamp every time a code is accessed. One-click revoke at any time.
+
+**Emergency Contacts**
+Always one tap away. Owner phone, partner, veterinarian, emergency neighbor, poison control (pre-filled with ASPCA number), and local non-emergency police. Tap-to-call on mobile.
+
+**Trip Overlays**
+Temporary trip-specific instructions layered on top of the permanent manual. Unusual feeding schedules, medication changes, scheduled visitors, temporary house rules, one-time tasks. Visually distinct so the sitter knows what's specific to this trip. Auto-expires on the trip end date.
+
+**Offline Access**
+After the first visit, everything (instructions, photos, pet profiles, contacts) is cached for offline access via service worker. Only vault codes require an internet connection for security.
+
+**Real-Time Activity Feed**
+Owners see when tasks are completed, when vault codes are accessed, and when proof photos are uploaded. Push notifications configurable per task type.
+
+## Frequently Asked Questions
+
+**Does my sitter need to download an app?**
+No. They open the link in any browser. It works offline after the first visit.
+
+**Is Vadem free?**
+Yes. Vadem is completely free during early access.
+
+**How are my door codes and passwords protected?**
+Vault items are encrypted end-to-end on your device. Your sitter must verify their phone number via SMS to view them. Access auto-expires when your trip ends, and you're notified every time a code is accessed.
+
+**Can I reuse my manual for multiple trips?**
+Yes. You build the manual once and reuse it every time you travel. Each trip gets its own overlay for anything different that week.
+
+**What if my sitter doesn't have cell service at my house?**
+After the first visit, everything is cached offline. Only vault codes require an internet connection for security.
+
+**Who can see my information?**
+Only people with your unique link can view instructions. Vault items require phone verification. You can regenerate the link at any time to revoke all access.
+
+## Guides
+
+- [Pet Sitter Checklist](https://vadem.app/guides/pet-sitter-checklist): Complete checklist of everything your pet sitter needs to know, organized by category
+- [House Sitter Instructions Template](https://vadem.app/guides/house-sitter-instructions-template): Room-by-room template for writing clear house sitting instructions
+- [What to Leave for Your Pet Sitter](https://vadem.app/guides/what-to-leave-for-pet-sitter): Supplies, documents, and information to prepare before you travel
+- [House Sitter Welcome Pack](https://vadem.app/guides/house-sitter-welcome-pack): How to assemble a thoughtful welcome pack for your house sitter
+- [Pet Medication Instructions](https://vadem.app/guides/pet-medication-instructions): How to write medication instructions your sitter can follow confidently
+
+## Legal
+
+- [Privacy Policy](https://vadem.app/privacy): How Vadem collects, uses, and protects your data
+- [Terms of Service](https://vadem.app/terms): Terms governing use of the Vadem service

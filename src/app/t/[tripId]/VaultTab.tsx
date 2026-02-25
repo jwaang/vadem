@@ -148,6 +148,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   const [decryptedItems, setDecryptedItems] = useState<DecryptedVaultItem[]>([]);
   const [accessDeniedReason, setAccessDeniedReason] = useState<AccessDeniedReason | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [consented, setConsented] = useState(false);
 
   // Upfront trip status check — if the trip is not active we show access denied
   // immediately without requiring the user to attempt verification.
@@ -512,13 +513,14 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-col items-center text-center gap-3 pt-2">
+        <p className="font-display text-lg text-text-primary tracking-tight">Vadem</p>
         <VaultLockIcon />
         <div className="flex flex-col gap-1">
           <h2 className="font-display text-2xl text-text-primary">Vault</h2>
           <p className="font-body text-sm text-text-secondary max-w-[280px]">
             {phase === "pin_entry"
               ? `Code sent. Enter the 6-digit code we texted you.`
-              : "Enter your phone number to receive a verification code."}
+              : "Enter your phone number to receive a one-time SMS verification code."}
           </p>
         </div>
       </div>
@@ -542,10 +544,32 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               disabled={isSending}
               error={error ?? undefined}
             />
+            {/* SMS consent */}
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consented}
+                onChange={(e) => setConsented(e.target.checked)}
+                className="mt-0.5 accent-vault shrink-0"
+              />
+              <span className="font-body text-xs text-text-muted leading-relaxed">
+                By checking this box, you agree to receive a one-time SMS
+                verification code from Vadem. Message &amp; data rates may
+                apply.{" "}
+                <a href="/privacy" target="_blank" className="underline text-vault">
+                  Privacy Policy
+                </a>{" "}
+                &amp;{" "}
+                <a href="/terms" target="_blank" className="underline text-vault">
+                  Terms of Service
+                </a>
+                .
+              </span>
+            </label>
             <Button
               variant="vault"
               size="lg"
-              disabled={isSending || !phone.trim()}
+              disabled={isSending || !phone.trim() || !consented}
               onClick={handleSendPin}
               className="w-full"
             >
@@ -557,6 +581,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               onClick={() => {
                 setPhone("");
                 setError(null);
+                setConsented(false);
                 setPhase("initial");
               }}
             >

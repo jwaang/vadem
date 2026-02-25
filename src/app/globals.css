@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Force light mode — Vadem has no dark theme.
+   Prevents Brave / Chrome from auto-darkening when OS is in dark mode. */
+html {
+  color-scheme: light;
+}
+
 /* ============================================================
    Vadem Design System — Tailwind v4 Theme
    Aesthetic: Warm Editorial

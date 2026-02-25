@@ -38,7 +38,6 @@ export const metadata: Metadata = {
   },
   description:
     "Create a care manual for your pet and house sitter. Share one link with daily task checklists, location photos, secure codes, and real-time updates. No app download needed.",
-  colorScheme: "only light",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -80,6 +79,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#C2704A",
+  colorScheme: "only light",
 };
 
 export default function RootLayout({

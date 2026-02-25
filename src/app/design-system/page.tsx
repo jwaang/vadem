@@ -191,6 +191,14 @@ export default function DesignSystemPage() {
               >
                 Pet &amp; House Sitter Care Manuals
               </span>
+
+              {/* Tagline */}
+              <span
+                className="font-body text-center mt-4"
+                style={{ fontSize: 30, color: "rgba(255,255,255,0.50)" }}
+              >
+                One link with everything your sitter needs
+              </span>
             </div>
           </div>
         </div>

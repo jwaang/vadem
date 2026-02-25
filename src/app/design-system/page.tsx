@@ -165,21 +165,21 @@ export default function DesignSystemPage() {
             />
 
             {/* Main content — centered */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-20">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-16">
               {/* Wordmark */}
               <span
                 className="font-display leading-none tracking-tight text-white"
-                style={{ fontSize: 104 }}
+                style={{ fontSize: 180 }}
               >
                 Vadem
               </span>
 
               {/* Divider rule */}
               <div
-                className="rounded-full mt-6 mb-6"
+                className="rounded-full mt-8 mb-8"
                 style={{
-                  width: 56,
-                  height: 2,
+                  width: 72,
+                  height: 3,
                   background: "rgba(255,255,255,0.35)",
                 }}
               />
@@ -187,37 +187,9 @@ export default function DesignSystemPage() {
               {/* Subtext */}
               <span
                 className="font-body text-center leading-snug"
-                style={{ fontSize: 30, color: "rgba(255,255,255,0.85)" }}
+                style={{ fontSize: 52, color: "rgba(255,255,255,0.85)" }}
               >
                 Pet &amp; House Sitter Care Manuals
-              </span>
-
-              {/* Tagline */}
-              <span
-                className="font-body text-center mt-3"
-                style={{ fontSize: 18, color: "rgba(255,255,255,0.50)" }}
-              >
-                One link with everything your sitter needs
-              </span>
-            </div>
-
-            {/* Bottom bar — domain + badge */}
-            <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-14 py-5">
-              <span
-                className="font-body tracking-wide"
-                style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}
-              >
-                vadem.app
-              </span>
-              <span
-                className="font-body text-xs font-semibold px-3 py-1 rounded-pill"
-                style={{
-                  color: "rgba(255,255,255,0.75)",
-                  background: "rgba(255,255,255,0.10)",
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                Free during early access
               </span>
             </div>
           </div>
@@ -261,7 +233,7 @@ export default function DesignSystemPage() {
             />
             <span
               className="font-display text-white relative"
-              style={{ fontSize: 480, lineHeight: 1 }}
+              style={{ fontSize: 880, lineHeight: 1 }}
             >
               V
             </span>

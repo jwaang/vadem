@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { PetProfileCard } from "@/components/ui/PetProfileCard";
 import { validatePhone, normalizePhone, formatPhone, formatPhoneInput } from "@/lib/phone";
-import { UploadIcon, TrashIcon, PlusIcon, PencilIcon, XIcon } from "@/components/ui/icons";
+import { UploadIcon, TrashIcon, PlusIcon, PencilIcon, XIcon, ChevronDownIcon } from "@/components/ui/icons";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ function petToFormValues(pet: Doc<"pets">): PetFormValues {
 function buildPetDetails(pet: Doc<"pets">) {
   const details: Array<{ emoji: string; label: string; value: string; phone?: string }> = [];
   if (pet.feedingInstructions) {
-    details.push({ emoji: "\uD83C\uDF7D\uFE0F", label: "Feeding", value: truncate(pet.feedingInstructions) });
+    details.push({ emoji: "\uD83D\uDCDD", label: "Care notes", value: truncate(pet.feedingInstructions) });
   }
   if (pet.vetName) {
     details.push({
@@ -267,6 +267,20 @@ function PetForm({
   const [keptPhotoIds, setKeptPhotoIds] = useState<Id<"_storage">[]>(existingPhotoIds);
   const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
+  const [showMoreDetails, setShowMoreDetails] = useState(() => {
+    if (!initialValues) return false;
+    return !!(
+      initialValues.personalityNotes ||
+      initialValues.medicalConditions ||
+      initialValues.medications.length > 0 ||
+      initialValues.behavioralQuirks ||
+      initialValues.allergies ||
+      initialValues.microchipNumber ||
+      initialValues.walkingRoutine ||
+      initialValues.groomingNeeds ||
+      initialValues.comfortItems
+    );
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editingMedIdx, setEditingMedIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -500,8 +514,8 @@ function PetForm({
         />
 
         <Textarea
-          label="Feeding instructions"
-          placeholder="e.g. 1 cup dry food twice daily — 7am and 6pm. Fresh water always."
+          label="General care notes"
+          placeholder="e.g. Doesn't like strangers, needs slow introductions"
           value={formData.feedingInstructions}
           onChange={set("feedingInstructions")}
           error={errors.feedingInstructions}
@@ -527,155 +541,169 @@ function PetForm({
           />
         </div>
 
-        {/* All optional fields — always visible (no toggle) */}
-        <Textarea
-          label="Personality notes"
-          placeholder="e.g. Very gentle, loves cuddles. Nervous around strangers at first but warms up quickly."
-          value={formData.personalityNotes}
-          onChange={set("personalityNotes")}
-        />
+        {/* More details toggle */}
+        <button
+          type="button"
+          onClick={() => setShowMoreDetails((v) => !v)}
+          className="flex items-center gap-2 font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 py-1 -mx-1 px-1 rounded"
+          aria-expanded={showMoreDetails}
+        >
+          <ChevronDownIcon size={16} style={{ transform: showMoreDetails ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 250ms var(--ease-out)" }} />
+          {showMoreDetails ? "Hide additional details" : "Add more details"}
+        </button>
 
-        <Textarea
-          label="Medical conditions"
-          placeholder="e.g. Mild hip dysplasia — avoid long runs. Seasonal allergies in spring."
-          value={formData.medicalConditions}
-          onChange={set("medicalConditions")}
-        />
+        {showMoreDetails && (
+          <div className="flex flex-col gap-4">
+            <Textarea
+              label="Personality notes"
+              placeholder="e.g. Very gentle, loves cuddles. Nervous around strangers at first but warms up quickly."
+              value={formData.personalityNotes}
+              onChange={set("personalityNotes")}
+            />
 
-        {/* Medications with collapsed/expanded UX */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <p className="font-body text-sm font-semibold text-text-primary">
-              Medications
-            </p>
-            <button
-              type="button"
-              onClick={addMedication}
-              className="flex items-center gap-1.5 font-body text-xs font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
-            >
-              <PlusIcon />
-              Add medication
-            </button>
-          </div>
+            <Textarea
+              label="Medical conditions"
+              placeholder="e.g. Mild hip dysplasia — avoid long runs. Seasonal allergies in spring."
+              value={formData.medicalConditions}
+              onChange={set("medicalConditions")}
+            />
 
-          {formData.medications.length === 0 ? (
-            <p className="font-body text-sm text-text-muted italic">
-              No medications added.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {formData.medications.map((med, i) => {
-                const isEditing = editingMedIdx === i;
+            {/* Medications with collapsed/expanded UX */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <p className="font-body text-sm font-semibold text-text-primary">
+                  Medications
+                </p>
+                <button
+                  type="button"
+                  onClick={addMedication}
+                  className="flex items-center gap-1.5 font-body text-xs font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
+                >
+                  <PlusIcon />
+                  Add medication
+                </button>
+              </div>
 
-                if (isEditing) {
-                  return (
-                    <div
-                      key={i}
-                      className="rounded-lg border border-border-default bg-bg-sunken p-4 flex flex-col gap-3"
-                    >
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input label="Name" placeholder="e.g. Apoquel" value={med.name} onChange={(e) => updateMedication(i, "name", e.target.value)} />
-                        <Input label="Dosage" placeholder="e.g. 16mg" value={med.dosage} onChange={(e) => updateMedication(i, "dosage", e.target.value)} />
-                        <Input label="Frequency" placeholder="e.g. Once daily" value={med.frequency} onChange={(e) => updateMedication(i, "frequency", e.target.value)} />
-                        <Input label="Time" placeholder="e.g. With breakfast" value={med.time} onChange={(e) => updateMedication(i, "time", e.target.value)} />
-                      </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => saveMedication(i)}
-                          disabled={!med.name.trim()}
+              {formData.medications.length === 0 ? (
+                <p className="font-body text-sm text-text-muted italic">
+                  No medications added.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {formData.medications.map((med, i) => {
+                    const isEditing = editingMedIdx === i;
+
+                    if (isEditing) {
+                      return (
+                        <div
+                          key={i}
+                          className="rounded-lg border border-border-default bg-bg-sunken p-4 flex flex-col gap-3"
                         >
-                          Save
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (!med.name.trim()) {
-                              removeMedication(i);
-                            } else {
-                              setEditingMedIdx(null);
-                            }
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                }
+                          <div className="grid grid-cols-2 gap-3">
+                            <Input label="Name" placeholder="e.g. Apoquel" value={med.name} onChange={(e) => updateMedication(i, "name", e.target.value)} />
+                            <Input label="Dosage" placeholder="e.g. 16mg" value={med.dosage} onChange={(e) => updateMedication(i, "dosage", e.target.value)} />
+                            <Input label="Frequency" placeholder="e.g. Once daily" value={med.frequency} onChange={(e) => updateMedication(i, "frequency", e.target.value)} />
+                            <Input label="Time" placeholder="e.g. With breakfast" value={med.time} onChange={(e) => updateMedication(i, "time", e.target.value)} />
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <Button
+                              size="sm"
+                              onClick={() => saveMedication(i)}
+                              disabled={!med.name.trim()}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (!med.name.trim()) {
+                                  removeMedication(i);
+                                } else {
+                                  setEditingMedIdx(null);
+                                }
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }
 
-                // Collapsed summary strip
-                const summary = [med.name, med.dosage].filter(Boolean).join(" \u00B7 ");
-                return (
-                  <div
-                    key={i}
-                    className="rounded-lg border border-border-default bg-bg-sunken px-4 py-3 flex items-center justify-between gap-2"
-                  >
-                    <p className="font-body text-sm text-text-primary min-w-0 truncate">
-                      {summary || "Untitled medication"}
-                    </p>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <IconButton
-                        icon={<PencilIcon />}
-                        aria-label={`Edit medication ${med.name || i + 1}`}
-                        onClick={() => setEditingMedIdx(i)}
-                      />
-                      <IconButton
-                        icon={<TrashIcon />}
-                        aria-label={`Remove medication ${med.name || i + 1}`}
-                        variant="danger"
-                        onClick={() => removeMedication(i)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                    // Collapsed summary strip
+                    const summary = [med.name, med.dosage].filter(Boolean).join(" \u00B7 ");
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-lg border border-border-default bg-bg-sunken px-4 py-3 flex items-center justify-between gap-2"
+                      >
+                        <p className="font-body text-sm text-text-primary min-w-0 truncate">
+                          {summary || "Untitled medication"}
+                        </p>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <IconButton
+                            icon={<PencilIcon />}
+                            aria-label={`Edit medication ${med.name || i + 1}`}
+                            onClick={() => setEditingMedIdx(i)}
+                          />
+                          <IconButton
+                            icon={<TrashIcon />}
+                            aria-label={`Remove medication ${med.name || i + 1}`}
+                            variant="danger"
+                            onClick={() => removeMedication(i)}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <Textarea
-          label="Behavioral quirks"
-          placeholder="e.g. Barks at the mailman. Hides under the bed during thunderstorms."
-          value={formData.behavioralQuirks}
-          onChange={set("behavioralQuirks")}
-        />
+            <Textarea
+              label="Behavioral quirks"
+              placeholder="e.g. Barks at the mailman. Hides under the bed during thunderstorms."
+              value={formData.behavioralQuirks}
+              onChange={set("behavioralQuirks")}
+            />
 
-        <Input
-          label="Allergies"
-          placeholder="e.g. Chicken, certain grass pollens"
-          value={formData.allergies}
-          onChange={set("allergies")}
-        />
+            <Input
+              label="Allergies"
+              placeholder="e.g. Chicken, certain grass pollens"
+              value={formData.allergies}
+              onChange={set("allergies")}
+            />
 
-        <Input
-          label="Microchip number"
-          placeholder="e.g. 985121012345678"
-          value={formData.microchipNumber}
-          onChange={set("microchipNumber")}
-        />
+            <Input
+              label="Microchip number"
+              placeholder="e.g. 985121012345678"
+              value={formData.microchipNumber}
+              onChange={set("microchipNumber")}
+            />
 
-        <Textarea
-          label="Walking routine"
-          placeholder="e.g. 3 walks daily — 7am, 12pm, 7pm. 20 min each. Loves the park on Oak St."
-          value={formData.walkingRoutine}
-          onChange={set("walkingRoutine")}
-        />
+            <Textarea
+              label="Walking routine"
+              placeholder="e.g. 3 walks daily — 7am, 12pm, 7pm. 20 min each. Loves the park on Oak St."
+              value={formData.walkingRoutine}
+              onChange={set("walkingRoutine")}
+            />
 
-        <Input
-          label="Grooming needs"
-          placeholder="e.g. Brush daily. Bathed every 2 weeks."
-          value={formData.groomingNeeds}
-          onChange={set("groomingNeeds")}
-        />
+            <Input
+              label="Grooming needs"
+              placeholder="e.g. Brush daily. Bathed every 2 weeks."
+              value={formData.groomingNeeds}
+              onChange={set("groomingNeeds")}
+            />
 
-        <Input
-          label="Comfort items"
-          placeholder="e.g. Blue stuffed elephant toy, fleece blanket on couch"
-          value={formData.comfortItems}
-          onChange={set("comfortItems")}
-        />
+            <Input
+              label="Comfort items"
+              placeholder="e.g. Blue stuffed elephant toy, fleece blanket on couch"
+              value={formData.comfortItems}
+              onChange={set("comfortItems")}
+            />
+          </div>
+        )}
 
         {/* Form actions */}
         <div className="flex flex-col gap-3 pt-1">

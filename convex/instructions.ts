@@ -10,22 +10,34 @@ const timeSlotValidator = v.union(
   v.literal("anytime"),
 );
 
+/** Map an HH:mm time string to a slot bucket for grouping. */
+function timeToSlot(time: string): "morning" | "afternoon" | "evening" {
+  const [h] = time.split(":").map(Number);
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
+}
+
 export const create = mutation({
   args: {
     sectionId: v.id("manualSections"),
     text: v.string(),
     sortOrder: v.number(),
     timeSlot: timeSlotValidator,
+    specificTime: v.optional(v.string()),
     isRecurring: v.boolean(),
     proofRequired: v.boolean(),
   },
   returns: v.id("instructions"),
   handler: async (ctx, args) => {
+    // Auto-derive timeSlot from specificTime if provided
+    const timeSlot = args.specificTime ? timeToSlot(args.specificTime) : args.timeSlot;
     const id = await ctx.db.insert("instructions", {
       sectionId: args.sectionId,
       text: args.text,
       sortOrder: args.sortOrder,
-      timeSlot: args.timeSlot,
+      timeSlot,
+      specificTime: args.specificTime,
       isRecurring: args.isRecurring,
       proofRequired: args.proofRequired,
     });
@@ -49,6 +61,7 @@ export const listBySection = query({
       text: v.string(),
       sortOrder: v.number(),
       timeSlot: timeSlotValidator,
+      specificTime: v.optional(v.string()),
       isRecurring: v.boolean(),
       proofRequired: v.boolean(),
     }),
@@ -68,12 +81,17 @@ export const update = mutation({
     text: v.optional(v.string()),
     sortOrder: v.optional(v.number()),
     timeSlot: v.optional(timeSlotValidator),
+    specificTime: v.optional(v.string()),
     isRecurring: v.optional(v.boolean()),
     proofRequired: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { instructionId, ...fields } = args;
+    // Auto-derive timeSlot from specificTime if provided
+    if (fields.specificTime) {
+      fields.timeSlot = timeToSlot(fields.specificTime);
+    }
     const updates = Object.fromEntries(
       Object.entries(fields).filter(([, val]) => val !== undefined),
     );

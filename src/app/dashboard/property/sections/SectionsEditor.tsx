@@ -17,7 +17,6 @@ import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, P
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
 
 const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
   { title: "Access & Arrival", icon: "🗝️" },
@@ -34,13 +33,6 @@ const ALL_SECTION_ICONS = [
   "🗝️", "🔌", "🍳", "🗑️", "🌿", "📍", "📋", "🚪",
   "🏠", "🛁", "🛏️", "🐾", "🧹", "🔧", "🌡️", "💡",
   "🎵", "🌻", "🧺", "📦",
-];
-
-const TIME_SLOT_OPTIONS: { value: TimeSlot; label: string }[] = [
-  { value: "anytime", label: "Anytime" },
-  { value: "morning", label: "Morning" },
-  { value: "afternoon", label: "Afternoon" },
-  { value: "evening", label: "Evening" },
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -84,19 +76,6 @@ function InstructionRow({
     void updateInstruction({ instructionId: instruction._id, text: trimmed });
   };
 
-  const handleTimeSlotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    void updateInstruction({
-      instructionId: instruction._id,
-      timeSlot: e.target.value as TimeSlot,
-    });
-  };
-
-  const handleProofToggle = () => {
-    void updateInstruction({
-      instructionId: instruction._id,
-      proofRequired: !instruction.proofRequired,
-    });
-  };
 
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
@@ -121,7 +100,7 @@ function InstructionRow({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onBlur={handleTextBlur}
-          placeholder="Describe this step…"
+          placeholder="Add an instruction…"
           rows={2}
           className="flex-1 resize-none font-body text-sm text-text-primary bg-transparent outline-none placeholder:text-text-muted leading-relaxed min-h-[44px]"
         />
@@ -135,51 +114,34 @@ function InstructionRow({
         />
       </div>
 
-      {/* Controls row: time slot + proof toggle + card placeholder */}
-      <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-border-default">
-        <select
-          value={instruction.timeSlot}
-          onChange={handleTimeSlotChange}
-          className="font-body text-xs font-semibold px-2 py-1 rounded-md bg-accent-light text-accent border-0 outline-none cursor-pointer"
-        >
-          {TIME_SLOT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={handleProofToggle}
-          aria-pressed={instruction.proofRequired}
-          className={`font-body text-xs font-semibold px-2 py-1 rounded-md transition-colors duration-150 ${
-            instruction.proofRequired
-              ? "bg-secondary-light text-secondary"
-              : "bg-bg-sunken text-text-muted hover:text-text-secondary"
-          }`}
-        >
-          📷 {instruction.proofRequired ? "Proof required" : "No proof"}
-        </button>
-
-        {/* Location card upload */}
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-            onClick={() => setShowUploader(true)}
-          >
-            + Photo card
-          </button>
-          <button
-            type="button"
-            className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-            onClick={() => setShowVideoUploader(true)}
-          >
-            + Video card
-          </button>
-        </div>
-      </div>
+      {/* Controls row: photo/video attach */}
+      {(() => {
+        const hasPhoto = locationCards?.some(c => c.resolvedPhotoUrl && !c.resolvedVideoUrl);
+        const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl);
+        if (hasPhoto && hasVideo) return null;
+        return (
+          <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-border-default">
+            {!hasPhoto && (
+              <button
+                type="button"
+                className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+                onClick={() => setShowUploader(true)}
+              >
+                + Photo card
+              </button>
+            )}
+            {!hasVideo && (
+              <button
+                type="button"
+                className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+                onClick={() => setShowVideoUploader(true)}
+              >
+                + Video card
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Location cards display */}
       {locationCards && locationCards.length > 0 && (

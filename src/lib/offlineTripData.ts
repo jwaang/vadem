@@ -14,7 +14,49 @@
  */
 
 const STORAGE_PREFIX = "vadem_trip_";
+const META_PREFIX = "vadem_trip_meta_";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// ── Trip metadata cache (shareLink → trip routing info) ──────────────────────
+
+interface TripMeta {
+  tripId: string;
+  status: "ACTIVE" | "PASSWORD_REQUIRED" | "NOT_STARTED" | "EXPIRED";
+  passwordRequired: boolean;
+  startDate?: string;
+  propertyName?: string;
+  petNames?: string[];
+  savedAt: number;
+}
+
+export function saveTripMeta(
+  shareLink: string,
+  meta: Omit<TripMeta, "savedAt">,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: TripMeta = { ...meta, savedAt: Date.now() };
+    localStorage.setItem(`${META_PREFIX}${shareLink}`, JSON.stringify(payload));
+  } catch {
+    // Best-effort — ignore quota errors
+  }
+}
+
+export function loadTripMeta(shareLink: string): TripMeta | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(`${META_PREFIX}${shareLink}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as TripMeta;
+    if (Date.now() - parsed.savedAt > MAX_AGE_MS) {
+      localStorage.removeItem(`${META_PREFIX}${shareLink}`);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 interface PersistedTripData<T> {
   data: T;

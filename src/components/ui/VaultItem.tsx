@@ -18,6 +18,7 @@ interface VaultItemProps extends HTMLAttributes<HTMLDivElement> {
   icon: ReactNode;
   label: string;
   hint?: string;
+  networkName?: string;
   value?: string;
   onVerify?: () => void;
   onCopy?: () => void;
@@ -85,6 +86,7 @@ function VaultItem({
   icon,
   label,
   hint,
+  networkName,
   value,
   onVerify,
   onCopy,
@@ -115,6 +117,12 @@ function VaultItem({
 
         {/* Code + copy, instructions, location card */}
         <div className="px-5 pb-4 flex flex-col gap-3">
+          {/* Network name (WiFi items) */}
+          {networkName && (
+            <p className="font-body text-xs text-text-secondary m-0">
+              Network: <span className="font-semibold text-text-primary">{networkName}</span>
+            </p>
+          )}
           {/* Code block + copy button */}
           <div className="flex items-center gap-2">
             <code className="flex-1 font-mono text-lg font-semibold tracking-[0.15em] text-vault bg-vault-light py-2 px-3 rounded-sm overflow-x-auto whitespace-nowrap">
@@ -125,7 +133,7 @@ function VaultItem({
                 icon={copied ? <CheckIcon /> : <ClipboardIcon />}
                 aria-label={copied ? "Copied!" : "Copy to clipboard"}
                 onClick={onCopy}
-                variant={copied ? "secondary" : "vault"}
+                variant={copied ? "secondary" : "default"}
                 size="lg"
               />
             )}

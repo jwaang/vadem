@@ -699,10 +699,22 @@ function DashboardPageInner() {
   const [showPublishedBanner, setShowPublishedBanner] = useState(false);
 
   const storePushSubscription = useMutation(api.users.storePushSubscription);
+  const updateTimezone = useMutation(api.users.updateTimezone);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync browser timezone to user profile for localized notifications
+  useEffect(() => {
+    if (!mounted || isLoading || !user) return;
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) updateTimezone({ token: user.token, timezone: tz });
+    } catch {
+      // Intl not available — skip
+    }
+  }, [mounted, isLoading, user, updateTimezone]);
 
   useEffect(() => {
     if (searchParams.get("published") === "true") {

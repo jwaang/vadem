@@ -7,13 +7,14 @@ import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { LocationCard } from "@/components/ui/LocationCard";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
-import { ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, CheckIcon } from "@/components/ui/icons";
+import { ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, CheckIcon, XIcon } from "@/components/ui/icons";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
 
 const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
   { title: "Access & Arrival", icon: "🗝️" },
@@ -29,13 +30,6 @@ const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
 const CUSTOM_SECTION_ICONS = [
   "🏠", "🛁", "🛏️", "🐾", "🧹", "🔧",
   "🌡️", "💡", "🎵", "🌻", "🧺", "📦",
-];
-
-const TIME_SLOT_OPTIONS: { value: TimeSlot; label: string }[] = [
-  { value: "anytime", label: "Anytime" },
-  { value: "morning", label: "Morning" },
-  { value: "afternoon", label: "Afternoon" },
-  { value: "evening", label: "Evening" },
 ];
 
 const PREBUILT_TITLES = new Set(PREBUILT_SECTIONS.map((p) => p.title));
@@ -65,11 +59,17 @@ function InstructionRow({
   onRemove,
 }: InstructionRowProps) {
   const updateInstruction = useMutation(api.instructions.update);
+  const removeLocationCard = useMutation(api.locationCards.remove);
   // key={instruction._id} on the parent causes remount when instruction changes,
   // resetting this state to the new instruction.text automatically.
   const [text, setText] = useState(instruction.text);
   const [showUploader, setShowUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
+
+  const locationCards = useQuery(api.locationCards.listByParent, {
+    parentId: instruction._id as string,
+    parentType: "instruction",
+  });
 
   const handleTextBlur = () => {
     const trimmed = text.trim();
@@ -77,19 +77,6 @@ function InstructionRow({
     void updateInstruction({ instructionId: instruction._id, text: trimmed });
   };
 
-  const handleTimeSlotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    void updateInstruction({
-      instructionId: instruction._id,
-      timeSlot: e.target.value as TimeSlot,
-    });
-  };
-
-  const handleProofToggle = () => {
-    void updateInstruction({
-      instructionId: instruction._id,
-      proofRequired: !instruction.proofRequired,
-    });
-  };
 
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
@@ -122,7 +109,7 @@ function InstructionRow({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onBlur={handleTextBlur}
-          placeholder="Describe this step…"
+          placeholder="Add an instruction…"
           rows={2}
           className="flex-1 resize-none font-body text-sm text-text-primary bg-transparent outline-none placeholder:text-text-muted leading-relaxed min-h-[44px]"
         />
@@ -138,55 +125,63 @@ function InstructionRow({
         </button>
       </div>
 
-      {/* Controls row: time slot + proof toggle + card placeholder */}
-      <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-border-default">
-        <select
-          value={instruction.timeSlot}
-          onChange={handleTimeSlotChange}
-          className="font-body text-xs font-semibold px-2 py-1 rounded-md bg-accent-light text-accent border-0 outline-none cursor-pointer"
-        >
-          {TIME_SLOT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+      {/* Controls row: photo/video attach */}
+      {(() => {
+        const hasPhoto = locationCards?.some(c => c.resolvedPhotoUrl && !c.resolvedVideoUrl);
+        const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl);
+        if (hasPhoto && hasVideo) return null;
+        return (
+          <div className="flex items-center gap-1 px-3 pb-3 pt-1 border-t border-border-default">
+            {!hasPhoto && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
+                onClick={() => setShowUploader(true)}
+                aria-label="Attach photo card"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Photo
+              </button>
+            )}
+            {!hasVideo && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
+                onClick={() => setShowVideoUploader(true)}
+                aria-label="Attach video card"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                Video
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Location cards display */}
+      {locationCards && locationCards.length > 0 && (
+        <div className="flex flex-col gap-2 px-3 pb-3 pt-3">
+          {locationCards.map((card) => (
+            <div key={card._id} className="relative group">
+              <LocationCard
+                src={card.resolvedPhotoUrl ?? undefined}
+                caption={card.caption ?? ""}
+                room={card.roomTag}
+                videoSrc={card.resolvedVideoUrl ?? undefined}
+                compact
+              />
+              <IconButton
+                icon={<XIcon size={10} />}
+                aria-label="Remove location card"
+                variant="danger"
+                size="sm"
+                onClick={() => void removeLocationCard({ cardId: card._id })}
+                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 shadow-sm z-10"
+              />
+            </div>
           ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={handleProofToggle}
-          aria-pressed={instruction.proofRequired}
-          className={`font-body text-xs font-semibold px-2 py-1 rounded-md transition-colors duration-150 ${
-            instruction.proofRequired
-              ? "bg-secondary-light text-secondary"
-              : "bg-bg-sunken text-text-muted hover:text-text-secondary"
-          }`}
-        >
-          📷 {instruction.proofRequired ? "Proof required" : "No proof"}
-        </button>
-
-        {/* Location card upload */}
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
-            onClick={() => setShowUploader(true)}
-            aria-label="Attach photo card"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Photo
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
-            onClick={() => setShowVideoUploader(true)}
-            aria-label="Attach video card"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            Video
-          </button>
         </div>
-      </div>
+      )}
 
       {showUploader && (
         <LocationCardUploader

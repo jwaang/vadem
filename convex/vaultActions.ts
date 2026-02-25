@@ -112,6 +112,7 @@ export const createVaultItem = action({
     label: v.string(),
     value: v.string(), // plaintext — encrypted before storage, never persisted
     instructions: v.optional(v.string()),
+    networkName: v.optional(v.string()),
     locationCardId: v.optional(v.id("locationCards")),
     sortOrder: v.number(),
   },
@@ -124,6 +125,7 @@ export const createVaultItem = action({
       label: args.label,
       encryptedValue,
       instructions: args.instructions,
+      networkName: args.networkName,
       locationCardId: args.locationCardId,
       sortOrder: args.sortOrder,
     });
@@ -328,6 +330,7 @@ export const getDecryptedVaultItems = action({
           label: v.string(),
           itemType: vaultItemType,
           instructions: v.optional(v.string()),
+          networkName: v.optional(v.string()),
           value: v.string(),
           locationCard: v.optional(
             v.object({
@@ -368,6 +371,7 @@ export const getDecryptedVaultItems = action({
             | "safe_combination"
             | "custom";
           instructions?: string;
+          networkName?: string;
           value: string;
           locationCard?: {
             caption: string;
@@ -454,6 +458,7 @@ export const getDecryptedVaultItems = action({
           label: item.label,
           itemType: item.itemType,
           instructions: item.instructions,
+          networkName: item.networkName,
           value,
           locationCard,
         };

@@ -29,6 +29,7 @@ interface DecryptedVaultItem {
   label: string;
   itemType: string;
   instructions?: string;
+  networkName?: string;
   value: string;
   locationCard?: VaultItemLocationCard;
 }
@@ -423,6 +424,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
                 icon={<ItemTypeIcon />}
                 label={item.label}
                 hint={item.instructions}
+                networkName={item.networkName}
                 value={item.value}
                 onCopy={() => handleCopy(item.id, item.value)}
                 copied={copiedId === item.id}

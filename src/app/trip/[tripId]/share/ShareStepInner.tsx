@@ -208,11 +208,15 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
     try {
       await updateTrip({ tripId, status: "active" });
       if (shareUrl) {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch {
+          // Clipboard may fail on Safari — continue to navigation
+        }
       }
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch {
       setIsActivating(false);
     }

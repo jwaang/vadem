@@ -32,6 +32,7 @@ interface VaultItemLabel {
   itemType: VaultItemType;
   label: string;
   instructions?: string;
+  networkName?: string;
   locationCardId?: Id<"locationCards">;
   sortOrder: number;
 }
@@ -354,6 +355,7 @@ function VaultForm({ propertyId, editItem, existingCount, onDone }: VaultFormPro
   const [label, setLabel] = useState(editItem?.label ?? "Front Door Code");
   const [value, setValue] = useState("");
   const [instructions, setInstructions] = useState(editItem?.instructions ?? "");
+  const [networkName, setNetworkName] = useState(editItem?.networkName ?? "");
   const [labelError, setLabelError] = useState("");
   const [valueError, setValueError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -403,6 +405,7 @@ function VaultForm({ propertyId, editItem, existingCount, onDone }: VaultFormPro
           itemType,
           label: label.trim(),
           instructions: instructions.trim() || undefined,
+          networkName: itemType === "wifi" ? networkName.trim() || undefined : undefined,
         });
         // Re-encrypt value only if user typed something
         if (value.trim()) {
@@ -415,6 +418,7 @@ function VaultForm({ propertyId, editItem, existingCount, onDone }: VaultFormPro
           label: label.trim(),
           value: value.trim(),
           instructions: instructions.trim() || undefined,
+          networkName: itemType === "wifi" ? networkName.trim() || undefined : undefined,
           sortOrder: existingCount,
         });
       }
@@ -456,6 +460,16 @@ function VaultForm({ propertyId, editItem, existingCount, onDone }: VaultFormPro
           placeholder="e.g. Front Door Code"
           error={labelError}
         />
+
+        {itemType === "wifi" && (
+          <Input
+            label="Network name"
+            id="vault-network-name"
+            value={networkName}
+            onChange={(e) => setNetworkName(e.target.value)}
+            placeholder="e.g. HomeWiFi_5G"
+          />
+        )}
 
         <ValueInput
           label={isEdit ? "Value (leave blank to keep current)" : "Value"}

@@ -379,8 +379,8 @@ function PetForm({
         />
 
         <Textarea
-          label="Feeding instructions"
-          placeholder="e.g. 1 cup dry food twice daily — 7am and 6pm. Fresh water always."
+          label="General care notes"
+          placeholder="e.g. Doesn't like strangers, needs slow introductions"
           value={formData.feedingInstructions}
           onChange={set("feedingInstructions")}
         />

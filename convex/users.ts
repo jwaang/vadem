@@ -94,6 +94,16 @@ const DEFAULT_NOTIFICATION_PREFERENCES = {
   tripEnding: true,
 };
 
+// Internal: get the user's timezone (IANA string or undefined)
+export const getTimezone = internalQuery({
+  args: { userId: v.id("users") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    return user?.timezone ?? null;
+  },
+});
+
 // Internal: get task completion notification preference for a user
 export const getNotificationPreference = internalQuery({
   args: { userId: v.id("users") },
@@ -152,5 +162,23 @@ export const getMyNotificationPreferences = query({
       return user.notificationPreferences;
     }
     return DEFAULT_NOTIFICATION_PREFERENCES;
+  },
+});
+
+// Public: save user's IANA timezone (auto-detected on login/app load)
+export const updateTimezone = mutation({
+  args: {
+    token: v.string(),
+    timezone: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return null;
+    await ctx.db.patch(session.userId, { timezone: args.timezone });
+    return null;
   },
 });

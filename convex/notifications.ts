@@ -6,7 +6,15 @@ import { v } from "convex/values";
 import webpush from "web-push";
 
 /** Format a Unix ms timestamp as 12-hour time, e.g. "7:12 AM" */
-function formatTime12h(ms: number): string {
+function formatTime12h(ms: number, timezone?: string): string {
+  if (timezone) {
+    return new Date(ms).toLocaleString("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
   const d = new Date(ms);
   let hours = d.getHours();
   const minutes = d.getMinutes();
@@ -133,9 +141,12 @@ export const sendTaskNotification = internalAction({
 
     if (pref === "off") return null;
 
+    // Look up owner's timezone for localized time formatting
+    const timezone = await ctx.runQuery(internal.users.getTimezone, { userId });
+
     // Build notification message
-    const displayName = args.sitterName || "Someone";
-    const time = formatTime12h(args.completedAt);
+    const displayName = args.sitterName?.trim() || "Someone";
+    const time = formatTime12h(args.completedAt, timezone ?? undefined);
     const message = args.proofPhotoUrl
       ? `${displayName} completed ${args.taskTitle} with photo at ${time}`
       : `${displayName} completed ${args.taskTitle}`;
@@ -264,8 +275,9 @@ export const sendDigestNotification = internalAction({
 
     if (count === 0) return null;
 
+    const timezone = await ctx.runQuery(internal.users.getTimezone, { userId: args.userId });
     const taskWord = count === 1 ? "task" : "tasks";
-    const since = formatTime12h(args.windowStart);
+    const since = formatTime12h(args.windowStart, timezone ?? undefined);
     const message = `${count} ${taskWord} completed since ${since}`;
 
     await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {

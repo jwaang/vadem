@@ -33,6 +33,7 @@ export default defineSchema({
     ), // Full notification preferences; defaults applied server-side when absent
     emailVerified: v.optional(v.boolean()),
     hasCompletedOnboarding: v.optional(v.boolean()),
+    timezone: v.optional(v.string()), // IANA timezone e.g. "America/Chicago"
   })
     .index("by_email", ["email"])
     .index("by_google_id", ["googleId"])
@@ -86,6 +87,7 @@ export default defineSchema({
       v.literal("evening"),
       v.literal("anytime"),
     ),
+    specificTime: v.optional(v.string()), // HH:mm format e.g. "07:00", "18:30"
     isRecurring: v.boolean(),
     proofRequired: v.boolean(),
   })
@@ -125,6 +127,7 @@ export default defineSchema({
     // AES-256-GCM ciphertext + IV stored as base64 JSON: { iv, ciphertext }
     encryptedValue: v.string(),
     instructions: v.optional(v.string()),
+    networkName: v.optional(v.string()), // WiFi network name (only meaningful for wifi type)
     locationCardId: v.optional(v.id("locationCards")),
     sortOrder: v.number(),
   }).index("by_property_sort", ["propertyId", "sortOrder"]),

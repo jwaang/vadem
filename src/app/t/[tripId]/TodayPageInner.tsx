@@ -59,6 +59,7 @@ interface TodayTask {
   id: string;
   text: string;
   timeSlot: SlotKey;
+  specificTime?: string;
   isOverlay: boolean;
   proofRequired: boolean;
   taskRef: string;
@@ -76,6 +77,14 @@ interface CompletionInfo {
 
 const SLOT_ORDER: SlotKey[] = ["morning", "afternoon", "evening", "anytime"];
 
+/** Format "HH:mm" as "7:00 AM" style. */
+function formatTime12h(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
 function toContactRole(role: string): ContactRole {
   const r = role.toLowerCase();
   if (r === "owner" || r.includes("owner") || r.includes("partner")) return "owner";
@@ -85,7 +94,7 @@ function toContactRole(role: string): ContactRole {
 }
 
 function buildTaskList(
-  recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>,
+  recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>,
   overlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>,
   today: string,
 ): TodayTask[] {
@@ -93,6 +102,7 @@ function buildTaskList(
     id: inst._id,
     text: inst.text,
     timeSlot: inst.timeSlot as SlotKey,
+    specificTime: inst.specificTime,
     isOverlay: false,
     proofRequired: inst.proofRequired,
     // Date-scoped ref so recurring tasks reset daily
@@ -193,7 +203,8 @@ function UncheckConfirmSheet({ hasProof, onConfirm, onCancel }: UncheckConfirmSh
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 pb-8 flex flex-col gap-4"
+        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 flex flex-col gap-4"
+        style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -245,7 +256,8 @@ function NamePrompt({ initialName, onConfirm, onCancel }: NamePromptProps) {
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 pb-8 flex flex-col gap-4"
+        className="w-full max-w-lg bg-bg-raised rounded-t-2xl shadow-xl p-6 flex flex-col gap-4"
+        style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -275,14 +287,15 @@ function NamePrompt({ initialName, onConfirm, onCancel }: NamePromptProps) {
             if (e.key === "Enter") onConfirm(name.trim());
           }}
         />
-        <button
-          type="button"
-          className="btn btn-primary w-full"
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
           onClick={() => onConfirm(name.trim())}
           disabled={name.trim().length === 0}
         >
           Continue to photo
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -322,6 +335,7 @@ function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, o
                 text={task.text}
                 completed={isCompleted || isUploading}
                 overlay={task.isOverlay}
+                time={task.specificTime ? formatTime12h(task.specificTime) : undefined}
                 showProof={task.proofRequired && !isCompleted && !isUploading}
                 proofPhotoUrl={completion?.proofPhotoUrl}
                 onPhotoClick={completion?.proofPhotoUrl ? () => onPhotoClick(completion.proofPhotoUrl!) : undefined}

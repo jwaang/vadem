@@ -392,12 +392,11 @@ export function LocationCardVideoUploader({
               </button>
             )}
 
-            {/* Hidden file input — capture="environment" enables camera on mobile */}
+            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
               accept="video/*"
-              capture="environment"
               className="sr-only"
               onChange={handleFileChange}
               aria-label="Select video"

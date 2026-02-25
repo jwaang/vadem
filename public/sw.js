@@ -2,9 +2,9 @@
 
 // ── Cache bucket names ─────────────────────────────────────────────────────
 // Bump the version suffix to force a full cache purge on deploy.
-const APP_SHELL_CACHE = "vadem-app-shell-v2";
-const CONTENT_CACHE = "vadem-content-v2";
-const PHOTOS_CACHE = "vadem-photos-v2";
+const APP_SHELL_CACHE = "vadem-app-shell-v3";
+const CONTENT_CACHE = "vadem-content-v3";
+const PHOTOS_CACHE = "vadem-photos-v3";
 
 // Key used to persist the current manualVersion inside CONTENT_CACHE
 const VERSION_META_KEY = "__manual_version__";

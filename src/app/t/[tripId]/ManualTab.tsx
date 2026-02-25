@@ -97,7 +97,7 @@ function truncate(text: string, max = 60): string {
 function buildPetDetails(pet: PetData): PetDetail[] {
   const details: PetDetail[] = [];
   if (pet.feedingInstructions) {
-    details.push({ emoji: "🍽️", label: "Feeding", value: truncate(pet.feedingInstructions) });
+    details.push({ emoji: "📝", label: "Care notes", value: truncate(pet.feedingInstructions) });
   }
   if (pet.vetName) {
     details.push({
@@ -354,11 +354,33 @@ export function ManualTab({ propertyId }: ManualTabProps) {
       }
     }
     for (const pet of fullManual.pets) {
-      if (pet.name.toLowerCase().includes(q)) {
+      // Search across all pet text fields
+      const searchable = [
+        pet.name,
+        pet.breed,
+        pet.feedingInstructions,
+        pet.personalityNotes,
+        pet.medicalConditions,
+        pet.behavioralQuirks,
+        pet.allergies,
+        pet.walkingRoutine,
+        pet.groomingNeeds,
+        pet.comfortItems,
+        pet.vetName,
+        ...pet.medications.map((m) => `${m.name} ${m.dosage} ${m.frequency}`),
+      ];
+      const match = searchable.find((s) => s?.toLowerCase().includes(q));
+      if (match) {
+        const snippet =
+          match === pet.name
+            ? pet.name
+            : match.length > 120
+              ? match.slice(0, 120) + "…"
+              : match;
         out.push({
           type: "pet",
           id: pet._id,
-          snippet: pet.name,
+          snippet: `${pet.name} — ${snippet}`,
           sectionName: "Pets",
           propertyId: propertyId as string,
         });

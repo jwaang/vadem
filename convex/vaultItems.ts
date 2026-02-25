@@ -25,6 +25,7 @@ const vaultItemLabelObject = v.object({
   itemType: vaultItemType,
   label: v.string(),
   instructions: v.optional(v.string()),
+  networkName: v.optional(v.string()),
   locationCardId: v.optional(v.id("locationCards")),
   sortOrder: v.number(),
 });
@@ -40,6 +41,7 @@ export const _insert = internalMutation({
     label: v.string(),
     encryptedValue: v.string(),
     instructions: v.optional(v.string()),
+    networkName: v.optional(v.string()),
     locationCardId: v.optional(v.id("locationCards")),
     sortOrder: v.number(),
   },
@@ -125,6 +127,7 @@ export const listByPropertyId = query({
       itemType: item.itemType,
       label: item.label,
       instructions: item.instructions,
+      networkName: item.networkName,
       locationCardId: item.locationCardId,
       sortOrder: item.sortOrder,
     }));
@@ -139,6 +142,7 @@ export const update = mutation({
     itemType: v.optional(vaultItemType),
     label: v.optional(v.string()),
     instructions: v.optional(v.string()),
+    networkName: v.optional(v.string()),
     locationCardId: v.optional(v.id("locationCards")),
     sortOrder: v.optional(v.number()),
   },

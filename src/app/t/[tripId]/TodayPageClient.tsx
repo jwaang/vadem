@@ -1,11 +1,12 @@
 "use client";
 
-import { Component, useState, useEffect, type ReactNode } from "react";
+import { Component, useState, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { saveTripMeta, loadTripMeta } from "@/lib/offlineTripData";
 
 const TodayPageInner = dynamic(() => import("./TodayPageInner"), { ssr: false });
 const PasswordGate = dynamic(
@@ -33,6 +34,70 @@ function formatStartDate(dateStr: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+// ── Offline detection ─────────────────────────────────────────────────
+
+function subscribeOnline(cb: () => void) {
+  window.addEventListener("online", cb);
+  window.addEventListener("offline", cb);
+  return () => {
+    window.removeEventListener("online", cb);
+    window.removeEventListener("offline", cb);
+  };
+}
+function getOnlineSnapshot() {
+  return navigator.onLine;
+}
+function getServerSnapshot() {
+  return true; // SSR assumes online
+}
+
+function useIsOffline(): boolean {
+  const online = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
+  return !online;
+}
+
+// ── Offline fallback screen ──────────────────────────────────────────
+
+function OfflineNoCache() {
+  return (
+    <div className="min-h-dvh bg-bg flex items-center justify-center p-6">
+      <div
+        className="bg-bg-raised rounded-xl p-8 flex flex-col items-center gap-4 w-full max-w-sm text-center"
+        style={{ boxShadow: "var(--shadow-md)" }}
+      >
+        <div className="w-12 h-12 rounded-round bg-bg-sunken flex items-center justify-center">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text-muted"
+            aria-hidden="true"
+          >
+            <line x1="1" y1="1" x2="23" y2="23" />
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+            <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <line x1="12" y1="20" x2="12.01" y2="20" />
+          </svg>
+        </div>
+        <h1 className="font-display text-2xl text-text-primary">
+          You&apos;re offline
+        </h1>
+        <p className="font-body text-sm text-text-muted">
+          Connect to the internet to load this trip for the first time. Once loaded, it will be available offline.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ── Error boundary — catches query / validation errors (e.g. malformed trip ID) ──
@@ -208,8 +273,13 @@ function NotStartedState({ startDate, propertyName, petNames }: NotStartedStateP
 
 function PostAuthTripView({ tripId, shareLink }: { tripId: Id<"trips">; shareLink: string }) {
   const state = useQuery(api.trips.getSitterTripState, { tripId });
+  const isOffline = useIsOffline();
 
   if (state === undefined) {
+    // Offline: skip the loading gate — TodayPageInner handles its own cache
+    if (isOffline) {
+      return <TodayPageInner tripId={tripId} shareLink={shareLink} />;
+    }
     return (
       <div className="min-h-dvh bg-bg flex items-center justify-center">
         <p className="font-body text-sm text-text-muted">Loading…</p>
@@ -245,6 +315,7 @@ interface PasswordProtectedResolverProps {
 function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResolverProps) {
   const cookieName = `vadem_trip_${shareLink}`;
   const storedToken = getCookie(cookieName);
+  const isOffline = useIsOffline();
 
   const [verified, setVerified] = useState(false);
 
@@ -256,6 +327,10 @@ function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResol
 
   // While validating the stored token
   if (storedToken && sessionValid === undefined) {
+    // Offline + cookie exists: trust it — sitter previously authenticated
+    if (isOffline) {
+      return <PostAuthTripView tripId={tripId} shareLink={shareLink} />;
+    }
     return (
       <div className="min-h-dvh bg-bg flex items-center justify-center">
         <p className="font-body text-sm text-text-muted">Loading…</p>
@@ -282,6 +357,21 @@ function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResol
 
 function TodayPageResolver({ shareLink }: { shareLink: string }) {
   const state = useQuery(api.trips.getTripByShareLink, { shareLink });
+  const isOffline = useIsOffline();
+
+  // Cache trip metadata whenever we get a successful response
+  useEffect(() => {
+    if (state && "tripId" in state && state.tripId) {
+      saveTripMeta(shareLink, {
+        tripId: state.tripId,
+        status: state.status as "ACTIVE" | "PASSWORD_REQUIRED" | "NOT_STARTED" | "EXPIRED",
+        passwordRequired: state.status === "PASSWORD_REQUIRED",
+        startDate: "startDate" in state ? state.startDate : undefined,
+        propertyName: "propertyName" in state ? state.propertyName : undefined,
+        petNames: "petNames" in state ? state.petNames : undefined,
+      });
+    }
+  }, [state, shareLink]);
 
   // Store tripId in sessionStorage for attribution when trip is active
   useEffect(() => {
@@ -294,8 +384,34 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
     }
   }, [state]);
 
-  // Still loading
+  // Still loading — use offline cache if available
   if (state === undefined) {
+    if (isOffline) {
+      const cached = loadTripMeta(shareLink);
+      if (cached) {
+        const tripId = cached.tripId as Id<"trips">;
+        if (cached.status === "ACTIVE") {
+          return <TodayPageInner tripId={tripId} shareLink={shareLink} />;
+        }
+        if (cached.status === "PASSWORD_REQUIRED") {
+          return <PasswordProtectedResolver tripId={tripId} shareLink={shareLink} />;
+        }
+        if (cached.status === "NOT_STARTED" && cached.startDate && cached.propertyName) {
+          return (
+            <NotStartedState
+              startDate={cached.startDate}
+              propertyName={cached.propertyName}
+              petNames={cached.petNames ?? []}
+            />
+          );
+        }
+        if (cached.status === "EXPIRED") {
+          return <ExpiredState tripId={tripId} />;
+        }
+      }
+      // No cache — show offline message instead of infinite loading
+      return <OfflineNoCache />;
+    }
     return (
       <div className="min-h-dvh bg-bg flex items-center justify-center">
         <p className="font-body text-sm text-text-muted">Loading…</p>

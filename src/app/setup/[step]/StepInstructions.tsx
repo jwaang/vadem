@@ -678,7 +678,7 @@ export default function Step5Sections() {
 
       {/* Navigation */}
       <div className="flex flex-col gap-3 pt-2">
-        <Button size="lg" className="w-full" onClick={() => router.push("/wizard/6")}>
+        <Button size="lg" className="w-full" onClick={() => router.push("/setup/review")}>
           Next
         </Button>
       </div>

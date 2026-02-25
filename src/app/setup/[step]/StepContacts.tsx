@@ -528,7 +528,7 @@ export default function Step4Contacts() {
 
       {/* Navigation */}
       <div className="flex flex-col gap-3 pt-2">
-        <Button size="lg" className="w-full" onClick={() => router.push("/wizard/5")}>
+        <Button size="lg" className="w-full" onClick={() => router.push("/setup/instructions")}>
           Next
         </Button>
       </div>

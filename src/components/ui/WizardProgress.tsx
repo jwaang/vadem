@@ -4,26 +4,14 @@ import { type HTMLAttributes } from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { SETUP_STEPS } from "@/lib/setupSteps";
 
 type StepStatus = "completed" | "active" | "upcoming";
-
-interface WizardStep {
-  label: string;
-}
 
 interface WizardProgressProps extends HTMLAttributes<HTMLElement> {
   currentStep: number;
   completedSteps?: number[];
 }
-
-const STEPS: WizardStep[] = [
-  { label: "Home" },
-  { label: "Pets" },
-  { label: "Access" },
-  { label: "Contacts" },
-  { label: "Instructions" },
-  { label: "Review" },
-];
 
 function CheckIcon() {
   return (
@@ -104,14 +92,14 @@ function WizardProgress({
       {...props}
     >
       <ol className="flex items-start list-none m-0 p-0 min-w-max">
-        {STEPS.map((step, index) => {
+        {SETUP_STEPS.map((step, index) => {
           const status = getStepStatus(index, currentStep, completedSteps);
-          const isLast = index === STEPS.length - 1;
+          const isLast = index === SETUP_STEPS.length - 1;
 
           return (
             <li key={step.label} className="flex items-start">
               <Link
-                href={`/wizard/${index + 1}`}
+                href={`/setup/${step.slug}`}
                 className={cn(
                   "flex flex-col items-center gap-2 min-w-[72px] cursor-pointer no-underline",
                   status === "upcoming" && "hover:[&>span:first-child]:border-primary hover:[&>span:last-child]:text-primary",
@@ -151,5 +139,4 @@ export {
   WizardProgress,
   type WizardProgressProps,
   type StepStatus,
-  STEPS,
 };

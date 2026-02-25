@@ -12,12 +12,16 @@ function generateSlug(): string {
   return crypto.randomBytes(9).toString("base64url");
 }
 
-// Creates (or regenerates) a cryptographically random share link for a trip.
-// Returns the 12-char slug; the caller constructs the full URL.
+// Returns the existing share link for a trip, or creates one if none exists.
+// Idempotent: calling multiple times will not regenerate the slug.
 export const generateShareLink = action({
   args: { tripId: v.id("trips") },
   returns: v.string(),
   handler: async (ctx, args): Promise<string> => {
+    const trip = await ctx.runQuery(internal.trips._getById, {
+      tripId: args.tripId,
+    });
+    if (trip?.shareLink) return trip.shareLink;
     const slug = generateSlug();
     await ctx.runMutation(api.trips.update, {
       tripId: args.tripId,

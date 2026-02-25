@@ -502,8 +502,8 @@ export default function Step3Access() {
     }
   };
 
-  const handleNext = () => router.push("/wizard/4");
-  const handleSkip = () => router.push("/wizard/4");
+  const handleNext = () => router.push("/setup/contacts");
+  const handleSkip = () => router.push("/setup/contacts");
 
   const hasItems = (vaultItems?.length ?? 0) > 0;
   const isLoadingSession = user && sessionData === undefined;

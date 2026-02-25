@@ -110,9 +110,9 @@ const tiltBase: Record<TiltVariant, string> = {
 };
 
 const tiltHover: Record<TiltVariant, string> = {
-  "tilted-left": "hover:-translate-y-1 hover:rotate-[-2deg] hover:shadow-xl",
-  neutral: "hover:-translate-y-1 hover:rotate-[-0.5deg] hover:shadow-xl",
-  "tilted-right": "hover:-translate-y-1 hover:rotate-[0.7deg] hover:shadow-xl",
+  "tilted-left": "",
+  neutral: "",
+  "tilted-right": "",
 };
 
 function LocationCard({
@@ -172,12 +172,11 @@ function LocationCard({
           onKeyDown={isClickable ? handleKeyDown : undefined}
           disabled={!isClickable}
           className={cn(
-            "flex items-center gap-3 w-full rounded-lg border border-border-default bg-bg-raised px-3 py-2.5 text-left transition-colors duration-150",
+            "flex items-center gap-3 w-full rounded-lg border border-border-default border-l-[3px] border-l-primary bg-bg-raised px-3 py-2.5 text-left transition-colors duration-150",
             isClickable && "hover:bg-bg-sunken active:bg-bg-sunken cursor-pointer",
             !isClickable && "cursor-default",
             className,
           )}
-          style={{ borderLeft: "3px solid var(--primary)" }}
           aria-label={caption || "View location photo"}
           {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
         >
@@ -203,13 +202,9 @@ function LocationCard({
                 {room}
               </span>
             )}
-            {caption ? (
+            {caption && (
               <span className="font-handwritten text-base leading-snug text-text-primary truncate">
                 {caption}
-              </span>
-            ) : (
-              <span className="font-body text-xs text-text-muted">
-                {videoSrc ? "View location video" : "View location photo"}
               </span>
             )}
           </div>
@@ -283,7 +278,7 @@ function LocationCard({
     <>
       <div
         className={cn(
-          "w-[280px] bg-bg-raised rounded-lg shadow-polaroid ring-1 ring-inset ring-[rgba(42,31,26,0.06)] transition-[translate,rotate,box-shadow] duration-250 ease-spring",
+          "w-[280px] bg-bg-raised rounded-lg shadow-polaroid ring-1 ring-inset ring-[rgba(42,31,26,0.06)]",
           tiltBase[tilt],
           isClickable && "cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2",
           isClickable && tiltHover[tilt],

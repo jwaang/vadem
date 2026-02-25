@@ -171,3 +171,22 @@ export const remove = mutation({
     return null;
   },
 });
+
+// Reorder vault items by updating their sortOrder values.
+export const reorderVaultItems = mutation({
+  args: {
+    updates: v.array(
+      v.object({
+        id: v.id("vaultItems"),
+        sortOrder: v.number(),
+      }),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, { updates }) => {
+    for (const { id, sortOrder } of updates) {
+      await ctx.db.patch(id, { sortOrder });
+    }
+    return null;
+  },
+});

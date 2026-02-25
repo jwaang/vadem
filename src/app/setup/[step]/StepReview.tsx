@@ -9,6 +9,7 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
 import { formatPhone } from "@/lib/phone";
+import type { SetupSlug } from "@/lib/setupSteps";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ function StatusBadge({ complete, label }: { complete: boolean; label: string }) 
 // ── Summary row ───────────────────────────────────────────────────────────────
 
 interface SummaryRowProps {
-  stepNumber: number;
+  stepSlug: SetupSlug;
   label: string;
   detail: string;
   complete: boolean;
@@ -38,7 +39,7 @@ interface SummaryRowProps {
 }
 
 function SummaryRow({
-  stepNumber,
+  stepSlug,
   label,
   detail,
   complete,
@@ -55,7 +56,7 @@ function SummaryRow({
       </div>
       <StatusBadge complete={complete} label={badgeText} />
       <Link
-        href={`/wizard/${stepNumber}`}
+        href={`/setup/${stepSlug}`}
         className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150 shrink-0"
       >
         Edit
@@ -269,9 +270,9 @@ function ManualPreview({
   );
 }
 
-// ── Step6Review ───────────────────────────────────────────────────────────────
+// ── StepReview ────────────────────────────────────────────────────────────────
 
-export default function Step6Review() {
+export default function StepReview() {
   const router = useRouter();
   const { user } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
@@ -343,7 +344,7 @@ export default function Step6Review() {
             Complete step 1 to create your property before publishing.
           </p>
           <Link
-            href="/wizard/1"
+            href="/setup/home"
             className="font-body text-sm text-primary hover:text-primary-hover mt-1 font-semibold"
           >
             Go to step 1 →
@@ -366,7 +367,7 @@ export default function Step6Review() {
           ) : summary ? (
             <>
               <SummaryRow
-                stepNumber={1}
+                stepSlug="home"
                 label="Your home"
                 detail={
                   summary.propertyName
@@ -377,7 +378,7 @@ export default function Step6Review() {
                 badgeText={summary.hasPropertyName ? "Complete" : "Missing"}
               />
               <SummaryRow
-                stepNumber={2}
+                stepSlug="pets"
                 label="Pets"
                 detail={
                   summary.petCount > 0
@@ -392,7 +393,7 @@ export default function Step6Review() {
                 }
               />
               <SummaryRow
-                stepNumber={3}
+                stepSlug="access"
                 label="Access & security"
                 detail={
                   summary.vaultItemCount > 0
@@ -407,7 +408,7 @@ export default function Step6Review() {
                 }
               />
               <SummaryRow
-                stepNumber={4}
+                stepSlug="contacts"
                 label="Emergency contacts"
                 detail={
                   summary.contactCount > 0
@@ -422,7 +423,7 @@ export default function Step6Review() {
                 }
               />
               <SummaryRow
-                stepNumber={5}
+                stepSlug="instructions"
                 label="House instructions"
                 detail={
                   summary.sectionCount > 0
@@ -488,7 +489,7 @@ export default function Step6Review() {
         {summary && !summary.hasPropertyName && !isLoading && (
           <p className="font-body text-xs text-text-muted text-center">
             Add your property name in{" "}
-            <Link href="/wizard/1" className="text-primary hover:text-primary-hover">
+            <Link href="/setup/home" className="text-primary hover:text-primary-hover">
               step 1
             </Link>{" "}
             to publish.

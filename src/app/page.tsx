@@ -14,6 +14,7 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Vadem",
+  alternateName: ["Vadem", "vadem.app"],
   url: "https://vadem.app",
   description:
     "Create care manuals for pet and house sitters with daily tasks, location photos, secure codes, and real-time updates.",

@@ -79,7 +79,7 @@ function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
         ...(originTripId ? { originTripId } : {}),
       });
       setUser({ token, email: userEmail, emailVerified: false });
-      router.push("/wizard");
+      router.push("/welcome");
     } catch (err) {
       if (err instanceof Error && err.message.includes("already exists")) {
         setErrors({ email: "An account with this email already exists" });

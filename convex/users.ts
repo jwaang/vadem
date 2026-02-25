@@ -95,17 +95,12 @@ const DEFAULT_NOTIFICATION_PREFERENCES = {
 };
 
 // Internal: get task completion notification preference for a user
-// Checks notificationPreferences.taskCompletions first, falls back to legacy
-// notificationPreference field, then defaults to 'proof-only'.
 export const getNotificationPreference = internalQuery({
   args: { userId: v.id("users") },
   returns: notificationPreferenceValidator,
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
-    if (user?.notificationPreferences?.taskCompletions) {
-      return user.notificationPreferences.taskCompletions;
-    }
-    return user?.notificationPreference ?? "proof-only";
+    return user?.notificationPreferences?.taskCompletions ?? "proof-only";
   },
 });
 
@@ -119,26 +114,6 @@ export const getNotificationPreferences = internalQuery({
       return user.notificationPreferences;
     }
     return DEFAULT_NOTIFICATION_PREFERENCES;
-  },
-});
-
-// Public: update the authenticated user's notification preference (legacy single-field)
-export const updateNotificationPreference = mutation({
-  args: {
-    token: v.string(),
-    preference: notificationPreferenceValidator,
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const session = await ctx.db
-      .query("sessions")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
-      .unique();
-    if (!session || session.expiresAt < Date.now()) return null;
-    await ctx.db.patch(session.userId, {
-      notificationPreference: args.preference,
-    });
-    return null;
   },
 });
 
@@ -159,24 +134,6 @@ export const updateNotificationPreferences = mutation({
       notificationPreferences: args.preferences,
     });
     return null;
-  },
-});
-
-// Public: get the authenticated user's notification preference (legacy)
-export const getMyNotificationPreference = query({
-  args: { token: v.string() },
-  returns: v.union(notificationPreferenceValidator, v.null()),
-  handler: async (ctx, args) => {
-    const session = await ctx.db
-      .query("sessions")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
-      .unique();
-    if (!session || session.expiresAt < Date.now()) return null;
-    const user = await ctx.db.get(session.userId);
-    if (user?.notificationPreferences?.taskCompletions) {
-      return user.notificationPreferences.taskCompletions;
-    }
-    return user?.notificationPreference ?? "proof-only";
   },
 });
 

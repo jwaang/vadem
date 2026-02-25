@@ -10,7 +10,7 @@ import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
 import { ActivityFeedItem, type ActivityType } from "@/components/ui/ActivityFeedItem";
 import { VerificationBanner } from "@/components/ui/VerificationBanner";
-import { HomeIcon, CalendarIcon, ClockIcon, BellIcon, CheckIcon, XIcon } from "@/components/ui/icons";
+import { HomeIcon, CalendarIcon, ClockIcon, BellIcon, CheckIcon, XIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 // ── Trip Status ────────────────────────────────────────────────────────
 
@@ -162,7 +162,10 @@ function ActivityFeedSectionInner() {
     { label: "Vault", value: "vault_accessed" },
   ];
 
-  const hasNoActiveTrip = propertyId !== undefined && activeTrip === null;
+  const propertiesLoaded = properties !== undefined;
+  const hasNoActiveTrip =
+    (propertiesLoaded && !propertyId) ||
+    (propertyId !== undefined && activeTrip === null);
 
   return (
     <>
@@ -332,7 +335,7 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
         title="Let's set up your home"
         description="Add your property details and care instructions so sitters have everything they need."
         cta="Get started"
-        onCta={() => router.push("/wizard/1")}
+        onCta={() => router.push("/setup/home")}
       />
     );
   } else {
@@ -380,7 +383,18 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
   }
 
   let tripContent: React.ReactNode = null;
-  if (!isLoadingProperties && property) {
+  if (!isLoadingProperties && !property) {
+    tripContent = (
+      <EmptyStateCard
+        icon={<CalendarIcon size={22} className="text-accent" />}
+        iconBg="bg-accent-subtle"
+        title="No trips yet"
+        description="Set up your property first, then create a trip to share with your sitter."
+        cta="Set up property"
+        onCta={() => router.push("/setup/home")}
+      />
+    );
+  } else if (!isLoadingProperties && property) {
     if (existingTrip === undefined) {
       tripContent = (
         <div className="bg-bg-raised rounded-xl border border-border-default p-5 animate-pulse">
@@ -409,13 +423,13 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
             className="bg-bg-raised rounded-xl border border-border-default overflow-hidden transition-[border-color] duration-150 group-hover:border-border-strong"
             style={{ boxShadow: "var(--shadow-sm)" }}
           >
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-10 h-10 rounded-lg bg-accent-subtle flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-4 px-5 py-4">
+              <div className="size-10 rounded-lg bg-accent-subtle flex items-center justify-center shrink-0">
                 <CalendarIcon size={20} className="text-accent" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-display italic text-base text-text-primary leading-snug">
+                  <span className="font-display italic text-base text-text-primary leading-snug text-balance">
                     {formatTripDate(existingTrip.startDate)} – {formatTripDate(existingTrip.endDate)}
                   </span>
                   <span
@@ -424,10 +438,10 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
                     {statusLabel}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap text-pretty">
                   {isActive ? (
                     <>
-                      <span className="font-body text-xs text-text-muted">
+                      <span className="font-body text-xs text-text-muted tabular-nums">
                         {daysLeft === 0
                           ? "Last day"
                           : `${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`}
@@ -435,7 +449,7 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
                       {taskSummary && (
                         <>
                           <span className="font-body text-xs text-border-strong">·</span>
-                          <span className="font-body text-xs text-text-muted">
+                          <span className="font-body text-xs text-text-muted tabular-nums">
                             {taskSummary.completed}/{taskSummary.total} tasks today
                           </span>
                         </>
@@ -454,14 +468,12 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
                   )}
                 </div>
               </div>
-              <span className="font-body text-sm text-text-muted group-hover:text-primary transition-colors duration-150 shrink-0">
-                →
-              </span>
+              <ChevronRightIcon size={16} className="text-text-muted group-hover:text-primary transition-colors duration-150 shrink-0" />
             </div>
             {isActive && (
-              <div className="h-1 bg-bg-sunken">
+              <div className="h-1.5 bg-bg-sunken">
                 <div
-                  className="h-full bg-accent transition-[width] duration-400"
+                  className="h-full bg-accent rounded-pill transition-[width] duration-400"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
@@ -540,7 +552,7 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
                   Your manual is {pct}% complete
                 </p>
                 <Link
-                  href="/wizard/2"
+                  href="/setup/pets"
                   className="font-body text-xs font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
                 >
                   Continue setup →
@@ -571,7 +583,7 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
         })()}
       </section>
 
-      {(!isLoadingProperties && property) || tripContent ? (
+      {tripContent && (
         <section aria-labelledby="trip-heading">
           <h2
             id="trip-heading"
@@ -581,7 +593,7 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
           </h2>
           {tripContent}
         </section>
-      ) : null}
+      )}
 
       <section aria-labelledby="activity-heading">
         <h2

@@ -39,7 +39,7 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 
 ### Route Structure
 Two distinct user modes with separate route trees:
-- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/dashboard/settings`, `/wizard/[step]`, `/manual/[propertyId]`, `/report`
+- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/dashboard/settings`, `/welcome`, `/setup/[step]` (slugs: home, pets, access, contacts, instructions, review), `/manual/[propertyId]`, `/report`
 - **Sitter routes** (unauthenticated, link-based): `/t/[tripId]` — password-gated today view with tabs (tasks, vault, activity); `/trip/[tripId]` — owner's authenticated view of the same trip
 - **Auth routes**: `/login`, `/signup`, `/verify-email`, `/auth/callback`
 

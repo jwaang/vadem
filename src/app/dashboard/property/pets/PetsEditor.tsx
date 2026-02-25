@@ -791,25 +791,26 @@ export default function PetsEditor() {
       const newPhotoIds =
         newPhotos.length > 0 ? await uploadPhotos(newPhotos) : [];
       const allPhotoIds = [...keptPhotoIds, ...newPhotoIds];
+      // Always send all fields so the mutation can clear empty ones
       await updatePet({
         petId,
         name: data.name.trim(),
         species: data.species.trim(),
-        breed: data.breed.trim() || undefined,
-        age: data.age.trim() || undefined,
+        breed: data.breed.trim(),
+        age: data.age.trim(),
         photos: allPhotoIds,
-        feedingInstructions: data.feedingInstructions.trim() || undefined,
-        vetName: data.vetName.trim() || undefined,
-        vetPhone: data.vetPhone.trim() ? normalizePhone(data.vetPhone) : undefined,
-        personalityNotes: data.personalityNotes.trim() || undefined,
-        medicalConditions: data.medicalConditions.trim() || undefined,
+        feedingInstructions: data.feedingInstructions.trim(),
+        vetName: data.vetName.trim(),
+        vetPhone: data.vetPhone.trim() ? normalizePhone(data.vetPhone) : "",
+        personalityNotes: data.personalityNotes.trim(),
+        medicalConditions: data.medicalConditions.trim(),
         medications: data.medications.filter((m) => m.name.trim()),
-        behavioralQuirks: data.behavioralQuirks.trim() || undefined,
-        allergies: data.allergies.trim() || undefined,
-        microchipNumber: data.microchipNumber.trim() || undefined,
-        walkingRoutine: data.walkingRoutine.trim() || undefined,
-        groomingNeeds: data.groomingNeeds.trim() || undefined,
-        comfortItems: data.comfortItems.trim() || undefined,
+        behavioralQuirks: data.behavioralQuirks.trim(),
+        allergies: data.allergies.trim(),
+        microchipNumber: data.microchipNumber.trim(),
+        walkingRoutine: data.walkingRoutine.trim(),
+        groomingNeeds: data.groomingNeeds.trim(),
+        comfortItems: data.comfortItems.trim(),
       });
       setEditingId(null);
     } catch {
@@ -871,7 +872,7 @@ export default function PetsEditor() {
             <ChevronLeftIcon />
             Property
           </Link>
-          <h1 className="font-display text-3xl text-text-primary leading-tight">
+          <h1 className="font-display text-4xl text-text-primary leading-tight">
             Pets
           </h1>
           <p className="font-body text-sm text-text-secondary">
@@ -896,7 +897,7 @@ export default function PetsEditor() {
 
         {/* Pet list */}
         {petList.length > 0 && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             {petList.map((pet, index) =>
               editingId === pet._id ? (
                 <PetForm

@@ -6,6 +6,7 @@ import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { NotificationToast } from "@/components/ui/NotificationToast";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   const [showToast, setShowToast] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [expiryValue, setExpiryValue] = useState("");
   const [expiryError, setExpiryError] = useState("");
   const [isSavingExpiry, setIsSavingExpiry] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -116,24 +118,40 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
     setCanShare(typeof navigator !== "undefined" && "share" in navigator);
   }, []);
 
-  // Auto-generate share link on mount
+  // Seed shareSlug from the existing trip record if it already has a link
   useEffect(() => {
-    if (shareSlug || isGenerating) return;
-    let cancelled = false;
-    setIsGenerating(true);
-    generateShareLink({ tripId })
-      .then((slug) => {
-        if (!cancelled) setShareSlug(slug);
-      })
-      .catch(() => {
-        // user can retry manually
-      })
-      .finally(() => {
-        if (!cancelled) setIsGenerating(false);
-      });
-    return () => { cancelled = true; };
+    if (trip?.shareLink && !shareSlug) {
+      setShareSlug(trip.shareLink);
+    }
+  }, [trip?.shareLink, shareSlug]);
+
+  // Sync expiry value from trip data
+  useEffect(() => {
+    if (!trip) return;
+    setExpiryValue(trip.linkExpiry ? msToDateString(trip.linkExpiry) : trip.endDate);
+  }, [trip]);
+
+  // Only generate a new share link if the trip loaded and has no existing link
+  useEffect(() => {
+    if (shareSlug || isGenerating || trip === undefined) return;
+    // trip loaded but has no shareLink yet — generate one
+    if (trip !== null && !trip.shareLink) {
+      let cancelled = false;
+      setIsGenerating(true);
+      generateShareLink({ tripId })
+        .then((slug) => {
+          if (!cancelled) setShareSlug(slug);
+        })
+        .catch(() => {
+          // user can retry manually
+        })
+        .finally(() => {
+          if (!cancelled) setIsGenerating(false);
+        });
+      return () => { cancelled = true; };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tripId]);
+  }, [tripId, trip]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const shareUrl = shareSlug ? `${origin}/t/${shareSlug}` : null;
@@ -170,9 +188,9 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
     }
   }
 
-  async function handleExpiryChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const dateStr = e.target.value;
+  async function handleExpirySelect(dateStr: string) {
     if (!dateStr || !trip) return;
+    setExpiryValue(dateStr);
     setExpiryError("");
     setIsSavingExpiry(true);
     try {
@@ -385,37 +403,16 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="link-expiry-date"
-                  className="font-body text-xs font-medium text-text-secondary"
-                >
-                  Expires on
-                </label>
-                <input
-                  id="link-expiry-date"
-                  type="date"
-                  defaultValue={
-                    trip.linkExpiry
-                      ? msToDateString(trip.linkExpiry)
-                      : trip.endDate
-                  }
-                  max={trip.endDate}
-                  onChange={handleExpiryChange}
-                  disabled={isSavingExpiry}
-                  className="font-body text-sm text-text-primary bg-bg border border-border-default rounded-md px-3 py-2 outline-none focus:border-primary w-full"
-                  style={{
-                    borderWidth: "1.5px",
-                    boxShadow: "none",
-                  }}
-                />
-                {expiryError && (
-                  <p className="font-body text-xs text-danger">{expiryError}</p>
-                )}
-                {isSavingExpiry && (
-                  <p className="font-body text-xs text-text-muted">Saving…</p>
-                )}
-              </div>
+              <DatePicker
+                label="Expires on"
+                id="link-expiry-date"
+                value={expiryValue}
+                onChange={handleExpirySelect}
+                max={trip.endDate}
+                disabled={isSavingExpiry}
+                error={expiryError || undefined}
+                hint={isSavingExpiry ? "Saving…" : undefined}
+              />
             </div>
           )}
 

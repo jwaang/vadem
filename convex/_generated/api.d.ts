@@ -29,6 +29,8 @@ import type * as reportActions from "../reportActions.js";
 import type * as reports from "../reports.js";
 import type * as search from "../search.js";
 import type * as sections from "../sections.js";
+import type * as seed from "../seed.js";
+import type * as seedHelpers from "../seedHelpers.js";
 import type * as shareActions from "../shareActions.js";
 import type * as sitterActions from "../sitterActions.js";
 import type * as sitters from "../sitters.js";
@@ -71,6 +73,8 @@ declare const fullApi: ApiFromModules<{
   reports: typeof reports;
   search: typeof search;
   sections: typeof sections;
+  seed: typeof seed;
+  seedHelpers: typeof seedHelpers;
   shareActions: typeof shareActions;
   sitterActions: typeof sitterActions;
   sitters: typeof sitters;

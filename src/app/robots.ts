@@ -8,7 +8,8 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/dashboard/",
-          "/wizard/",
+          "/setup/",
+          "/welcome",
           "/trip/",
           "/t/",
           "/auth/",

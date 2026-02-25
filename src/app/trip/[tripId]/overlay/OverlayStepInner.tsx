@@ -6,17 +6,13 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
+import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
-
-const SUGGESTIONS = [
-  "Any medication changes?",
-  "Any scheduled visitors?",
-  "Any special instructions?",
-];
 
 type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
 
@@ -92,6 +88,7 @@ interface SavedItemRowProps {
 
 function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+  const [showVideoUploader, setShowVideoUploader] = useState(false);
 
   // Live query — drives attached state reactively after upload/reload
   const existingCards = useQuery(api.locationCards.listByParent, {
@@ -133,11 +130,6 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
           {item.date && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
               {item.date}
-            </span>
-          )}
-          {item.proofRequired && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-warning-light text-warning">
-              📷 Proof needed
             </span>
           )}
         </div>
@@ -185,13 +177,20 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => setShowPhotoUploader(true)}
-            className="self-start inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted border border-dashed border-border-strong rounded-md px-3 py-1.5 hover:text-primary hover:border-primary transition-colors duration-150"
-          >
-            <CameraIcon />
-            Attach location card
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPhotoUploader(true)}
+              className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+            >
+              + Photo card
+            </button>
+            <button
+              onClick={() => setShowVideoUploader(true)}
+              className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+            >
+              + Video card
+            </button>
+          </div>
         )}
       </div>
 
@@ -206,6 +205,15 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
           existingPhotoUrl={attachedCard?.resolvedPhotoUrl}
           existingCaption={attachedCard?.caption}
           existingRoomTag={attachedCard?.roomTag}
+        />
+      )}
+      {/* Video uploader modal */}
+      {showVideoUploader && (
+        <LocationCardVideoUploader
+          parentId={item._id}
+          parentType="overlayItem"
+          onSuccess={() => setShowVideoUploader(false)}
+          onClose={() => setShowVideoUploader(false)}
         />
       )}
     </>
@@ -225,13 +233,8 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
   const [text, setText] = useState("");
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState<TimeSlot>("anytime");
-  const [proofRequired, setProofRequired] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
-
-  function applySuggestion(suggestion: string) {
-    setText(suggestion);
-  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -247,13 +250,12 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
         text: text.trim(),
         date: date || undefined,
         timeSlot,
-        proofRequired,
+        proofRequired: false,
       });
       // Reset form
       setText("");
       setDate("");
       setTimeSlot("anytime");
-      setProofRequired(false);
       onAdded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add item.");
@@ -268,23 +270,6 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
         <h3 className="font-body text-sm font-semibold text-text-primary">
           Add a trip-specific task
         </h3>
-        <p className="font-body text-xs text-text-muted mt-0.5">
-          Tap a suggestion or type your own
-        </p>
-      </div>
-
-      {/* Suggestion chips */}
-      <div className="flex flex-wrap gap-2">
-        {SUGGESTIONS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => applySuggestion(s)}
-            className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-pill border border-accent-light bg-accent-subtle text-accent hover:bg-accent-light transition-colors duration-150"
-          >
-            {s}
-          </button>
-        ))}
       </div>
 
       <form onSubmit={handleAdd} className="flex flex-col gap-4">
@@ -320,37 +305,14 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
 
         {/* Date + Time slot row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="overlay-date"
-              className="font-body text-xs font-semibold text-text-secondary"
-            >
-              Specific date{" "}
-              <span className="font-normal text-text-muted">(optional)</span>
-            </label>
-            <input
-              id="overlay-date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 outline-none transition-[border-color,box-shadow] duration-150"
-              style={{
-                border: "1.5px solid var(--border-default)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--primary)";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px var(--primary-subtle)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-default)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-            <p className="font-body text-xs text-text-muted">
-              Leave empty to apply all days
-            </p>
-          </div>
+          <DatePicker
+            label="Specific date"
+            id="overlay-date"
+            value={date}
+            onChange={setDate}
+            placeholder="Leave empty for all days"
+            hint="Leave empty to apply all days"
+          />
 
           <div className="flex flex-col gap-1.5">
             <label
@@ -382,36 +344,6 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
               <option value="afternoon">Afternoon</option>
               <option value="evening">Evening</option>
             </select>
-          </div>
-        </div>
-
-        {/* Proof required toggle */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={proofRequired}
-            onClick={() => setProofRequired((v) => !v)}
-            className={[
-              "relative inline-flex h-6 w-11 shrink-0 rounded-pill border-2 border-transparent transition-colors duration-250",
-              proofRequired ? "bg-primary" : "bg-border-strong",
-            ].join(" ")}
-          >
-            <span
-              className={[
-                "inline-block h-5 w-5 rounded-round bg-white shadow transition-[translate] duration-250",
-                proofRequired ? "translate-x-5" : "translate-x-0",
-              ].join(" ")}
-            />
-            <span className="sr-only">Require photo proof</span>
-          </button>
-          <div>
-            <p className="font-body text-sm font-medium text-text-primary">
-              Require proof photo
-            </p>
-            <p className="font-body text-xs text-text-muted">
-              Sitter must upload a photo to mark as done
-            </p>
           </div>
         </div>
 
@@ -545,7 +477,7 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
           )}
 
           {/* Add item form */}
-          <AddItemForm tripId={tripId} onAdded={() => {}} />
+          <AddItemForm tripId={tripId} onAdded={() => { }} />
 
           {/* Continue */}
           <div className="flex items-center justify-end pt-2">

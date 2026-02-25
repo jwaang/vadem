@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -354,7 +354,6 @@ function EditableContactCard({
 // ── Inner (requires Convex) ───────────────────────────────────────────────────
 
 function ContactsEditorInner() {
-  const router = useRouter();
   const { user } = useAuth();
 
   const sessionData = useQuery(
@@ -467,23 +466,20 @@ function ContactsEditorInner() {
     <CreatorLayout activeNav="property">
       <div className="flex flex-col gap-6">
         {/* Header */}
-        <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/property")}
-            className="inline-flex items-center gap-1.5 font-body text-sm text-text-muted hover:text-text-primary transition-colors duration-150 self-start"
+        <div className="flex flex-col gap-1">
+          <Link
+            href="/dashboard/property"
+            className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-text-muted hover:text-text-secondary transition-colors duration-150 mb-1"
           >
             <ChevronLeftIcon />
             Property
-          </button>
-          <div className="flex flex-col gap-1">
-            <h1 className="font-display text-4xl text-text-primary leading-tight">
-              Emergency contacts
-            </h1>
-            <p className="font-body text-sm text-text-secondary">
-              Add contacts your sitter can reach quickly in an emergency.
-            </p>
-          </div>
+          </Link>
+          <h1 className="font-display text-4xl text-text-primary leading-tight">
+            Emergency contacts
+          </h1>
+          <p className="font-body text-sm text-text-secondary">
+            Add contacts your sitter can reach quickly in an emergency.
+          </p>
         </div>
 
         {generalError && (
@@ -506,7 +502,7 @@ function ContactsEditorInner() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {contacts.map((contact, index) =>
               contact.isLocked ? (
                 <LockedContactCard key={contact._id} contact={contact} />
@@ -531,7 +527,7 @@ function ContactsEditorInner() {
           <button
             type="button"
             onClick={handleAddContact}
-            className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-secondary hover:bg-secondary-subtle transition-[border-color,background-color] duration-150 font-body text-sm font-semibold text-text-primary"
+            className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-primary hover:bg-primary-subtle transition-[border-color,background-color] duration-150 font-body text-sm font-semibold text-text-primary"
           >
             <PlusIcon />
             Add contact

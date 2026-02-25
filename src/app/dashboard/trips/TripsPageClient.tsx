@@ -8,10 +8,10 @@ import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Badge } from "@/components/ui/Badge";
 import { NotificationToast } from "@/components/ui/NotificationToast";
-import { CalendarIcon, PlusIcon, CopyIcon, ShareNetworkIcon, CheckIcon, RefreshIcon } from "@/components/ui/icons";
+import { CalendarIcon, PlusIcon, CopyIcon, ShareNetworkIcon, CheckIcon, RefreshIcon, HomeIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 // ── Date formatting ────────────────────────────────────────────────────
 
@@ -533,26 +533,24 @@ function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
-          <Input
+          <DatePicker
             label="Start date"
-            type="date"
             id="trip-start-date"
             value={startDate}
             min={today}
-            onChange={(e) => {
-              setStartDate(e.target.value);
+            onChange={(v) => {
+              setStartDate(v);
               setDateError("");
             }}
             required
           />
-          <Input
+          <DatePicker
             label="End date"
-            type="date"
             id="trip-end-date"
             value={endDate}
             min={startDate || today}
-            onChange={(e) => {
-              setEndDate(e.target.value);
+            onChange={(v) => {
+              setEndDate(v);
               setDateError("");
             }}
             required
@@ -688,8 +686,10 @@ function TripsSectionInner() {
     propertyId ? { propertyId } : "skip",
   );
 
+  const hasNoProperty = properties !== undefined && properties.length === 0;
+
   // Still loading — propertyId is known but existingTrip hasn't resolved yet
-  const isLoading = propertyId !== undefined && existingTrip === undefined;
+  const isLoading = !hasNoProperty && (propertyId !== undefined && existingTrip === undefined);
 
   return (
     <div className="flex flex-col gap-8">
@@ -700,7 +700,7 @@ function TripsSectionInner() {
             Plan and manage your upcoming trips
           </p>
         </div>
-        {!showForm && !existingTrip && !isLoading && (
+        {!hasNoProperty && !showForm && !existingTrip && !isLoading && (
           <Button
             variant="primary"
             size="sm"
@@ -712,7 +712,26 @@ function TripsSectionInner() {
         )}
       </div>
 
-      {isLoading ? (
+      {hasNoProperty ? (
+        <Link
+          href="/setup/home"
+          className="bg-bg-raised rounded-xl border border-border-default p-5 flex items-center gap-4 no-underline hover:border-border-strong transition-colors duration-150"
+          style={{ boxShadow: "var(--shadow-sm)" }}
+        >
+          <div className="w-11 h-11 rounded-xl bg-primary-subtle flex items-center justify-center shrink-0">
+            <HomeIcon size={22} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm font-semibold text-text-primary">
+              Set up your home first
+            </p>
+            <p className="font-body text-xs text-text-muted mt-0.5">
+              Add your property before creating a trip — it only takes a minute.
+            </p>
+          </div>
+          <ChevronRightIcon size={16} className="text-text-muted shrink-0" />
+        </Link>
+      ) : isLoading ? (
         <div className="flex flex-col gap-3">
           {[0, 1].map((i) => (
             <div key={i} className="h-24 rounded-xl bg-bg-sunken animate-pulse" />
@@ -734,7 +753,7 @@ function TripsSectionInner() {
         />
       )}
 
-      {!showForm && !existingTrip && !isLoading && (
+      {!hasNoProperty && !showForm && !existingTrip && !isLoading && (
         <div className="flex flex-col gap-3">
           <h2 className="font-body text-sm font-semibold text-text-secondary uppercase tracking-wide">
             How trips work

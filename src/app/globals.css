@@ -149,11 +149,24 @@
     from { opacity: 1; transform: translateX(0) scale(1); }
     to { opacity: 0; transform: translateX(20px) scale(0.96); }
   }
+
+  @keyframes onboarding-slide-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
 }
 
 /* ============================================================
    Body: Linen Background with Subtle Noise Texture
    ============================================================ */
+
+/* ── react-day-picker overrides ── */
+.rdp-root {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-primary-subtle);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+}
 
 body {
   background-color: #FAF6F1;

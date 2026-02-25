@@ -20,6 +20,11 @@ export const _createUser = internalMutation({
       appleId: args.appleId,
       emailVerified: args.emailVerified,
       createdAt: Date.now(),
+      notificationPreferences: {
+        taskCompletions: "proof-only",
+        linkOpened: true,
+        tripEnding: true,
+      },
     });
   },
 });
@@ -176,7 +181,26 @@ export const validateSession = query({
     if (!session || session.expiresAt < Date.now()) return null;
     const user = await ctx.db.get(session.userId);
     if (!user) return null;
-    return { userId: user._id, email: user.email, emailVerified: user.emailVerified ?? false };
+    return {
+      userId: user._id,
+      email: user.email,
+      emailVerified: user.emailVerified ?? false,
+      hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+    };
+  },
+});
+
+// Public: mark onboarding as complete for the current session user
+export const markOnboardingComplete = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.token) return;
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return;
+    await ctx.db.patch(session.userId, { hasCompletedOnboarding: true });
   },
 });
 

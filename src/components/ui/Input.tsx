@@ -57,4 +57,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   );
 });
 
-export { Input, type InputProps };
+export { Input, fieldBase, fieldError, type InputProps };

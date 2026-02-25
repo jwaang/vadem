@@ -2,7 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [{ hostname: "images.unsplash.com" }],
+    remotePatterns: [
+      { hostname: "images.unsplash.com" },
+      { hostname: "*.convex.cloud" },
+    ],
+  },
+  async redirects() {
+    return [
+      { source: "/wizard", destination: "/setup/home", permanent: true },
+      { source: "/wizard/1", destination: "/setup/home", permanent: true },
+      { source: "/wizard/2", destination: "/setup/pets", permanent: true },
+      { source: "/wizard/3", destination: "/setup/access", permanent: true },
+      { source: "/wizard/4", destination: "/setup/contacts", permanent: true },
+      { source: "/wizard/5", destination: "/setup/instructions", permanent: true },
+      { source: "/wizard/6", destination: "/setup/review", permanent: true },
+    ];
   },
   async headers() {
     return [

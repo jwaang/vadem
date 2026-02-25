@@ -45,16 +45,31 @@ interface SectionData {
   instructions: InstructionData[];
 }
 
+interface MedicationData {
+  name: string;
+  dosage: string;
+  frequency: string;
+  time: string;
+}
+
 interface PetData {
   _id: string;
   name: string;
+  species: string;
   breed?: string;
   age?: string;
   feedingInstructions?: string;
   vetName?: string;
   vetPhone?: string;
   personalityNotes?: string;
+  medicalConditions?: string;
+  medications: MedicationData[];
+  behavioralQuirks?: string;
+  allergies?: string;
+  microchipNumber?: string;
   walkingRoutine?: string;
+  groomingNeeds?: string;
+  comfortItems?: string;
   resolvedPhotoUrl: string | null;
 }
 
@@ -75,14 +90,14 @@ interface FullManualData {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function truncate(text: string, max = 60): string {
+  return text.length > max ? text.slice(0, max - 3) + "…" : text;
+}
+
 function buildPetDetails(pet: PetData): PetDetail[] {
   const details: PetDetail[] = [];
   if (pet.feedingInstructions) {
-    const val =
-      pet.feedingInstructions.length > 60
-        ? pet.feedingInstructions.slice(0, 57) + "…"
-        : pet.feedingInstructions;
-    details.push({ emoji: "🍽️", label: "Feeding", value: val });
+    details.push({ emoji: "🍽️", label: "Feeding", value: truncate(pet.feedingInstructions) });
   }
   if (pet.vetName) {
     details.push({
@@ -93,11 +108,31 @@ function buildPetDetails(pet: PetData): PetDetail[] {
     });
   }
   if (pet.walkingRoutine) {
-    const val =
-      pet.walkingRoutine.length > 60
-        ? pet.walkingRoutine.slice(0, 57) + "…"
-        : pet.walkingRoutine;
-    details.push({ emoji: "🚶", label: "Walks", value: val });
+    details.push({ emoji: "🚶", label: "Walks", value: truncate(pet.walkingRoutine) });
+  }
+  if (pet.medicalConditions) {
+    details.push({ emoji: "🩺", label: "Medical", value: truncate(pet.medicalConditions) });
+  }
+  if (pet.medications.length > 0) {
+    const summary = pet.medications
+      .map((m) => [m.name, m.dosage].filter(Boolean).join(" "))
+      .join(", ");
+    details.push({ emoji: "💊", label: "Meds", value: truncate(summary) });
+  }
+  if (pet.allergies) {
+    details.push({ emoji: "⚠️", label: "Allergies", value: truncate(pet.allergies) });
+  }
+  if (pet.behavioralQuirks) {
+    details.push({ emoji: "🐾", label: "Quirks", value: truncate(pet.behavioralQuirks) });
+  }
+  if (pet.groomingNeeds) {
+    details.push({ emoji: "✂️", label: "Grooming", value: truncate(pet.groomingNeeds) });
+  }
+  if (pet.comfortItems) {
+    details.push({ emoji: "🧸", label: "Comfort", value: truncate(pet.comfortItems) });
+  }
+  if (pet.microchipNumber) {
+    details.push({ emoji: "📟", label: "Microchip", value: pet.microchipNumber });
   }
   return details;
 }
@@ -538,18 +573,17 @@ export function ManualTab({ propertyId }: ManualTabProps) {
                                 )}
                             </div>
 
-                            {/* Inline location cards — horizontal scroll */}
+                            {/* Inline location cards — compact strips */}
                             {instruction.locationCards.length > 0 && (
-                              <div className="flex gap-4 overflow-x-auto pb-2 mt-3 -mx-4 px-4 [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]">
+                              <div className="flex flex-col gap-2 mt-3">
                                 {instruction.locationCards.map((card) => (
                                   <LocationCard
                                     key={card._id}
                                     src={card.photoUrl}
                                     caption={card.caption}
                                     room={card.roomTag}
-                                    tilt="neutral"
-                                    className="shrink-0 w-[200px]"
                                     videoSrc={card.resolvedVideoUrl ?? undefined}
+                                    compact
                                   />
                                 ))}
                               </div>
@@ -575,7 +609,7 @@ export function ManualTab({ propertyId }: ManualTabProps) {
                         key={pet._id}
                         src={pet.resolvedPhotoUrl ?? undefined}
                         name={pet.name}
-                        breed={pet.breed ?? ""}
+                        breed={pet.breed || pet.species || ""}
                         age={pet.age ?? ""}
                         details={buildPetDetails(pet)}
                         personalityNote={pet.personalityNotes}

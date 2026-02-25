@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "nuke-db": "bash scripts/nuke-db.sh"
+    "nuke-db": "bash scripts/nuke-db.sh",
+    "seed-demo": "bash scripts/seed-demo.sh"
   },
   "dependencies": {
     "@prelude.so/sdk": "^0.10.0",
@@ -23,6 +24,7 @@
     "framer-motion": "^12.34.3",
     "next": "16.1.6",
     "react": "19.2.3",
+    "react-day-picker": "^9.13.2",
     "react-dom": "19.2.3",
     "resend": "^6.9.2",
     "tailwind-merge": "^3.4.1",

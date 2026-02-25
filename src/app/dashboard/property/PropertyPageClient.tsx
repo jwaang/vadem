@@ -157,14 +157,30 @@ export default function PropertyPageClient() {
               No property found. Set up your home first.
             </p>
             <Link
-              href="/wizard/1"
+              href="/setup/home"
               className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
             >
               Get started →
             </Link>
           </div>
         ) : (
-          <PropertyHubInner propertyId={property._id} />
+          <>
+            <PropertyHubInner propertyId={property._id} />
+            <Link
+              href="/setup/home"
+              className="flex items-center gap-3 bg-bg-raised rounded-xl border border-border-default p-4 hover:border-border-strong transition-colors duration-150"
+              style={{ boxShadow: "var(--shadow-xs)" }}
+            >
+              <div className="w-9 h-9 rounded-lg bg-accent-subtle flex items-center justify-center text-lg">
+                🔄
+              </div>
+              <div className="flex-1">
+                <p className="font-body text-sm font-semibold text-text-primary">Re-run setup wizard</p>
+                <p className="font-body text-xs text-text-muted">Walk through all steps again to update your manual</p>
+              </div>
+              <ChevronRightIcon size={16} className="text-text-muted" />
+            </Link>
+          </>
         )}
       </div>
     </CreatorLayout>

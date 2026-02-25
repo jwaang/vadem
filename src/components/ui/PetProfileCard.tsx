@@ -27,6 +27,8 @@ interface PetProfileCardProps extends HTMLAttributes<HTMLDivElement> {
   details?: PetDetail[];
   /** Personality note displayed in handwritten font */
   personalityNote?: string;
+  /** Optional action buttons rendered in the name row (top-right) */
+  actions?: React.ReactNode;
 }
 
 function PetProfileCard({
@@ -37,13 +39,16 @@ function PetProfileCard({
   age,
   details = [],
   personalityNote,
+  actions,
   className,
   ...props
 }: PetProfileCardProps) {
+  const subtitle = [breed, age].filter(Boolean).join(" · ");
+
   return (
     <div
       className={cn(
-        "max-w-[360px] bg-bg-raised rounded-xl shadow-md overflow-hidden border border-border-default transition-[box-shadow,translate] duration-250 ease-out hover:shadow-lg hover:-translate-y-0.5",
+        "max-w-[360px] bg-bg-raised rounded-xl shadow-sm overflow-hidden border border-border-default",
         className,
       )}
       {...props}
@@ -60,28 +65,39 @@ function PetProfileCard({
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full bg-[linear-gradient(135deg,var(--color-primary-light)_0%,var(--color-accent-light)_50%,var(--color-secondary-light)_100%)]" />
+          <div className="w-full h-full bg-primary-light" />
         )}
       </div>
 
       {/* Content below photo */}
-      <div className="flex flex-col gap-3 pt-5 px-5 pb-6">
-        <h2 className="font-display text-3xl leading-tight tracking-tight text-text-primary m-0">
-          {name}
-        </h2>
-        <p className="font-body text-sm leading-normal text-text-muted m-0">
-          {breed} · {age}
-        </p>
+      <div className="flex flex-col gap-2 pt-5 px-5 pb-6">
+        <div className="flex items-start gap-2">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <h2 className="font-display text-3xl leading-tight text-text-primary text-balance">
+              {name}
+            </h2>
+            {subtitle && (
+              <p className="font-body text-sm leading-normal text-text-muted text-pretty">
+                {subtitle}
+              </p>
+            )}
+          </div>
+          {actions && (
+            <div className="flex items-center gap-0.5 shrink-0 pt-1">
+              {actions}
+            </div>
+          )}
+        </div>
 
         {details.length > 0 && (
           <div className="flex flex-col mt-1 divide-y divide-border-default">
             {details.map((detail) => (
               <div
                 key={detail.label}
-                className="flex items-center gap-2 font-body text-sm leading-normal py-3"
+                className="flex items-start gap-2.5 font-body text-sm leading-normal py-2.5"
               >
                 <span
-                  className="shrink-0 w-6 text-center text-base"
+                  className="shrink-0 size-5 text-center text-sm leading-5 mt-px"
                   aria-hidden="true"
                 >
                   {detail.emoji}
@@ -92,12 +108,12 @@ function PetProfileCard({
                 {detail.phone ? (
                   <a
                     href={`tel:${detail.phone}`}
-                    className="text-secondary font-semibold no-underline ml-auto text-right transition-colors duration-150 ease-out hover:text-secondary-hover"
+                    className="text-secondary font-semibold no-underline ml-auto text-right transition-colors duration-150 ease-out hover:text-secondary-hover tabular-nums"
                   >
                     {detail.value}
                   </a>
                 ) : (
-                  <span className="text-text-secondary ml-auto text-right">
+                  <span className="text-text-secondary ml-auto text-right line-clamp-2">
                     {detail.value}
                   </span>
                 )}
@@ -107,7 +123,7 @@ function PetProfileCard({
         )}
 
         {personalityNote && (
-          <p className="font-handwritten text-lg leading-relaxed text-text-secondary bg-accent-subtle rounded-md py-3 px-4 mt-1 m-0">
+          <p className="font-handwritten text-lg leading-relaxed text-text-secondary bg-accent-subtle rounded-md py-3 px-4 mt-1 text-pretty">
             {personalityNote}
           </p>
         )}

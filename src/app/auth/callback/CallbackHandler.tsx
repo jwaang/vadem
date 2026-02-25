@@ -57,9 +57,9 @@ function CallbackHandlerInner({ provider }: CallbackHandlerProps) {
     const redirectUri = `${origin}/auth/callback/${provider}`;
 
     exchangeCode({ provider, code, redirectUri })
-      .then(({ token, email }) => {
+      .then(({ token, email, isNewUser }) => {
         setUser({ token, email, emailVerified: true });
-        router.replace("/dashboard");
+        router.replace(isNewUser ? "/welcome" : "/dashboard");
       })
       .catch((err: unknown) => {
         const raw = err instanceof Error ? err.message : String(err);

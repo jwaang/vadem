@@ -17,7 +17,7 @@ export default defineSchema({
         v.literal("digest"),
         v.literal("off"),
       ),
-    ), // Legacy: task completion preference; superseded by notificationPreferences
+    ), // DEPRECATED — kept for existing rows; use notificationPreferences instead
     notificationPreferences: v.optional(
       v.object({
         taskCompletions: v.union(
@@ -32,6 +32,7 @@ export default defineSchema({
       }),
     ), // Full notification preferences; defaults applied server-side when absent
     emailVerified: v.optional(v.boolean()),
+    hasCompletedOnboarding: v.optional(v.boolean()),
   })
     .index("by_email", ["email"])
     .index("by_google_id", ["googleId"])

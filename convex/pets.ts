@@ -128,9 +128,17 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { petId, ...fields } = args;
-    const updates = Object.fromEntries(
-      Object.entries(fields).filter(([, val]) => val !== undefined),
-    );
+    // Build updates: include provided fields, converting empty strings to
+    // undefined so Convex removes the field from the document.
+    const updates: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(fields)) {
+      if (val === undefined) continue; // field not provided — skip
+      if (typeof val === "string" && val.trim() === "") {
+        updates[key] = undefined; // explicitly cleared — remove field
+      } else {
+        updates[key] = val;
+      }
+    }
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(petId, updates);
     }

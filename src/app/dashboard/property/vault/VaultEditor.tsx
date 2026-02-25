@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { ChevronLeftIcon, PlusIcon, EyeIcon, EyeOffIcon, PencilIcon, TrashIcon, LockIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, PlusIcon, EyeIcon, EyeOffIcon, PencilIcon, TrashIcon, LockIcon } from "@/components/ui/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -240,6 +240,10 @@ interface VaultItemCardProps {
   onConfirmDelete: () => void;
   onCancelDelete: () => void;
   isDeleting: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
 function VaultItemCard({
@@ -250,6 +254,10 @@ function VaultItemCard({
   onConfirmDelete,
   onCancelDelete,
   isDeleting,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
 }: VaultItemCardProps) {
   const config = getTypeConfig(item.itemType);
 
@@ -275,20 +283,38 @@ function VaultItemCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <IconButton
-            icon={<PencilIcon />}
-            aria-label={`Edit ${item.label}`}
-            size="sm"
-            onClick={onEdit}
-          />
-          <IconButton
-            icon={<TrashIcon />}
-            aria-label={`Delete ${item.label}`}
-            variant="danger"
-            size="sm"
-            onClick={onDelete}
-          />
+        <div className="flex flex-col items-end justify-between self-stretch shrink-0 py-0.5">
+          <div className="flex items-center gap-0.5">
+            <IconButton
+              icon={<PencilIcon />}
+              aria-label={`Edit ${item.label}`}
+              size="sm"
+              onClick={onEdit}
+            />
+            <IconButton
+              icon={<TrashIcon />}
+              aria-label={`Delete ${item.label}`}
+              variant="danger"
+              size="sm"
+              onClick={onDelete}
+            />
+          </div>
+          <div className="flex items-center gap-0.5">
+            <IconButton
+              icon={<ChevronUpIcon />}
+              aria-label={`Move ${item.label} up`}
+              size="sm"
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+            />
+            <IconButton
+              icon={<ChevronDownIcon />}
+              aria-label={`Move ${item.label} down`}
+              size="sm"
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+            />
+          </div>
         </div>
       </div>
 
@@ -505,6 +531,31 @@ function VaultEditorInner({ propertyId }: { propertyId: Id<"properties"> }) {
 
   const items = useQuery(api.vaultItems.listByPropertyId, { propertyId });
   const removeItem = useMutation(api.vaultItems.remove);
+  const reorderItems = useMutation(api.vaultItems.reorderVaultItems);
+
+  function handleMoveUp(index: number) {
+    if (!items || index <= 0) return;
+    const prev = items[index - 1];
+    const curr = items[index];
+    reorderItems({
+      updates: [
+        { id: prev._id, sortOrder: curr.sortOrder },
+        { id: curr._id, sortOrder: prev.sortOrder },
+      ],
+    });
+  }
+
+  function handleMoveDown(index: number) {
+    if (!items || index >= items.length - 1) return;
+    const curr = items[index];
+    const next = items[index + 1];
+    reorderItems({
+      updates: [
+        { id: curr._id, sortOrder: next.sortOrder },
+        { id: next._id, sortOrder: curr.sortOrder },
+      ],
+    });
+  }
 
   async function handleDelete(itemId: Id<"vaultItems">) {
     setDeletingId(itemId);
@@ -555,7 +606,7 @@ function VaultEditorInner({ propertyId }: { propertyId: Id<"properties"> }) {
         <EmptyVault onAdd={() => setMode("add")} />
       ) : (
         <>
-          {items.map((item) => (
+          {items.map((item, index) => (
             <VaultItemCard
               key={item._id}
               item={item as VaultItemLabel}
@@ -571,20 +622,23 @@ function VaultEditorInner({ propertyId }: { propertyId: Id<"properties"> }) {
               onConfirmDelete={() => handleDelete(item._id)}
               onCancelDelete={() => setDeleteConfirmId(null)}
               isDeleting={deletingId === item._id}
+              canMoveUp={index > 0}
+              canMoveDown={index < items.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
             />
           ))}
-          <Button
-            variant="soft"
-            size="sm"
-            icon={<PlusIcon />}
+          <button
+            type="button"
             onClick={() => {
               setMode("add");
               setDeleteConfirmId(null);
             }}
-            className="self-start"
+            className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-primary hover:bg-primary-subtle transition-[border-color,background-color] duration-150 font-body text-sm font-semibold text-text-primary"
           >
+            <PlusIcon />
             Add item
-          </Button>
+          </button>
         </>
       )}
     </div>
@@ -650,7 +704,7 @@ export default function VaultEditor() {
         <div className="flex flex-col gap-1">
           <Link
             href="/dashboard/property"
-            className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-text-secondary transition-colors duration-150 mb-2"
+            className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-text-muted hover:text-text-secondary transition-colors duration-150 mb-1"
           >
             <ChevronLeftIcon />
             Property

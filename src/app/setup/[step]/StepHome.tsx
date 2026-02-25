@@ -7,6 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { Input } from "@/components/ui/Input";
+import { AddressAutocomplete } from "@/components/ui/AddressAutocomplete";
 import { Button } from "@/components/ui/Button";
 
 // ── Upload icon ──────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ export default function Step1Home() {
     setGeneralError(null);
     try {
       await saveProperty(sessionData.userId);
-      router.push("/wizard/2");
+      router.push("/setup/pets");
     } catch {
       setGeneralError("Something went wrong. Please try again.");
     } finally {
@@ -257,11 +258,11 @@ export default function Step1Home() {
           autoFocus
         />
 
-        <Input
+        <AddressAutocomplete
           label="Address"
           placeholder="e.g. 123 Maple Street, Austin TX"
           value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          onChange={setAddress}
           hint="Optional — helps sitters confirm the right location"
         />
 

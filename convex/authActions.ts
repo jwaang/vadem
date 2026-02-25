@@ -24,7 +24,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // Sign up: create a new user account and return a session token
 export const signUp = action({
   args: { email: v.string(), password: v.string(), originTripId: v.optional(v.string()) },
-  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean; isNewUser: boolean }> => {
     const existing = await ctx.runQuery(internal.auth._getUserByEmail, {
       email: args.email,
     });
@@ -71,7 +71,7 @@ export const signUp = action({
       }
     }
 
-    return { token, email: args.email, emailVerified: false };
+    return { token, email: args.email, emailVerified: false, isNewUser: true };
   },
 });
 
@@ -109,9 +109,10 @@ export const exchangeOAuthCode = action({
     code: v.string(),
     redirectUri: v.string(),
   },
-  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean; isNewUser: boolean }> => {
     let email: string;
     let providerId: string;
+    let isNewUser = false;
 
     if (args.provider === "google") {
       const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -175,6 +176,7 @@ export const exchangeOAuthCode = action({
             email,
             googleId: providerId,
           })) as Id<"users">;
+          isNewUser = true;
         }
       }
 
@@ -185,7 +187,7 @@ export const exchangeOAuthCode = action({
         token,
         expiresAt: Date.now() + SESSION_TTL_MS,
       });
-      return { token, email, emailVerified: true };
+      return { token, email, emailVerified: true, isNewUser };
     }
 
     if (args.provider === "apple") {
@@ -276,6 +278,7 @@ export const exchangeOAuthCode = action({
             email,
             appleId: providerId,
           })) as Id<"users">;
+          isNewUser = true;
         }
       }
 
@@ -286,7 +289,7 @@ export const exchangeOAuthCode = action({
         token,
         expiresAt: Date.now() + SESSION_TTL_MS,
       });
-      return { token, email, emailVerified: true };
+      return { token, email, emailVerified: true, isNewUser };
     }
 
     throw new Error("Unknown OAuth provider");

@@ -13,7 +13,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { LocationCard } from "@/components/ui/LocationCard";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
-import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, PencilIcon, XIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PencilIcon, XIcon } from "@/components/ui/icons";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -183,29 +183,26 @@ function InstructionRow({
 
       {/* Location cards display */}
       {locationCards && locationCards.length > 0 && (
-        <div className="px-3 pb-3 pt-3 overflow-x-auto">
-          <div className="flex gap-3 pb-1">
-            {locationCards.map((card) => (
-              <div key={card._id} className="relative shrink-0 group">
-                <LocationCard
-                  src={card.resolvedPhotoUrl ?? undefined}
-                  caption={card.caption ?? ""}
-                  room={card.roomTag}
-                  videoSrc={card.resolvedVideoUrl ?? undefined}
-                  tilt="neutral"
-                  className="w-[200px]"
-                />
-                <IconButton
-                  icon={<XIcon size={10} />}
-                  aria-label="Remove location card"
-                  variant="danger"
-                  size="sm"
-                  onClick={() => void removeLocationCard({ cardId: card._id })}
-                  className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 shadow-sm z-10"
-                />
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-col gap-2 px-3 pb-3 pt-3">
+          {locationCards.map((card) => (
+            <div key={card._id} className="relative group">
+              <LocationCard
+                src={card.resolvedPhotoUrl ?? undefined}
+                caption={card.caption ?? ""}
+                room={card.roomTag}
+                videoSrc={card.resolvedVideoUrl ?? undefined}
+                compact
+              />
+              <IconButton
+                icon={<XIcon size={10} />}
+                aria-label="Remove location card"
+                variant="danger"
+                size="sm"
+                onClick={() => void removeLocationCard({ cardId: card._id })}
+                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 shadow-sm z-10"
+              />
+            </div>
+          ))}
         </div>
       )}
 
@@ -336,10 +333,10 @@ function SectionEditPanel({
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Section header */}
-      <div className={`flex items-center bg-bg-sunken ${isExpanded ? "border-b border-border-default" : ""}`}>
+      <div className={isExpanded ? "border-b border-border-default" : ""}>
         {isEditing ? (
           /* Inline edit form */
-          <div className="flex-1 flex flex-col gap-3 min-w-0 px-3 py-3">
+          <div className="flex flex-col gap-3 px-4 py-3">
             <input
               type="text"
               value={editTitle}
@@ -348,7 +345,7 @@ function SectionEditPanel({
               autoFocus
               className="w-full font-body text-sm text-text-primary bg-bg-raised rounded-md border-[1.5px] border-primary outline-none px-3 py-1.5 placeholder:text-text-muted"
             />
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {ALL_SECTION_ICONS.map((emoji) => (
                 <button
                   key={emoji}
@@ -356,10 +353,10 @@ function SectionEditPanel({
                   onClick={() => setEditIcon(emoji)}
                   aria-label={`Select ${emoji} icon`}
                   aria-pressed={editIcon === emoji}
-                  className={`w-8 h-8 rounded-md text-lg flex items-center justify-center transition-[background-color,box-shadow] duration-150 ${
+                  className={`size-9 rounded-md text-xl flex items-center justify-center transition-[background-color,box-shadow] duration-150 ${
                     editIcon === emoji
                       ? "bg-primary-light ring-2 ring-primary ring-offset-1"
-                      : "bg-bg hover:bg-primary-subtle"
+                      : "bg-bg-sunken hover:bg-primary-subtle"
                   }`}
                 >
                   {emoji}
@@ -382,72 +379,56 @@ function SectionEditPanel({
           </div>
         ) : (
           <>
-            {/* Clickable title area — toggles expand */}
-            <button
-              type="button"
-              onClick={() => setIsExpanded((v) => !v)}
-              aria-expanded={isExpanded}
-              className="flex items-center gap-2.5 flex-1 min-w-0 px-3 py-3 text-left"
-            >
-              <span className="text-xl leading-none shrink-0" aria-hidden="true">
-                {section.icon}
-              </span>
-              <p className="font-body text-sm font-semibold text-text-primary truncate flex-1 min-w-0">
-                {section.title}
-              </p>
-              {instructionCount > 0 && (
-                <span className="font-body text-xs text-text-muted tabular-nums shrink-0">
-                  {instructionCount}
+            {/* Row 1: Title + actions */}
+            <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((v) => !v)}
+                aria-expanded={isExpanded}
+                className="group flex items-center gap-2.5 flex-1 min-w-0 text-left"
+              >
+                <span className="text-xl leading-none shrink-0" aria-hidden="true">
+                  {section.icon}
                 </span>
-              )}
-            </button>
+                <p className="font-body text-sm font-semibold text-text-primary truncate flex-1 min-w-0">
+                  {section.title}
+                </p>
+              </button>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <IconButton
+                  icon={<PencilIcon />}
+                  aria-label={isExpanded ? `Collapse ${section.title}` : `Expand ${section.title}`}
+                  size="sm"
+                  onClick={() => setIsExpanded((v) => !v)}
+                />
+                <IconButton
+                  icon={<TrashIcon />}
+                  aria-label={`Delete ${section.title}`}
+                  variant="danger"
+                  size="sm"
+                  onClick={() => {
+                    setShowDeleteConfirm((v) => !v);
+                    setIsEditing(false);
+                  }}
+                />
+              </div>
+            </div>
 
-            {/* Right-side actions */}
-            <div className="flex items-center gap-0.5 pr-2 shrink-0">
-              {/* Reorder */}
+            {/* Row 2: Reorder arrows, right-aligned */}
+            <div className="flex items-center justify-end gap-0.5 px-3 pb-2">
               <IconButton
                 icon={<ChevronUpIcon />}
                 aria-label={`Move ${section.title} up`}
                 onClick={onMoveUp}
                 disabled={!canMoveUp}
+                size="sm"
               />
               <IconButton
                 icon={<ChevronDownIcon />}
                 aria-label={`Move ${section.title} down`}
                 onClick={onMoveDown}
                 disabled={!canMoveDown}
-              />
-              {/* Divider */}
-              <div className="w-px h-4 bg-border-default mx-1" />
-              {/* Edit + delete */}
-              <IconButton
-                icon={<PencilIcon />}
-                aria-label={`Edit ${section.title}`}
-                onClick={() => {
-                  setEditTitle(section.title);
-                  setEditIcon(section.icon);
-                  setIsEditing(true);
-                  setShowDeleteConfirm(false);
-                }}
-              />
-              <IconButton
-                icon={<TrashIcon />}
-                aria-label={`Delete ${section.title}`}
-                variant="danger"
-                onClick={() => {
-                  setShowDeleteConfirm((v) => !v);
-                  setIsEditing(false);
-                }}
-              />
-              {/* Divider */}
-              <div className="w-px h-4 bg-border-default mx-1" />
-              {/* Expand toggle */}
-              <IconButton
-                icon={<ChevronRightIcon />}
-                aria-label={isExpanded ? "Collapse section" : "Expand section"}
-                onClick={() => setIsExpanded((v) => !v)}
-                className="transition-[rotate] duration-150"
-                style={{ rotate: isExpanded ? "90deg" : "0deg" }}
+                size="sm"
               />
             </div>
           </>
@@ -513,11 +494,12 @@ function SectionEditPanel({
           <button
             type="button"
             onClick={handleAddInstruction}
-            className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-lg border border-dashed border-border-strong hover:border-secondary hover:bg-secondary-subtle transition-[border-color,background-color] duration-150 font-body text-sm text-text-muted hover:text-secondary"
+            className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-lg border-[1.5px] border-dashed border-border-strong bg-bg-sunken hover:border-primary hover:bg-primary-subtle transition-[border-color,background-color] duration-150 font-body text-sm text-text-muted hover:text-primary"
           >
             <PlusIcon />
             Add instruction
           </button>
+
         </div>
       )}
     </div>
@@ -713,21 +695,19 @@ export default function SectionsEditor() {
   return (
     <CreatorLayout activeNav="property">
       <div className="flex flex-col gap-6">
-        {/* Back link */}
-        <Link
-          href="/dashboard/property"
-          className="inline-flex items-center gap-1.5 font-body text-sm text-text-muted hover:text-text-primary transition-colors duration-150 self-start"
-        >
-          <ChevronLeftIcon />
-          Property
-        </Link>
-
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl text-text-primary leading-tight">
+        <div className="flex flex-col gap-1">
+          <Link
+            href="/dashboard/property"
+            className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-text-muted hover:text-text-secondary transition-colors duration-150 mb-1"
+          >
+            <ChevronLeftIcon />
+            Property
+          </Link>
+          <h1 className="font-display text-4xl text-text-primary leading-tight">
             Home sections
           </h1>
-          <p className="font-body text-sm text-text-secondary mt-1">
+          <p className="font-body text-sm text-text-secondary">
             Add, edit, reorder, or delete sections and instructions in your manual.
           </p>
         </div>
@@ -748,7 +728,7 @@ export default function SectionsEditor() {
             <p className="font-body text-sm text-text-muted max-w-[280px]">
               Complete the setup wizard to create your property first.
             </p>
-            <Button variant="soft" size="sm" onClick={() => router.push("/wizard/1")}>
+            <Button variant="soft" size="sm" onClick={() => router.push("/setup/home")}>
               Start setup wizard
             </Button>
           </div>
@@ -765,7 +745,7 @@ export default function SectionsEditor() {
 
         {/* Active sections */}
         {!isLoadingSections && activeSections.length > 0 && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <p className="font-body text-xs font-semibold text-text-muted uppercase tracking-wide">
               Your sections
             </p>

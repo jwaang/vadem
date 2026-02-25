@@ -4,25 +4,30 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { WizardProgress } from "@/components/ui/WizardProgress";
+import { SETUP_STEPS, type SetupSlug } from "@/lib/setupSteps";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeftIcon } from "@/components/ui/icons";
-import Step1Home from "./Step1Home";
-import Step2Pets from "./Step2Pets";
-import Step3Access from "./Step3Access";
-import Step4Contacts from "./Step4Contacts";
-import Step5Sections from "./Step5Sections";
-import Step6Review from "./Step6Review";
+import StepHome from "./StepHome";
+import StepPets from "./StepPets";
+import StepAccess from "./StepAccess";
+import StepContacts from "./StepContacts";
+import StepInstructions from "./StepInstructions";
+import StepReview from "./StepReview";
 
-interface WizardStepInnerProps {
-  step: number;
+interface SetupStepInnerProps {
+  step: SetupSlug;
 }
 
-function ComingSoon({ step }: { step: number }) {
+function getStepIndex(slug: SetupSlug): number {
+  return SETUP_STEPS.findIndex((s) => s.slug === slug);
+}
+
+function ComingSoon() {
   return (
     <div className="bg-bg-raised rounded-xl p-8 text-center flex flex-col gap-4 items-center">
-      <p className="font-body text-sm text-text-muted">Step {step} is coming soon.</p>
+      <p className="font-body text-sm text-text-muted">This step is coming soon.</p>
       <Link
-        href="/wizard/1"
+        href="/setup/home"
         className="font-body text-sm text-primary hover:text-primary-hover underline underline-offset-2"
       >
         Back to step 1
@@ -31,19 +36,23 @@ function ComingSoon({ step }: { step: number }) {
   );
 }
 
-function WizardLayout({
+function SetupLayout({
   step,
+  wide,
   children,
 }: {
-  step: number;
+  step: SetupSlug;
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const stepIndex = getStepIndex(step);
+  const prevSlug = stepIndex > 0 ? SETUP_STEPS[stepIndex - 1].slug : null;
 
   return (
     <main className="min-h-dvh bg-bg flex flex-col items-center px-4 pt-8 pb-12">
-      <div className="w-full max-w-lg flex flex-col gap-6">
+      <div className={`w-full flex flex-col gap-6 ${wide ? "max-w-lg lg:max-w-4xl" : "max-w-lg"}`}>
         {/* Wordmark */}
         <div className="text-center">
           <button
@@ -76,14 +85,14 @@ function WizardLayout({
         )}
 
         {/* Progress indicator */}
-        <WizardProgress currentStep={step - 1} />
+        <WizardProgress currentStep={stepIndex} />
 
         {/* Back button */}
-        {step > 1 && (
+        {prevSlug && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/wizard/${step - 1}`)}
+            onClick={() => router.push(`/setup/${prevSlug}`)}
             className="self-start -mt-2"
           >
             <ChevronLeftIcon size={14} />
@@ -103,10 +112,10 @@ function WizardLayout({
   );
 }
 
-export default function WizardStepInner({ step }: WizardStepInnerProps) {
+export default function SetupStepInner({ step }: SetupStepInnerProps) {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
     return (
-      <WizardLayout step={step}>
+      <SetupLayout step={step}>
         <div className="p-8 text-center">
           <p className="font-body text-sm text-text-muted">
             Backend service is not configured. Set{" "}
@@ -116,27 +125,27 @@ export default function WizardStepInner({ step }: WizardStepInnerProps) {
             to enable the wizard.
           </p>
         </div>
-      </WizardLayout>
+      </SetupLayout>
     );
   }
 
   return (
-    <WizardLayout step={step}>
-      {step === 1 ? (
-        <Step1Home />
-      ) : step === 2 ? (
-        <Step2Pets />
-      ) : step === 3 ? (
-        <Step3Access />
-      ) : step === 4 ? (
-        <Step4Contacts />
-      ) : step === 5 ? (
-        <Step5Sections />
-      ) : step === 6 ? (
-        <Step6Review />
+    <SetupLayout step={step} wide={step === "pets"}>
+      {step === "home" ? (
+        <StepHome />
+      ) : step === "pets" ? (
+        <StepPets />
+      ) : step === "access" ? (
+        <StepAccess />
+      ) : step === "contacts" ? (
+        <StepContacts />
+      ) : step === "instructions" ? (
+        <StepInstructions />
+      ) : step === "review" ? (
+        <StepReview />
       ) : (
-        <ComingSoon step={step} />
+        <ComingSoon />
       )}
-    </WizardLayout>
+    </SetupLayout>
   );
 }

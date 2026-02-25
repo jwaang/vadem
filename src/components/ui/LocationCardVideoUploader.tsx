@@ -10,7 +10,7 @@ interface LocationCardVideoUploaderProps {
   /** Parent record ID (polymorphic string) */
   parentId: string;
   /** Parent type for the card */
-  parentType: "instruction" | "pet" | "vault";
+  parentType: "instruction" | "pet" | "vault" | "overlayItem";
   /** Called after successful save */
   onSuccess: () => void;
   /** Called to dismiss the modal */

@@ -1,5 +1,0 @@
-import { redirect } from "next/navigation";
-
-export default function WizardPage() {
-  redirect("/wizard/1");
-}

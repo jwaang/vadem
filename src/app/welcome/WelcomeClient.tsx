@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -45,6 +45,7 @@ function WelcomeClientInner() {
   const router = useRouter();
   const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const isLeavingRef = useRef(false);
 
   const sessionData = useQuery(
     api.auth.validateSession,
@@ -59,9 +60,9 @@ function WelcomeClientInner() {
     }
   }, [user, router]);
 
-  // Redirect if already onboarded
+  // Redirect if already onboarded (but not if the user just clicked a CTA)
   useEffect(() => {
-    if (sessionData?.hasCompletedOnboarding) {
+    if (sessionData?.hasCompletedOnboarding && !isLeavingRef.current) {
       router.replace("/dashboard");
     }
   }, [sessionData, router]);
@@ -72,11 +73,9 @@ function WelcomeClientInner() {
   };
 
   const completeOnboarding = (destination: string) => {
-    // Navigate FIRST, then mark onboarding complete in the background.
-    // If we await markOnboarding before navigating, the Convex reactive
-    // subscription updates sessionData.hasCompletedOnboarding → true,
-    // which triggers the useEffect redirect to /dashboard before
-    // router.push can take effect.
+    // Mark that we're navigating away so the useEffect doesn't
+    // race us to /dashboard when the mutation updates sessionData.
+    isLeavingRef.current = true;
     router.push(destination);
     if (user?.token) {
       void markOnboarding({ token: user.token });

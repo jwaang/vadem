@@ -13,12 +13,17 @@ import { IconButton } from "@/components/ui/IconButton";
 import { LocationCard } from "@/components/ui/LocationCard";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
-import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PencilIcon, XIcon } from "@/components/ui/icons";
+import { TimePicker } from "@/components/ui/TimePicker";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PencilIcon, XIcon, CameraIcon } from "@/components/ui/icons";
+import { cn } from "@/lib/utils";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 
 const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
+  { title: "Morning Routine", icon: "☀️" },
+  { title: "Afternoon Routine", icon: "⛅" },
+  { title: "Evening Routine", icon: "🌙" },
   { title: "Access & Arrival", icon: "🗝️" },
   { title: "Appliances", icon: "🔌" },
   { title: "Kitchen", icon: "🍳" },
@@ -64,6 +69,7 @@ function InstructionRow({
   const [text, setText] = useState(instruction.text);
   const [showUploader, setShowUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
+  const [editingCardId, setEditingCardId] = useState<Id<"locationCards"> | null>(null);
 
   const locationCards = useQuery(api.locationCards.listByParent, {
     parentId: instruction._id as string,
@@ -76,9 +82,23 @@ function InstructionRow({
     void updateInstruction({ instructionId: instruction._id, text: trimmed });
   };
 
+  const handleTimeChange = (value: string) => {
+    if (value) {
+      void updateInstruction({ instructionId: instruction._id, specificTime: value });
+    } else {
+      void updateInstruction({ instructionId: instruction._id, specificTime: "", timeSlot: "anytime" });
+    }
+  };
+
+  const handleProofToggle = () => {
+    void updateInstruction({ instructionId: instruction._id, proofRequired: !instruction.proofRequired });
+  };
+
+  const hasPhoto = locationCards?.some(c => c.resolvedPhotoUrl && !c.resolvedVideoUrl) ?? false;
+  const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl) ?? false;
 
   return (
-    <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
+    <div className="rounded-lg border border-border-default bg-bg-raised">
       {/* Top row: reorder + text + delete */}
       <div className="flex items-start gap-2 p-3 pb-2">
         <div className="flex flex-col gap-0.5 shrink-0 mt-0.5">
@@ -114,55 +134,96 @@ function InstructionRow({
         />
       </div>
 
-      {/* Controls row: photo/video attach */}
-      {(() => {
-        const hasPhoto = locationCards?.some(c => c.resolvedPhotoUrl && !c.resolvedVideoUrl);
-        const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl);
-        if (hasPhoto && hasVideo) return null;
-        return (
-          <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-border-default">
-            {!hasPhoto && (
-              <button
-                type="button"
-                className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-                onClick={() => setShowUploader(true)}
-              >
-                + Photo card
-              </button>
-            )}
-            {!hasVideo && (
-              <button
-                type="button"
-                className="font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-                onClick={() => setShowVideoUploader(true)}
-              >
-                + Video card
-              </button>
-            )}
-          </div>
-        );
-      })()}
+      {/* Toolbar: time · proof · attachments */}
+      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-t border-border-default">
+        <TimePicker
+          value={instruction.specificTime || ""}
+          onChange={handleTimeChange}
+          minuteStep={5}
+          placeholder="Time"
+          compact
+        />
+        <button
+          type="button"
+          onClick={handleProofToggle}
+          className={cn(
+            "inline-flex items-center gap-1 font-body text-xs font-semibold px-2 py-1.5 rounded-md transition-colors duration-150",
+            instruction.proofRequired
+              ? "text-primary bg-primary-subtle"
+              : "text-text-muted hover:text-primary hover:bg-primary-subtle",
+          )}
+          aria-pressed={instruction.proofRequired}
+        >
+          <CameraIcon size={14} />
+          Proof
+        </button>
+        {!hasPhoto && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
+            onClick={() => setShowUploader(true)}
+            aria-label="Attach photo"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Photo
+          </button>
+        )}
+        {!hasVideo && (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted hover:text-primary hover:bg-primary-subtle px-2 py-1.5 rounded-md transition-colors duration-150"
+            onClick={() => setShowVideoUploader(true)}
+            aria-label="Attach video"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video
+          </button>
+        )}
+      </div>
 
       {/* Location cards display */}
       {locationCards && locationCards.length > 0 && (
         <div className="flex flex-col gap-2 px-3 pb-3 pt-3">
           {locationCards.map((card) => (
-            <div key={card._id} className="relative group">
-              <LocationCard
-                src={card.resolvedPhotoUrl ?? undefined}
-                caption={card.caption ?? ""}
-                room={card.roomTag}
-                videoSrc={card.resolvedVideoUrl ?? undefined}
-                compact
-              />
-              <IconButton
-                icon={<XIcon size={10} />}
-                aria-label="Remove location card"
-                variant="danger"
-                size="sm"
-                onClick={() => void removeLocationCard({ cardId: card._id })}
-                className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 shadow-sm z-10"
-              />
+            <div key={card._id} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <LocationCard
+                    src={card.resolvedPhotoUrl ?? undefined}
+                    caption={card.caption ?? ""}
+                    room={card.roomTag}
+                    videoSrc={card.resolvedVideoUrl ?? undefined}
+                    compact
+                  />
+                </div>
+                <div className="flex flex-col gap-1 shrink-0">
+                  <IconButton
+                    icon={<PencilIcon />}
+                    aria-label="Edit location card"
+                    size="sm"
+                    onClick={() => setEditingCardId(card._id)}
+                  />
+                  <IconButton
+                    icon={<XIcon />}
+                    aria-label="Remove location card"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => void removeLocationCard({ cardId: card._id })}
+                  />
+                </div>
+              </div>
+              {editingCardId === card._id && (
+                <LocationCardUploader
+                  parentId={instruction._id as string}
+                  parentType="instruction"
+                  onSuccess={() => setEditingCardId(null)}
+                  onClose={() => setEditingCardId(null)}
+                  existingCardId={card._id}
+                  existingPhotoUrl={card.resolvedPhotoUrl}
+                  existingCaption={card.caption ?? undefined}
+                  existingRoomTag={card.roomTag ?? undefined}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -293,7 +354,7 @@ function SectionEditPanel({
   const instructionCount = instructions?.length ?? 0;
 
   return (
-    <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
+    <div className="rounded-lg border border-border-default bg-bg-raised">
       {/* Section header */}
       <div className={isExpanded ? "border-b border-border-default" : ""}>
         {isEditing ? (

@@ -44,13 +44,6 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Vadem",
   },
-  icons: {
-    icon: [
-      { url: "/favicon.png", sizes: "48x48", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
-  },
   openGraph: {
     title: "Vadem — Pet & House Sitter Care Manuals",
     description:

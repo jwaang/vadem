@@ -59,7 +59,7 @@ function isAppShellUrl(url) {
   return (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname === "/manifest.json" ||
-    url.pathname.startsWith("/icons/")
+    url.pathname.startsWith("/icon-")
   );
 }
 
@@ -329,8 +329,8 @@ self.addEventListener("push", (event) => {
   const title = data.title ?? "Vadem";
   const options = {
     body: data.body ?? "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-96.png",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
     data: { url: data.url ?? "/dashboard" },
   };
 

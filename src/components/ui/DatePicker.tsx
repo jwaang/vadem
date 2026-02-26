@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { DayPicker, type Matcher } from "react-day-picker";
 import "react-day-picker/style.css";
-import { cn } from "@/lib/utils";
+import { cn, getPopoverAlign } from "@/lib/utils";
 import { fieldBase, fieldError as fieldErrorCls } from "@/components/ui/Input";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
@@ -65,6 +65,7 @@ function DatePicker({
   const hasError = !!error;
 
   const [open, setOpen] = useState(false);
+  const [align, setAlign] = useState<"left" | "right">("left");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverId = inputId ? `${inputId}-popover` : "datepicker-popover";
@@ -133,7 +134,10 @@ function DatePicker({
                 : undefined
           }
           disabled={disabled}
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            if (!open) setAlign(getPopoverAlign(wrapperRef.current, 300));
+            setOpen((v) => !v);
+          }}
           onKeyDown={handleKeyDown}
           className={cn(
             fieldBase,
@@ -152,7 +156,10 @@ function DatePicker({
           <div
             id={popoverId}
             role="dialog"
-            className="absolute left-0 top-full mt-1 z-50 bg-bg-raised border border-border-default rounded-lg p-3"
+            className={cn(
+              "absolute top-full mt-1 z-50 bg-bg-raised border border-border-default rounded-lg p-3",
+              align === "right" ? "right-0" : "left-0",
+            )}
             style={{ boxShadow: "var(--shadow-lg)" }}
           >
             <DayPicker

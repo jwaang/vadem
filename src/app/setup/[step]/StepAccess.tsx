@@ -26,6 +26,7 @@ interface VaultFormValues {
   label: string;
   value: string;
   instructions: string;
+  networkName: string;
 }
 
 const EMPTY_FORM: VaultFormValues = {
@@ -33,6 +34,7 @@ const EMPTY_FORM: VaultFormValues = {
   label: "",
   value: "",
   instructions: "",
+  networkName: "",
 };
 
 const TYPE_DEFAULT_LABELS: Record<VaultItemType, string> = {
@@ -397,6 +399,19 @@ function VaultForm({ onSave, onCancel, isSaving, generalError }: VaultFormProps)
           error={errors.value}
         />
 
+        {/* Network name (WiFi only) */}
+        {formData.itemType === "wifi" && (
+          <Input
+            label="Network name"
+            placeholder="e.g. HomeWiFi_5G"
+            value={formData.networkName}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, networkName: e.target.value }))
+            }
+            hint="Shown to your sitter so they know which network to join"
+          />
+        )}
+
         {/* Instructions */}
         <Textarea
           label="Instructions"
@@ -482,6 +497,7 @@ export default function Step3Access() {
         label: data.label.trim(),
         value: data.value.trim(),
         instructions: data.instructions.trim() || undefined,
+        networkName: data.itemType === "wifi" ? data.networkName.trim() || undefined : undefined,
         sortOrder: vaultItems?.length ?? 0,
       });
       setShowForm(false);

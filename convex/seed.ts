@@ -175,7 +175,7 @@ export const run = action({
     const morningId = await ctx.runMutation(api.sections.create, {
       propertyId,
       title: "Morning Routine",
-      icon: "sun",
+      icon: "☀️",
       sortOrder: 0,
     });
     for (const [i, task] of [
@@ -200,7 +200,7 @@ export const run = action({
     const eveningId = await ctx.runMutation(api.sections.create, {
       propertyId,
       title: "Evening Routine",
-      icon: "moon",
+      icon: "🌙",
       sortOrder: 1,
     });
     for (const [i, task] of [
@@ -225,7 +225,7 @@ export const run = action({
     const rulesId = await ctx.runMutation(api.sections.create, {
       propertyId,
       title: "House Rules",
-      icon: "clipboard",
+      icon: "📋",
       sortOrder: 2,
     });
     for (const [i, task] of [
@@ -249,7 +249,7 @@ export const run = action({
     const plantsId = await ctx.runMutation(api.sections.create, {
       propertyId,
       title: "Plants & Garden",
-      icon: "leaf",
+      icon: "🌿",
       sortOrder: 3,
     });
     for (const [i, task] of [
@@ -305,7 +305,8 @@ export const run = action({
       itemType: "wifi",
       label: "Home WiFi",
       encryptedValue: encryptValue("LakeTahoe2026!"),
-      instructions: "Network name: LakeHouse5G. Router is in the office closet.",
+      networkName: "LakeHouse5G",
+      instructions: "Router is in the office closet.",
       sortOrder: 0,
     });
     await ctx.runMutation(internal.vaultItems._insert, {

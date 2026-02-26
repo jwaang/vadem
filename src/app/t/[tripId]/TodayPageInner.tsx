@@ -95,7 +95,7 @@ function toContactRole(role: string): ContactRole {
 
 function buildTaskList(
   recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>,
-  overlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>,
+  overlayItems: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>,
   today: string,
 ): TodayTask[] {
   const recurring: TodayTask[] = recurringInstructions.map((inst) => ({
@@ -115,6 +115,7 @@ function buildTaskList(
     id: item._id,
     text: item.text,
     timeSlot: item.timeSlot as SlotKey,
+    specificTime: item.specificTime,
     isOverlay: true,
     proofRequired: item.proofRequired,
     taskRef: `overlay:${item._id}`,
@@ -1199,10 +1200,10 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
       property: { _id: Id<"properties">; name: string } | null;
       sitters: Array<{ name: string }>;
       emergencyContacts: Array<{ name: string; role: string; phone: string; notes?: string; isLocked: boolean }>;
-      recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
-      todayOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
-      tomorrowRecurringInstructions: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
-      tomorrowOverlayItems: Array<{ _id: string; text: string; timeSlot: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      todayOverlayItems: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      tomorrowRecurringInstructions: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>;
+      tomorrowOverlayItems: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>;
       completions: Array<{ _id: Id<"taskCompletions">; taskRef: string; proofPhotoUrl?: string }>;
     };
 

@@ -9,6 +9,13 @@ const timeSlotValidator = v.union(
   v.literal("anytime"),
 );
 
+function timeToSlot(time: string): "morning" | "afternoon" | "evening" {
+  const [h] = time.split(":").map(Number);
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
+}
+
 const overlayItemObject = v.object({
   _id: v.id("overlayItems"),
   _creationTime: v.number(),
@@ -16,6 +23,7 @@ const overlayItemObject = v.object({
   text: v.string(),
   date: v.optional(v.string()),
   timeSlot: timeSlotValidator,
+  specificTime: v.optional(v.string()),
   proofRequired: v.boolean(),
   locationCardId: v.optional(v.id("locationCards")),
 });
@@ -26,12 +34,17 @@ export const create = mutation({
     text: v.string(),
     date: v.optional(v.string()),
     timeSlot: timeSlotValidator,
+    specificTime: v.optional(v.string()),
     proofRequired: v.boolean(),
     locationCardId: v.optional(v.id("locationCards")),
   },
   returns: v.id("overlayItems"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("overlayItems", args);
+    const timeSlot = args.specificTime ? timeToSlot(args.specificTime) : args.timeSlot;
+    return await ctx.db.insert("overlayItems", {
+      ...args,
+      timeSlot,
+    });
   },
 });
 
@@ -65,12 +78,16 @@ export const update = mutation({
     text: v.optional(v.string()),
     date: v.optional(v.string()),
     timeSlot: v.optional(timeSlotValidator),
+    specificTime: v.optional(v.string()),
     proofRequired: v.optional(v.boolean()),
     locationCardId: v.optional(v.id("locationCards")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { overlayItemId, ...fields } = args;
+    if (fields.specificTime) {
+      fields.timeSlot = timeToSlot(fields.specificTime);
+    }
     const updates = Object.fromEntries(
       Object.entries(fields).filter(([, val]) => val !== undefined),
     );

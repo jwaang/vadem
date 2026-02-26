@@ -220,6 +220,7 @@ export default defineSchema({
       v.literal("evening"),
       v.literal("anytime"),
     ),
+    specificTime: v.optional(v.string()),
     proofRequired: v.boolean(),
     locationCardId: v.optional(v.id("locationCards")),
   }).index("by_trip_date", ["tripId", "date"]),

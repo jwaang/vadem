@@ -7,21 +7,16 @@ import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
+import { PencilIcon } from "@/components/ui/icons";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
-
-const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
-  morning: "Morning",
-  afternoon: "Afternoon",
-  evening: "Evening",
-  anytime: "Anytime",
-};
 
 const STEPS = [
   { label: "Overlay Items", active: true, href: "overlay" },
@@ -74,12 +69,20 @@ function CameraIcon() {
 
 // ── Saved item row ─────────────────────────────────────────────────────────────
 
+function formatTime12h(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
 interface SavedItemRowProps {
   item: {
     _id: Id<"overlayItems">;
     text: string;
     date?: string;
     timeSlot: TimeSlot;
+    specificTime?: string;
     proofRequired: boolean;
     locationCardId?: Id<"locationCards">;
   };
@@ -87,8 +90,14 @@ interface SavedItemRowProps {
 }
 
 function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
+  const updateItem = useMutation(api.overlayItems.update);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(item.text);
+  const [editDate, setEditDate] = useState(item.date ?? "");
+  const [editSpecificTime, setEditSpecificTime] = useState(item.specificTime ?? "");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Live query — drives attached state reactively after upload/reload
   const existingCards = useQuery(api.locationCards.listByParent, {
@@ -101,38 +110,145 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
   return (
     <>
       <div className="bg-bg-raised rounded-lg border border-border-default p-4 flex flex-col gap-3">
-        {/* Item text + delete */}
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-sm font-medium text-text-primary leading-snug">
-              {item.text}
-            </p>
+        {isEditing ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`edit-text-${item._id}`} className="font-body text-xs font-semibold text-text-secondary">
+                Description
+              </label>
+              <textarea
+                id={`edit-text-${item._id}`}
+                value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={2}
+              className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 resize-none outline-none transition-[border-color,box-shadow] duration-150"
+              style={{ border: "1.5px solid var(--border-default)" }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px var(--primary-subtle)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+              autoFocus
+            />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <DatePicker
+                label="Specific date"
+                id={`edit-date-${item._id}`}
+                value={editDate}
+                onChange={setEditDate}
+                hint="Leave empty for all days"
+              />
+              <TimePicker
+                label="Time"
+                id={`edit-time-${item._id}`}
+                value={editSpecificTime}
+                onChange={setEditSpecificTime}
+                minuteStep={5}
+                hint="Leave empty for anytime"
+              />
+            </div>
+            {/* Attach photo/video buttons — only in edit mode */}
+            {!photoAttached && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoUploader(true)}
+                  className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+                >
+                  + Photo card
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowVideoUploader(true)}
+                  className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
+                >
+                  + Video card
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditText(item.text);
+                  setEditDate(item.date ?? "");
+                  setEditSpecificTime(item.specificTime ?? "");
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={isSaving || !editText.trim()}
+                onClick={async () => {
+                  setIsSaving(true);
+                  try {
+                    await updateItem({
+                      overlayItemId: item._id,
+                      text: editText.trim(),
+                      date: editDate || undefined,
+                      specificTime: editSpecificTime || undefined,
+                    });
+                    setIsEditing(false);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+              >
+                {isSaving ? "Saving…" : "Save"}
+              </Button>
+            </div>
           </div>
-          <button
-            onClick={() => onDelete(item._id)}
-            className="text-text-muted hover:text-danger transition-colors duration-150 shrink-0 mt-0.5"
-            aria-label="Delete item"
-          >
-            <TrashIcon />
-          </button>
-        </div>
+        ) : (
+          <>
+            {/* Item text + edit + delete */}
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-body text-sm font-medium text-text-primary leading-snug">
+                  {item.text}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-text-muted hover:text-primary transition-colors duration-150 shrink-0 mt-0.5"
+                aria-label="Edit item"
+              >
+                <PencilIcon size={15} />
+              </button>
+              <button
+                onClick={() => onDelete(item._id)}
+                className="text-text-muted hover:text-danger transition-colors duration-150 shrink-0 mt-0.5"
+                aria-label="Delete item"
+              >
+                <TrashIcon />
+              </button>
+            </div>
 
-        {/* Badges row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-pill bg-accent-light text-accent border border-accent">
-            ✦ This Trip Only
-          </span>
-          {item.timeSlot !== "anytime" && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
-              {TIME_SLOT_LABELS[item.timeSlot]}
-            </span>
-          )}
-          {item.date && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
-              {item.date}
-            </span>
-          )}
-        </div>
+            {/* Badges row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-pill bg-accent-light text-accent border border-accent">
+                ✦ This Trip Only
+              </span>
+              {item.specificTime && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
+                  {formatTime12h(item.specificTime)}
+                </span>
+              )}
+              {item.date && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
+                  {item.date}
+                </span>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Location card — inline preview when attached, attach button when not */}
         {photoAttached && attachedCard ? (
@@ -176,22 +292,7 @@ function SavedItemRow({ item, onDelete }: SavedItemRowProps) {
               Edit
             </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPhotoUploader(true)}
-              className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-            >
-              + Photo card
-            </button>
-            <button
-              onClick={() => setShowVideoUploader(true)}
-              className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted hover:text-primary transition-colors duration-150"
-            >
-              + Video card
-            </button>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* Photo uploader modal */}
@@ -232,7 +333,7 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
 
   const [text, setText] = useState("");
   const [date, setDate] = useState("");
-  const [timeSlot, setTimeSlot] = useState<TimeSlot>("anytime");
+  const [specificTime, setSpecificTime] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
 
@@ -249,13 +350,14 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
         tripId,
         text: text.trim(),
         date: date || undefined,
-        timeSlot,
+        timeSlot: "anytime" as TimeSlot,
+        specificTime: specificTime || undefined,
         proofRequired: false,
       });
       // Reset form
       setText("");
       setDate("");
-      setTimeSlot("anytime");
+      setSpecificTime("");
       onAdded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add item.");
@@ -310,41 +412,17 @@ function AddItemForm({ tripId, onAdded }: AddItemFormProps) {
             id="overlay-date"
             value={date}
             onChange={setDate}
-            placeholder="Leave empty for all days"
             hint="Leave empty to apply all days"
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="overlay-slot"
-              className="font-body text-xs font-semibold text-text-secondary"
-            >
-              Time slot
-            </label>
-            <select
-              id="overlay-slot"
-              value={timeSlot}
-              onChange={(e) => setTimeSlot(e.target.value as TimeSlot)}
-              className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 outline-none transition-[border-color,box-shadow] duration-150"
-              style={{
-                border: "1.5px solid var(--border-default)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--primary)";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px var(--primary-subtle)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-default)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              <option value="anytime">Anytime</option>
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="evening">Evening</option>
-            </select>
-          </div>
+          <TimePicker
+            label="Time"
+            id="overlay-time"
+            value={specificTime}
+            onChange={setSpecificTime}
+            minuteStep={5}
+            hint="Leave empty for anytime"
+          />
         </div>
 
         {error && (
@@ -462,6 +540,7 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
                     text: item.text,
                     date: item.date,
                     timeSlot: item.timeSlot as TimeSlot,
+                    specificTime: item.specificTime,
                     proofRequired: item.proofRequired,
                     locationCardId: item.locationCardId,
                   }}

@@ -6,7 +6,6 @@ import {
 } from "next/font/google";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
-import { PostHogPageview } from "@/components/PostHogPageview";
 import { AuthProvider } from "@/lib/authContext";
 import "./globals.css";
 
@@ -83,7 +82,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${bricolageGrotesque.variable} ${caveat.variable}`}>
       <body>
-        <PostHogPageview />
         <ConvexClientProvider>
           <AuthProvider>{children}</AuthProvider>
         </ConvexClientProvider>

@@ -143,6 +143,12 @@ export const remove = mutation({
         taskTitle,
         createdAt: Date.now(),
       });
+      await ctx.scheduler.runAfter(0, internal.notifications.sendTaskUncheckedNotification, {
+        tripId: completion.tripId,
+        taskTitle,
+        sitterName: completion.sitterName ?? "",
+        uncheckedAt: Date.now(),
+      });
     }
     return null;
   },

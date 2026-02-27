@@ -149,7 +149,7 @@ export const sendTaskNotification = internalAction({
     const time = formatTime12h(args.completedAt, timezone ?? undefined);
     const message = args.proofPhotoUrl
       ? `${displayName} completed ${args.taskTitle} with photo at ${time}`
-      : `${displayName} completed ${args.taskTitle}`;
+      : `${displayName} completed ${args.taskTitle} at ${time}`;
     const deepLinkUrl = "/dashboard";
 
     if (pref === "all") {
@@ -244,6 +244,80 @@ export const sendTripEndingSoonNotification = internalAction({
         "Your trip ends tomorrow. Vault access will expire automatically.",
       deepLinkUrl: "/dashboard",
     });
+
+    return null;
+  },
+});
+
+/**
+ * Send a push notification when a sitter unchecks a previously completed task.
+ *
+ * Uses the same preference lookup as sendTaskNotification, but always sends for
+ * 'proof-only' preference since unchecking is rare and notable.
+ */
+export const sendTaskUncheckedNotification = internalAction({
+  args: {
+    tripId: v.id("trips"),
+    taskTitle: v.string(),
+    sitterName: v.string(),
+    uncheckedAt: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    const trip = await ctx.runQuery(internal.trips._getById, {
+      tripId: args.tripId,
+    });
+    if (!trip) return null;
+
+    const property = await ctx.runQuery(internal.properties._getById, {
+      propertyId: trip.propertyId,
+    });
+    if (!property) return null;
+
+    const userId = property.ownerId;
+
+    const pref = await ctx.runQuery(internal.users.getNotificationPreference, {
+      userId,
+    });
+
+    if (pref === "off") return null;
+
+    const timezone = await ctx.runQuery(internal.users.getTimezone, { userId });
+    const displayName = args.sitterName?.trim() || "Someone";
+    const time = formatTime12h(args.uncheckedAt, timezone ?? undefined);
+    const message = `${displayName} unchecked ${args.taskTitle} at ${time}`;
+    const deepLinkUrl = "/dashboard";
+
+    // Send for 'all', 'proof-only' (unchecking is rare/notable), and 'digest'
+    if (pref === "all" || pref === "proof-only") {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
+        userId,
+        tripId: args.tripId,
+        message,
+        deepLinkUrl,
+      });
+    } else if (pref === "digest") {
+      const hourStart = Math.floor(args.uncheckedAt / 3_600_000) * 3_600_000;
+      const nextHourStart = hourStart + 3_600_000;
+
+      const shouldSchedule = await ctx.runMutation(
+        internal.trips._schedulePendingDigest,
+        { tripId: args.tripId, nextHourStart },
+      );
+
+      if (shouldSchedule) {
+        await ctx.scheduler.runAt(
+          nextHourStart,
+          internal.notifications.sendDigestNotification,
+          {
+            tripId: args.tripId,
+            userId,
+            windowStart: hourStart,
+            windowEnd: nextHourStart,
+          },
+        );
+      }
+    }
 
     return null;
   },

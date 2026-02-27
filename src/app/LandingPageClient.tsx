@@ -64,7 +64,7 @@ function Nav() {
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="font-body text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-150 hidden sm:inline-block"
+            className="font-body text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-150"
           >
             Log in
           </Link>

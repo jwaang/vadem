@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -35,17 +35,20 @@ function eventToActivityType(event: string): ActivityType {
   return "view";
 }
 
-function eventToAction(event: string, vaultItemLabel?: string, taskTitle?: string): string {
+function eventToAction(event: string, vaultItemLabel?: string, taskTitle?: string, sectionName?: string): ReactNode {
   if (event === "link_opened") return "opened the sitter link";
   if (event === "vault_accessed") {
     return vaultItemLabel ? `accessed your ${vaultItemLabel}` : "accessed a vault item";
   }
+  const sectionSuffix = sectionName
+    ? <span className="text-text-muted"> in {sectionName}</span>
+    : null;
   if (event === "task_completed")
-    return taskTitle ? `completed "${taskTitle}"` : "completed a task";
+    return taskTitle ? <>completed &ldquo;{taskTitle}&rdquo;{sectionSuffix}</> : "completed a task";
   if (event === "proof_uploaded")
-    return taskTitle ? `submitted proof for "${taskTitle}"` : "submitted a proof photo";
+    return taskTitle ? <>submitted proof for &ldquo;{taskTitle}&rdquo;{sectionSuffix}</> : "submitted a proof photo";
   if (event === "task_unchecked")
-    return taskTitle ? `unmarked "${taskTitle}" as complete` : "unmarked a task as complete";
+    return taskTitle ? <>unmarked &ldquo;{taskTitle}&rdquo; as complete{sectionSuffix}</> : "unmarked a task as complete";
   if (event === "trip_started") return "trip started";
   if (event === "trip_expired") return "trip expired";
   return event.replace(/_/g, " ");
@@ -174,7 +177,7 @@ function TripActivityFeedInner({ tripId }: { tripId: Id<"trips"> }) {
                       key={event._id}
                       type={eventToActivityType(event.eventType)}
                       name={event.sitterName ?? "Sitter"}
-                      action={eventToAction(event.eventType, event.vaultItemLabel, event.taskTitle)}
+                      action={eventToAction(event.eventType, event.vaultItemLabel, event.taskTitle, event.sectionName)}
                       timestamp={formatActivityTimestamp(event.createdAt)}
                       hideBorder={isLast && isDone}
                       proofPhotoUrl={event.proofPhotoUrl}

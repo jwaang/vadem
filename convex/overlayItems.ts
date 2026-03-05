@@ -24,6 +24,7 @@ const overlayItemObject = v.object({
   date: v.optional(v.string()),
   timeSlot: timeSlotValidator,
   specificTime: v.optional(v.string()),
+  specificTimeEnd: v.optional(v.string()),
   proofRequired: v.boolean(),
   locationCardId: v.optional(v.id("locationCards")),
 });
@@ -35,6 +36,7 @@ export const create = mutation({
     date: v.optional(v.string()),
     timeSlot: timeSlotValidator,
     specificTime: v.optional(v.string()),
+    specificTimeEnd: v.optional(v.string()),
     proofRequired: v.boolean(),
     locationCardId: v.optional(v.id("locationCards")),
   },
@@ -72,6 +74,26 @@ export const listByTripAndDate = query({
   },
 });
 
+export const listOutOfRangeByTrip = query({
+  args: {
+    tripId: v.id("trips"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.array(overlayItemObject),
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("overlayItems")
+      .withIndex("by_trip_date", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    return items.filter(
+      (item) =>
+        item.date !== undefined &&
+        (item.date < args.startDate || item.date > args.endDate),
+    );
+  },
+});
+
 export const update = mutation({
   args: {
     overlayItemId: v.id("overlayItems"),
@@ -79,6 +101,7 @@ export const update = mutation({
     date: v.optional(v.string()),
     timeSlot: v.optional(timeSlotValidator),
     specificTime: v.optional(v.string()),
+    specificTimeEnd: v.optional(v.string()),
     proofRequired: v.optional(v.boolean()),
     locationCardId: v.optional(v.id("locationCards")),
   },

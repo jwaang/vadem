@@ -334,7 +334,7 @@ export function ManualTab({ propertyId, isOnline }: ManualTabProps) {
   const convexResults = useQuery(
     api.search.searchManual,
     debouncedQuery.trim()
-      ? { propertyId, query: debouncedQuery.trim() }
+      ? { propertyId, query: debouncedQuery.trim(), context: "manual" as const }
       : "skip",
   );
 

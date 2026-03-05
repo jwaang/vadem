@@ -25,12 +25,12 @@ export const create = mutation({
     sortOrder: v.number(),
     timeSlot: timeSlotValidator,
     specificTime: v.optional(v.string()),
+    specificTimeEnd: v.optional(v.string()),
     isRecurring: v.boolean(),
     proofRequired: v.boolean(),
   },
   returns: v.id("instructions"),
   handler: async (ctx, args) => {
-    // Auto-derive timeSlot from specificTime if provided
     const timeSlot = args.specificTime ? timeToSlot(args.specificTime) : args.timeSlot;
     const id = await ctx.db.insert("instructions", {
       sectionId: args.sectionId,
@@ -38,6 +38,7 @@ export const create = mutation({
       sortOrder: args.sortOrder,
       timeSlot,
       specificTime: args.specificTime,
+      specificTimeEnd: args.specificTimeEnd,
       isRecurring: args.isRecurring,
       proofRequired: args.proofRequired,
     });
@@ -62,6 +63,7 @@ export const listBySection = query({
       sortOrder: v.number(),
       timeSlot: timeSlotValidator,
       specificTime: v.optional(v.string()),
+      specificTimeEnd: v.optional(v.string()),
       isRecurring: v.boolean(),
       proofRequired: v.boolean(),
     }),
@@ -82,13 +84,13 @@ export const update = mutation({
     sortOrder: v.optional(v.number()),
     timeSlot: v.optional(timeSlotValidator),
     specificTime: v.optional(v.string()),
+    specificTimeEnd: v.optional(v.string()),
     isRecurring: v.optional(v.boolean()),
     proofRequired: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { instructionId, ...fields } = args;
-    // Auto-derive timeSlot from specificTime if provided
     if (fields.specificTime) {
       fields.timeSlot = timeToSlot(fields.specificTime);
     }
@@ -98,13 +100,11 @@ export const update = mutation({
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(instructionId, updates);
       const instruction = await ctx.db.get(instructionId);
-      if (instruction) {
-        const section = await ctx.db.get(instruction.sectionId);
-        if (section) {
-          await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
-            propertyId: section.propertyId,
-          });
-        }
+      const section = instruction ? await ctx.db.get(instruction.sectionId) : null;
+      if (section) {
+        await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+          propertyId: section.propertyId,
+        });
       }
     }
     return null;

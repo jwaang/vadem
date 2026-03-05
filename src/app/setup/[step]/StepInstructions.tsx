@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -14,23 +14,18 @@ import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUplo
 import { TimePicker } from "@/components/ui/TimePicker";
 import { ChevronUpIcon, ChevronDownIcon, ChevronRightIcon, TrashIcon, PlusIcon, CheckIcon, XIcon, PencilIcon, CameraIcon } from "@/components/ui/icons";
 import { trackOnboardingStepCompleted } from "@/lib/analytics";
+import { NotificationToast } from "@/components/ui/NotificationToast";
+import { isValidTimeRange } from "@/lib/todayViewHelpers";
 import { cn } from "@/lib/utils";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 
-const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
-  { title: "Morning Routine", icon: "☀️" },
-  { title: "Afternoon Routine", icon: "⛅" },
-  { title: "Evening Routine", icon: "🌙" },
-  { title: "Access & Arrival", icon: "🗝️" },
-  { title: "Appliances", icon: "🔌" },
-  { title: "Kitchen", icon: "🍳" },
-  { title: "Trash & Mail", icon: "🗑️" },
-  { title: "Plants & Garden", icon: "🌿" },
-  { title: "Where Things Are", icon: "📍" },
-  { title: "House Rules", icon: "📋" },
-  { title: "Departure / Lockup", icon: "🚪" },
+type Visibility = "tasks" | "manual" | "both";
+
+const PREBUILT_SECTIONS: { title: string; icon: string; defaultVisibility: Visibility }[] = [
+  { title: "Daily Routine", icon: "📋", defaultVisibility: "both" },
+  { title: "Where Things Are", icon: "📍", defaultVisibility: "manual" },
 ];
 
 const CUSTOM_SECTION_ICONS = [
@@ -44,6 +39,47 @@ const PREBUILT_TITLES = new Set(PREBUILT_SECTIONS.map((p) => p.title));
 
 type SectionDoc = Doc<"manualSections">;
 type InstructionDoc = Doc<"instructions">;
+
+// ── VisibilityPicker ──────────────────────────────────────────────────────────
+
+const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
+  { value: "tasks", label: "Tasks" },
+  { value: "manual", label: "Manual" },
+  { value: "both", label: "Both" },
+];
+
+function VisibilityPicker({
+  value,
+  onChange,
+}: {
+  value: Visibility;
+  onChange: (v: Visibility) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-body text-xs font-semibold text-text-secondary">
+        Appears in
+      </span>
+      <div className="flex items-center gap-1">
+        {VISIBILITY_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "rounded-pill px-3 py-1.5 font-body text-xs transition-colors duration-150",
+              value === opt.value
+                ? "bg-primary-subtle text-primary font-semibold"
+                : "text-text-muted hover:text-text-secondary",
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ── InstructionRow ─────────────────────────────────────────────────────────────
 
@@ -72,6 +108,23 @@ function InstructionRow({
   const [showUploader, setShowUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
   const [editingCardId, setEditingCardId] = useState<Id<"locationCards"> | null>(null);
+  const [showEndTimeError, setShowEndTimeError] = useState(false);
+  const lastValidEndTimeRef = useRef(instruction.specificTimeEnd || "");
+
+  useEffect(() => {
+    const endTime = instruction.specificTimeEnd || "";
+    if (!endTime || !instruction.specificTime || isValidTimeRange(instruction.specificTime, endTime)) {
+      lastValidEndTimeRef.current = endTime;
+    }
+  }, [instruction.specificTime, instruction.specificTimeEnd]);
+
+  const handleEndTimeClose = useCallback(() => {
+    const endTime = instruction.specificTimeEnd;
+    if (endTime && instruction.specificTime && !isValidTimeRange(instruction.specificTime, endTime)) {
+      void updateInstruction({ instructionId: instruction._id, specificTimeEnd: lastValidEndTimeRef.current });
+      setShowEndTimeError(true);
+    }
+  }, [instruction.specificTime, instruction.specificTimeEnd, instruction._id, updateInstruction]);
 
   const locationCards = useQuery(api.locationCards.listByParent, {
     parentId: instruction._id as string,
@@ -86,10 +139,23 @@ function InstructionRow({
 
   const handleTimeChange = (value: string) => {
     if (value) {
+      const endTime = instruction.specificTimeEnd;
+      if (endTime) {
+        const [sh, sm] = value.split(":").map(Number);
+        const [eh, em] = endTime.split(":").map(Number);
+        if (eh * 60 + em <= sh * 60 + sm) {
+          void updateInstruction({ instructionId: instruction._id, specificTime: value, specificTimeEnd: "" });
+          return;
+        }
+      }
       void updateInstruction({ instructionId: instruction._id, specificTime: value });
     } else {
-      void updateInstruction({ instructionId: instruction._id, specificTime: "", timeSlot: "anytime" });
+      void updateInstruction({ instructionId: instruction._id, specificTime: "", specificTimeEnd: "", timeSlot: "anytime" });
     }
+  };
+
+  const handleEndTimeChange = (value: string) => {
+    void updateInstruction({ instructionId: instruction._id, specificTimeEnd: value || "" });
   };
 
   const handleProofToggle = () => {
@@ -100,6 +166,7 @@ function InstructionRow({
   const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl) ?? false;
 
   return (
+    <>
     <div className="rounded-lg border border-border-default bg-bg-raised">
       {/* Top row: reorder + text + delete */}
       <div className="flex items-start gap-2 p-3 pb-2">
@@ -155,6 +222,16 @@ function InstructionRow({
           placeholder="Time"
           compact
         />
+        {instruction.specificTime && (
+          <TimePicker
+            value={instruction.specificTimeEnd || ""}
+            onChange={handleEndTimeChange}
+            onClose={handleEndTimeClose}
+            minuteStep={5}
+            placeholder="End time"
+            compact
+          />
+        )}
         <button
           type="button"
           onClick={handleProofToggle}
@@ -258,6 +335,15 @@ function InstructionRow({
         />
       )}
     </div>
+    <NotificationToast
+      title="Invalid time range"
+      message="End time must be after start time."
+      variant="warning"
+      visible={showEndTimeError}
+      autoDismissMs={3000}
+      onDismiss={() => setShowEndTimeError(false)}
+    />
+    </>
   );
 }
 
@@ -273,6 +359,7 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
   const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const updateSection = useMutation(api.sections.update);
   const createInstruction = useMutation(api.instructions.create);
   const removeInstruction = useMutation(api.instructions.remove);
   const reorderInstructions = useMutation(api.instructions.reorderInstructions);
@@ -340,6 +427,11 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
         <p className="font-body text-sm font-semibold text-text-primary flex-1 min-w-0 truncate">
           {section.title}
         </p>
+        {!isExpanded && (section.visibility ?? "both") !== "both" && (
+          <span className="font-body text-[10px] text-text-muted bg-bg rounded-pill px-2 py-0.5 shrink-0">
+            {(section.visibility ?? "both") === "manual" ? "Manual only" : "Tasks only"}
+          </span>
+        )}
         <div className="flex items-center gap-1 shrink-0">
           {instructionCount > 0 && (
             <span className="font-body text-xs text-text-muted tabular-nums">
@@ -368,6 +460,20 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
           </button>
         </div>
       </div>
+
+      {/* Visibility & time block pickers */}
+      {isExpanded && (
+        <div className="px-4 pt-3 flex flex-col gap-3">
+          <VisibilityPicker
+            value={(section.visibility ?? "both") as Visibility}
+            onChange={(vis) => {
+              updateSection({ sectionId: section._id, visibility: vis }).catch(() =>
+                setError("Failed to update visibility. Please try again."),
+              );
+            }}
+          />
+        </div>
+      )}
 
       {/* Instructions body */}
       {isExpanded && (
@@ -425,7 +531,7 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
 // ── CustomSectionForm ──────────────────────────────────────────────────────────
 
 interface CustomSectionFormProps {
-  onAdd: (title: string, icon: string, sortOrder: number) => void;
+  onAdd: (title: string, icon: string, sortOrder: number, visibility: Visibility) => void;
   onCancel: () => void;
   nextSortOrder: number;
 }
@@ -433,6 +539,7 @@ interface CustomSectionFormProps {
 function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionFormProps) {
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState(CUSTOM_SECTION_ICONS[0]);
+  const [visibility, setVisibility] = useState<Visibility>("both");
 
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised p-4 flex flex-col gap-4">
@@ -480,6 +587,11 @@ function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionForm
         </div>
       </div>
 
+      <VisibilityPicker
+        value={visibility}
+        onChange={setVisibility}
+      />
+
       {/* Actions */}
       <div className="flex items-center gap-2 justify-end">
         <Button variant="ghost" size="sm" onClick={onCancel}>
@@ -491,7 +603,7 @@ function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionForm
           disabled={!title.trim()}
           onClick={() => {
             if (title.trim()) {
-              onAdd(title.trim(), icon, nextSortOrder);
+              onAdd(title.trim(), icon, nextSortOrder, visibility);
             }
           }}
         >
@@ -543,7 +655,7 @@ export default function Step5Sections() {
   const maxSortOrder = activeSections.reduce((max, s) => Math.max(max, s.sortOrder), 7);
   const nextCustomSortOrder = Math.max(maxSortOrder + 1, 100);
 
-  const handleTogglePrebuilt = (prebuilt: { title: string; icon: string }, index: number) => {
+  const handleTogglePrebuilt = (prebuilt: { title: string; icon: string; defaultVisibility: Visibility }, index: number) => {
     if (!propertyId) return;
     setGeneralError(null);
 
@@ -560,6 +672,7 @@ export default function Step5Sections() {
         title: prebuilt.title,
         icon: prebuilt.icon,
         sortOrder: index,
+        visibility: prebuilt.defaultVisibility,
       }).catch(() => {
         setGeneralError("Failed to add section. Please try again.");
       });
@@ -574,11 +687,11 @@ export default function Step5Sections() {
     setConfirmRemoveId(null);
   };
 
-  const handleAddCustomSection = (title: string, icon: string, sortOrder: number) => {
+  const handleAddCustomSection = (title: string, icon: string, sortOrder: number, visibility: Visibility) => {
     if (!propertyId) return;
     setShowCustomForm(false);
     setGeneralError(null);
-    createSection({ propertyId, title, icon, sortOrder }).catch(() => {
+    createSection({ propertyId, title, icon, sortOrder, visibility }).catch(() => {
       setGeneralError("Failed to add section. Please try again.");
     });
   };

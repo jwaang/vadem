@@ -262,6 +262,20 @@ export const updateTripDates = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
     }
 
+    if (trip.status !== "draft" && trip.status !== "active") {
+      throw new ConvexError({
+        code: "FORBIDDEN",
+        message: "Cannot update dates on a completed or expired trip.",
+      });
+    }
+
+    if (args.endDate <= args.startDate) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "End date must be after start date.",
+      });
+    }
+
     // Cancel existing scheduled notification if present
     if (trip.tripEndingScheduledId) {
       await ctx.scheduler.cancel(trip.tripEndingScheduledId);
@@ -282,9 +296,12 @@ export const updateTripDates = mutation({
       );
     }
 
+    const linkExpiry = new Date(args.endDate + "T23:59:59.999Z").getTime();
+
     await ctx.db.patch(args.tripId, {
       startDate: args.startDate,
       endDate: args.endDate,
+      linkExpiry,
       tripEndingScheduledId,
     });
 
@@ -293,13 +310,122 @@ export const updateTripDates = mutation({
 });
 
 export const remove = mutation({
-  args: { tripId: v.id("trips") },
+  args: { tripId: v.id("trips"), token: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Auth: verify session and ownership
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) {
+      throw new ConvexError({ code: "UNAUTHORIZED", message: "Invalid or expired session" });
+    }
     const trip = await ctx.db.get(args.tripId);
     if (!trip) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
     }
+    const property = await ctx.db.get(trip.propertyId);
+    if (!property || property.ownerId !== session.userId) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Not authorized to delete this trip" });
+    }
+
+    // 1. Cancel scheduled function if present
+    if (trip.tripEndingScheduledId) {
+      try {
+        await ctx.scheduler.cancel(trip.tripEndingScheduledId);
+      } catch {
+        // Already executed or cancelled — safe to ignore
+      }
+    }
+
+    // 2. Delete overlay items + their location cards and storage
+    const overlayItems = await ctx.db
+      .query("overlayItems")
+      .withIndex("by_trip_date", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const item of overlayItems) {
+      if (item.locationCardId) {
+        const card = await ctx.db.get(item.locationCardId);
+        if (card) {
+          if (card.storageId) {
+            try { await ctx.storage.delete(card.storageId); } catch { /* best-effort */ }
+          }
+          if (card.videoStorageId) {
+            try { await ctx.storage.delete(card.videoStorageId); } catch { /* best-effort */ }
+          }
+          await ctx.db.delete(card._id);
+        }
+      }
+      await ctx.db.delete(item._id);
+    }
+
+    // 3. Delete task completions + proof photo storage
+    const completions = await ctx.db
+      .query("taskCompletions")
+      .withIndex("by_trip_date", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const completion of completions) {
+      if (completion.proofPhotoUrl) {
+        const rawSegment = completion.proofPhotoUrl.split("/").pop();
+        const storageId = rawSegment?.split("?")[0];
+        if (storageId) {
+          try {
+            await ctx.storage.delete(storageId as Id<"_storage">);
+          } catch (err) {
+            console.error("[trips.remove] Storage delete failed:", err);
+          }
+        }
+      }
+      await ctx.db.delete(completion._id);
+    }
+
+    // 4. Delete trip sessions
+    const tripSessions = await ctx.db
+      .query("tripSessions")
+      .withIndex("by_trip", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const ts of tripSessions) {
+      await ctx.db.delete(ts._id);
+    }
+
+    // 5. Delete sitters
+    const sitters = await ctx.db
+      .query("sitters")
+      .withIndex("by_trip", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const s of sitters) {
+      await ctx.db.delete(s._id);
+    }
+
+    // 6. Delete vault pins
+    const vaultPins = await ctx.db
+      .query("vaultPins")
+      .withIndex("by_trip_phone", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const vp of vaultPins) {
+      await ctx.db.delete(vp._id);
+    }
+
+    // 7. Delete activity log
+    const activityLogs = await ctx.db
+      .query("activityLog")
+      .withIndex("by_trip_time", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const al of activityLogs) {
+      await ctx.db.delete(al._id);
+    }
+
+    // 8. Delete vault access log
+    const vaultAccessLogs = await ctx.db
+      .query("vaultAccessLog")
+      .withIndex("by_trip_accessed", (q) => q.eq("tripId", args.tripId))
+      .collect();
+    for (const val of vaultAccessLogs) {
+      await ctx.db.delete(val._id);
+    }
+
+    // 9. Delete trip record
     await ctx.db.delete(args.tripId);
     return null;
   },
@@ -348,7 +474,10 @@ export const getTripByShareLink = query({
     v.object({ status: v.literal("PASSWORD_REQUIRED"), tripId: v.id("trips") }),
     v.object({
       status: v.literal("NOT_STARTED"),
+      tripId: v.id("trips"),
+      propertyId: v.id("properties"),
       startDate: v.string(),
+      endDate: v.string(),
       propertyName: v.string(),
       petNames: v.array(v.string()),
     }),
@@ -391,7 +520,10 @@ export const getTripByShareLink = query({
         .collect();
       return {
         status: "NOT_STARTED" as const,
+        tripId: trip._id,
+        propertyId: trip.propertyId,
         startDate: trip.startDate,
+        endDate: trip.endDate,
         propertyName: property?.name ?? "Your stay",
         petNames: pets.map((p) => p.name),
       };
@@ -414,7 +546,10 @@ export const getSitterTripState = query({
     v.object({ status: v.literal("EXPIRED") }),
     v.object({
       status: v.literal("NOT_STARTED"),
+      tripId: v.id("trips"),
+      propertyId: v.id("properties"),
       startDate: v.string(),
+      endDate: v.string(),
       propertyName: v.string(),
       petNames: v.array(v.string()),
     }),
@@ -447,7 +582,10 @@ export const getSitterTripState = query({
         .collect();
       return {
         status: "NOT_STARTED" as const,
+        tripId: trip._id,
+        propertyId: trip.propertyId,
         startDate: trip.startDate,
+        endDate: trip.endDate,
         propertyName: property?.name ?? "Your stay",
         petNames: pets.map((p) => p.name),
       };

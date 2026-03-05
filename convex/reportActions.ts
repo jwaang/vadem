@@ -48,6 +48,7 @@ type ReportActivityEvent = {
   sitterName?: string;
   vaultItemLabel?: string;
   taskTitle?: string;
+  sectionName?: string;
   createdAt: number;
 };
 
@@ -76,15 +77,16 @@ function fmtTs(ms: number): string {
 }
 
 function eventLabel(event: ReportActivityEvent): string {
-  const { eventType, taskTitle, vaultItemLabel, sitterName } = event;
+  const { eventType, taskTitle, vaultItemLabel, sitterName, sectionName } = event;
   const who = sitterName ?? "System";
+  const inSection = sectionName ? ` in ${sectionName}` : "";
   if (eventType === "link_opened") return `${who} opened the sitter link`;
   if (eventType === "task_completed")
-    return `${who} completed "${taskTitle ?? "a task"}"`;
+    return `${who} completed "${taskTitle ?? "a task"}"${inSection}`;
   if (eventType === "proof_uploaded")
-    return `${who} submitted proof for "${taskTitle ?? "a task"}"`;
+    return `${who} submitted proof for "${taskTitle ?? "a task"}"${inSection}`;
   if (eventType === "task_unchecked")
-    return `${who} unmarked "${taskTitle ?? "a task"}"`;
+    return `${who} unmarked "${taskTitle ?? "a task"}"${inSection}`;
   if (eventType === "vault_accessed")
     return `${who} accessed ${vaultItemLabel ?? "a vault item"}`;
   if (eventType === "trip_started") return "Trip started";

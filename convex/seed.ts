@@ -172,59 +172,66 @@ export const run = action({
     console.log("✓ Pets created: Luna (dog) & Mochi (cat)");
 
     // ── 5. Create manual sections & instructions ───────────────────────
-    // Morning Routine
-    const morningId = await ctx.runMutation(api.sections.create, {
+    // Daily Routine (merged morning + evening, chronological by specificTime)
+    const dailyId = await ctx.runMutation(api.sections.create, {
       propertyId,
-      title: "Morning Routine",
-      icon: "☀️",
+      title: "Daily Routine",
+      icon: "📋",
       sortOrder: 0,
     });
-    const morningTasks = [
-      { text: "Let Luna out to the backyard (she'll scratch the sliding door)", specificTime: "07:00" },
-      { text: "Feed Luna — 2 cups kibble in the silver bowl by the pantry", specificTime: "07:15" },
-      { text: "Feed Mochi — 1/3 cup dry food in the blue bowl on the counter" },
-      { text: "Give Luna her glucosamine chew (bag on the kitchen counter)" },
-      { text: "Walk Luna around the lake trail — 30 minutes", specificTime: "07:30" },
-      { text: "Check water bowls and refill if needed" },
+    // When specificTime is set, the mutation derives timeSlot via timeToSlot()
+    // (overriding whatever we pass). Items without specificTime stay "anytime".
+    const dailyTasks: { text: string; timeSlot: "morning" | "evening" | "anytime"; specificTime?: string; proofRequired?: boolean }[] = [
+      { text: "Let Luna out to the backyard (she'll scratch the sliding door)", timeSlot: "morning", specificTime: "07:00" },
+      { text: "Feed Luna — 2 cups kibble in the silver bowl by the pantry", timeSlot: "morning", specificTime: "07:15" },
+      { text: "Feed Mochi — 1/3 cup dry food in the blue bowl on the counter", timeSlot: "morning", specificTime: "07:15" },
+      { text: "Give Luna her glucosamine chew (bag on the kitchen counter)", timeSlot: "morning", specificTime: "07:15" },
+      { text: "Walk Luna around the lake trail — 30 minutes", timeSlot: "morning", specificTime: "07:30", proofRequired: true },
+      { text: "Check water bowls and refill if needed", timeSlot: "anytime" },
+      { text: "Walk Luna — 20 min neighborhood loop around 5pm", timeSlot: "evening", specificTime: "17:00", proofRequired: true },
+      { text: "Feed Luna dinner — 2 cups kibble", timeSlot: "evening", specificTime: "18:00" },
+      { text: "Feed Mochi — 1 can wet food (Fancy Feast from the pantry)", timeSlot: "evening", specificTime: "18:00" },
+      { text: "Plug in Mochi's heated bed in the living room", timeSlot: "evening", specificTime: "21:00" },
+      { text: "Let Luna out one last time before bed (~10pm)", timeSlot: "evening", specificTime: "22:00" },
+      { text: "Lock the back sliding door and check the front deadbolt", timeSlot: "evening", specificTime: "22:00" },
+      { text: "Close all blinds before bed — Mochi gets spooked by raccoons", timeSlot: "evening", specificTime: "22:00" },
     ];
-    const morningInstructionIds: Id<"instructions">[] = [];
-    for (const [i, task] of morningTasks.entries()) {
+    const dailyInstructionIds: Id<"instructions">[] = [];
+    for (const [i, task] of dailyTasks.entries()) {
       const id = await ctx.runMutation(api.instructions.create, {
-        sectionId: morningId,
+        sectionId: dailyId,
         text: task.text,
         sortOrder: i,
-        timeSlot: "morning",
+        timeSlot: task.timeSlot,
         isRecurring: true,
-        proofRequired: i === 4, // proof for the walk
+        proofRequired: task.proofRequired ?? false,
         ...(task.specificTime ? { specificTime: task.specificTime } : {}),
       });
-      morningInstructionIds.push(id);
+      dailyInstructionIds.push(id);
     }
 
-    // Evening Routine
-    const eveningId = await ctx.runMutation(api.sections.create, {
+    // Where Things Are (manual-only reference section)
+    const whereId = await ctx.runMutation(api.sections.create, {
       propertyId,
-      title: "Evening Routine",
-      icon: "🌙",
+      title: "Where Things Are",
+      icon: "📍",
       sortOrder: 1,
+      visibility: "manual",
     });
-    const eveningTasks = [
-      { text: "Walk Luna — 20 min neighborhood loop around 5pm", specificTime: "17:00" },
-      { text: "Feed Luna dinner — 2 cups kibble", specificTime: "18:00" },
-      { text: "Feed Mochi — 1 can wet food (Fancy Feast from the pantry)" },
-      { text: "Plug in Mochi's heated bed in the living room" },
-      { text: "Let Luna out one last time before bed (~10pm)", specificTime: "22:00" },
-      { text: "Lock the back sliding door and check the front deadbolt" },
-    ];
-    for (const [i, task] of eveningTasks.entries()) {
+    for (const [i, text] of [
+      "Thermostat is on the wall in the hallway by the kitchen",
+      "Fuse box is in the garage, left wall behind the door",
+      "Water shutoff valve is in the garage behind the bikes",
+      "First aid kit is under the master bathroom sink",
+      "Extra towels and linens are in the hall closet, top shelf",
+    ].entries()) {
       await ctx.runMutation(api.instructions.create, {
-        sectionId: eveningId,
-        text: task.text,
+        sectionId: whereId,
+        text,
         sortOrder: i,
-        timeSlot: "evening",
-        isRecurring: true,
-        proofRequired: i === 0,
-        ...(task.specificTime ? { specificTime: task.specificTime } : {}),
+        timeSlot: "anytime",
+        isRecurring: false,
+        proofRequired: false,
       });
     }
 
@@ -234,13 +241,13 @@ export const run = action({
       title: "House Rules",
       icon: "📋",
       sortOrder: 2,
+      visibility: "manual",
     });
     for (const [i, task] of [
       "No shoes in the house — shoe rack by the front door",
       "Thermostat stays at 72°F — don't adjust below 68°F",
       "Recycling goes in the blue bin, trash in black (pickup is Thursday)",
       "Don't let Luna on the couch — she knows the rule but will test you",
-      "Close all blinds before bed — Mochi gets spooked by raccoons",
     ].entries()) {
       await ctx.runMutation(api.instructions.create, {
         sectionId: rulesId,
@@ -259,21 +266,32 @@ export const run = action({
       icon: "🌿",
       sortOrder: 3,
     });
-    for (const [i, task] of [
-      "Water indoor plants every other day — there are 6 pots on the windowsills",
-      "Garden hose for the raised beds — 5 minutes each, every morning",
-      "Don't water the succulents on the porch — they're fine for a week",
-    ].entries()) {
-      await ctx.runMutation(api.instructions.create, {
-        sectionId: plantsId,
-        text: task,
-        sortOrder: i,
-        timeSlot: "morning",
-        isRecurring: true,
-        proofRequired: false,
-      });
-    }
-    console.log("✓ Manual sections created: Morning, Evening, House Rules, Plants");
+    await ctx.runMutation(api.instructions.create, {
+      sectionId: plantsId,
+      text: "Water indoor plants every other day — there are 6 pots on the windowsills",
+      sortOrder: 0,
+      timeSlot: "anytime",
+      isRecurring: true,
+      proofRequired: false,
+    });
+    await ctx.runMutation(api.instructions.create, {
+      sectionId: plantsId,
+      text: "Garden hose for the raised beds — 5 minutes each, every morning",
+      sortOrder: 1,
+      timeSlot: "morning",
+      specificTime: "08:00",
+      isRecurring: true,
+      proofRequired: false,
+    });
+    await ctx.runMutation(api.instructions.create, {
+      sectionId: plantsId,
+      text: "Don't water the succulents on the porch — they're fine for a week",
+      sortOrder: 2,
+      timeSlot: "anytime",
+      isRecurring: true,
+      proofRequired: false,
+    });
+    console.log("✓ Manual sections created: Daily Routine, Where Things Are, House Rules, Plants");
 
     // ── 6. Create emergency contacts ───────────────────────────────────
     // (ASPCA auto-created by property.create; add more)
@@ -392,6 +410,7 @@ export const run = action({
       text: "FedEx delivering a package — leave the porch light on",
       date: todayStr,
       timeSlot: "afternoon",
+      specificTime: "14:00",
       proofRequired: false,
     });
     await ctx.runMutation(api.overlayItems.create, {
@@ -399,6 +418,7 @@ export const run = action({
       text: "Bring trash & recycling bins to the curb (pickup is early morning)",
       date: fmt(tomorrow),
       timeSlot: "evening",
+      specificTime: "20:00",
       proofRequired: false,
     });
     await ctx.runMutation(api.overlayItems.create, {
@@ -406,6 +426,7 @@ export const run = action({
       text: "Jamie (neighbor) is dropping off a package — leave the garage open between 2-4pm",
       date: fmt(dayAfterTomorrow),
       timeSlot: "afternoon",
+      specificTime: "14:00",
       proofRequired: false,
     });
     await ctx.runMutation(api.overlayItems.create, {
@@ -428,7 +449,7 @@ export const run = action({
     // "Let Luna out" — completed
     await ctx.runMutation(internal.seedHelpers.insertTaskCompletion, {
       tripId,
-      taskRef: `recurring:${morningInstructionIds[0]}:${todayStr}`,
+      taskRef: `recurring:${dailyInstructionIds[0]}:${todayStr}`,
       taskType: "recurring",
       sitterName: "Alex Rivera",
       completedAt: sixHoursAgo,
@@ -437,7 +458,7 @@ export const run = action({
     // "Feed Luna" — completed
     await ctx.runMutation(internal.seedHelpers.insertTaskCompletion, {
       tripId,
-      taskRef: `recurring:${morningInstructionIds[1]}:${todayStr}`,
+      taskRef: `recurring:${dailyInstructionIds[1]}:${todayStr}`,
       taskType: "recurring",
       sitterName: "Alex Rivera",
       completedAt: fiveAndHalfHoursAgo,
@@ -446,7 +467,7 @@ export const run = action({
     // "Feed Mochi" — completed
     await ctx.runMutation(internal.seedHelpers.insertTaskCompletion, {
       tripId,
-      taskRef: `recurring:${morningInstructionIds[2]}:${todayStr}`,
+      taskRef: `recurring:${dailyInstructionIds[2]}:${todayStr}`,
       taskType: "recurring",
       sitterName: "Alex Rivera",
       completedAt: fiveHoursAgo,

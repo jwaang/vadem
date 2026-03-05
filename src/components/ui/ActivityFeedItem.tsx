@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type HTMLAttributes } from "react";
+import { useState, type HTMLAttributes, type ReactNode } from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ interface ActivityFeedItemProps extends HTMLAttributes<HTMLDivElement> {
   /** Bold name in the activity text (e.g. "Jamie") */
   name: string;
   /** The action description after the name */
-  action: string;
+  action: ReactNode;
   /** Timestamp string shown in muted xs text */
   timestamp: string;
   /** Whether to hide the bottom border (e.g. last item) */

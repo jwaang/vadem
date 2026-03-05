@@ -13,6 +13,7 @@ interface TimePickerProps {
   error?: string;
   value?: string; // HH:mm 24h format or ""
   onChange: (value: string) => void; // emits HH:mm 24h format or ""
+  onClose?: () => void; // fired when the popover closes
   minuteStep?: number; // default 5
   placeholder?: string;
   compact?: boolean; // chip-style trigger for inline toolbars
@@ -112,6 +113,7 @@ function TimePicker({
   error,
   value,
   onChange,
+  onClose,
   minuteStep = 5,
   placeholder = "Set time",
   compact,
@@ -159,13 +161,20 @@ function TimePicker({
   function handleClear() {
     onChange("");
     setOpen(false);
+    onClose?.();
     buttonRef.current?.focus();
   }
+
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     function handlePointerDown(e: PointerEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
+        onCloseRef.current?.();
       }
     }
     document.addEventListener("pointerdown", handlePointerDown);
@@ -175,6 +184,7 @@ function TimePicker({
   function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
     if (e.key === "Escape") {
       setOpen(false);
+      onClose?.();
     } else if (e.key === "ArrowDown" && !open) {
       e.preventDefault();
       setOpen(true);

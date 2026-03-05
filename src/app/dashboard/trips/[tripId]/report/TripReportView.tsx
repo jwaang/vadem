@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useAction, useMutation } from "convex/react";
@@ -49,22 +49,26 @@ function eventToAction(
   event: string,
   vaultItemLabel?: string,
   taskTitle?: string,
-): string {
+  sectionName?: string,
+): ReactNode {
   if (event === "link_opened") return "opened the sitter link";
   if (event === "vault_accessed") {
     return vaultItemLabel
       ? `accessed your ${vaultItemLabel}`
       : "accessed a vault item";
   }
+  const sectionSuffix = sectionName
+    ? <span className="text-text-muted"> in {sectionName}</span>
+    : null;
   if (event === "task_completed")
-    return taskTitle ? `completed "${taskTitle}"` : "completed a task";
+    return taskTitle ? <>completed &ldquo;{taskTitle}&rdquo;{sectionSuffix}</> : "completed a task";
   if (event === "proof_uploaded")
     return taskTitle
-      ? `submitted proof for "${taskTitle}"`
+      ? <>submitted proof for &ldquo;{taskTitle}&rdquo;{sectionSuffix}</>
       : "submitted a proof photo";
   if (event === "task_unchecked")
     return taskTitle
-      ? `unmarked "${taskTitle}" as complete`
+      ? <>unmarked &ldquo;{taskTitle}&rdquo; as complete{sectionSuffix}</>
       : "unmarked a task as complete";
   if (event === "trip_started") return "trip started";
   if (event === "trip_expired") return "trip expired";
@@ -632,6 +636,7 @@ function TripReportViewInner({ tripId }: { tripId: string }) {
                     event.eventType,
                     event.vaultItemLabel,
                     event.taskTitle,
+                    event.sectionName,
                   )}
                   timestamp={formatActivityTimestamp(event.createdAt)}
                   proofPhotoUrl={event.proofPhotoUrl}

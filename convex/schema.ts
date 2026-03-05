@@ -70,6 +70,7 @@ export default defineSchema({
     title: v.string(),
     icon: v.string(),
     sortOrder: v.number(),
+    visibility: v.optional(v.union(v.literal("tasks"), v.literal("manual"), v.literal("both"))),
   })
     .index("by_property_sort", ["propertyId", "sortOrder"])
     .searchIndex("search_title", {
@@ -88,6 +89,7 @@ export default defineSchema({
       v.literal("anytime"),
     ),
     specificTime: v.optional(v.string()), // HH:mm format e.g. "07:00", "18:30"
+    specificTimeEnd: v.optional(v.string()), // HH:mm end time for range display
     isRecurring: v.boolean(),
     proofRequired: v.boolean(),
   })
@@ -226,6 +228,7 @@ export default defineSchema({
       v.literal("anytime"),
     ),
     specificTime: v.optional(v.string()),
+    specificTimeEnd: v.optional(v.string()),
     proofRequired: v.boolean(),
     locationCardId: v.optional(v.id("locationCards")),
   }).index("by_trip_date", ["tripId", "date"]),
@@ -274,6 +277,7 @@ export default defineSchema({
     vaultItemLabel: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
     taskTitle: v.optional(v.string()),
+    sectionName: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_trip_time", ["tripId", "createdAt"])

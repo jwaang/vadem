@@ -12,6 +12,8 @@ interface BottomNavProps extends HTMLAttributes<HTMLElement> {
   onTabChange?: (tab: TabId) => void;
   /** Position behavior: "fixed" (viewport) or "sticky" (layout flow) */
   variant?: BottomNavVariant;
+  /** Limit which tabs are shown (defaults to all) */
+  visibleTabs?: TabId[];
 }
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -99,6 +101,7 @@ function BottomNav({
   activeTab,
   onTabChange,
   variant = "fixed",
+  visibleTabs,
   className,
   ...props
 }: BottomNavProps) {
@@ -123,7 +126,7 @@ function BottomNav({
       aria-label="Main navigation"
       {...props}
     >
-      {tabs.map((tab) => {
+      {(visibleTabs ? tabs.filter((t) => visibleTabs.includes(t.id)) : tabs).map((tab) => {
         const isActive = tab.id === currentTab;
 
         return (

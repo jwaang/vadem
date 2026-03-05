@@ -21,12 +21,24 @@ export const searchManual = query({
   args: {
     propertyId: v.id("properties"),
     query: v.string(),
+    context: v.optional(v.union(v.literal("manual"), v.literal("tasks"))),
   },
   returns: v.array(searchResultObject),
   handler: async (ctx, args) => {
     if (!args.query.trim()) return [];
 
     const pid = args.propertyId;
+    const viewContext = args.context; // "manual" | "tasks" | undefined
+
+    // Helper: returns true if a section's visibility is compatible with the view context
+    function isVisibleIn(
+      visibility: "tasks" | "manual" | "both" | undefined,
+    ): boolean {
+      if (!viewContext) return true; // no context filter = show all
+      const vis = visibility ?? "both";
+      return vis === "both" || vis === viewContext;
+    }
+
     const results: Array<{
       type: "instruction" | "section" | "pet" | "location_card" | "contact";
       id: string;
@@ -45,7 +57,7 @@ export const searchManual = query({
       const section = (await ctx.db.get(
         inst.sectionId,
       )) as Doc<"manualSections"> | null;
-      if (section?.propertyId === pid) {
+      if (section?.propertyId === pid && isVisibleIn(section.visibility)) {
         const snippet =
           inst.text.length > 120 ? inst.text.slice(0, 120) + "…" : inst.text;
         results.push({
@@ -67,6 +79,7 @@ export const searchManual = query({
       )
       .take(5);
     for (const section of sectionHits) {
+      if (!isVisibleIn(section.visibility)) continue;
       results.push({
         type: "section",
         id: section._id,

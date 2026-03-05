@@ -52,9 +52,14 @@ export const getTodayTasks = query({
           .collect(),
       ]);
 
-    // Fetch instructions for every section in parallel (avoids N+1)
+    // Filter to sections visible in the task view (exclude manual-only)
+    const taskSections = allSections.filter(
+      (s) => (s.visibility ?? "both") !== "manual",
+    );
+
+    // Fetch instructions for task-visible sections in parallel (avoids N+1)
     const instructionsPerSection = await Promise.all(
-      allSections.map((section) =>
+      taskSections.map((section) =>
         ctx.db
           .query("instructions")
           .withIndex("by_section_sort", (q) => q.eq("sectionId", section._id))
@@ -149,6 +154,106 @@ export const getTodayTasks = query({
       tomorrowRecurringInstructions: enrichedRecurringInstructions,
       tomorrowOverlayItems,
       completions: allCompletions,
+    };
+  },
+});
+
+/**
+ * Preview query for creators — returns the same shape as getTodayTasks
+ * but works with just a propertyId (no trip required).
+ * Skips trip-specific tables (overlayItems, taskCompletions, sitters).
+ */
+export const getPreviewTasks = query({
+  args: {
+    propertyId: v.id("properties"),
+    today: v.string(), // "YYYY-MM-DD"
+  },
+  returns: v.any(),
+  handler: async (ctx, { propertyId, today }) => {
+    const [property, emergencyContacts, allSections] = await Promise.all([
+      ctx.db.get(propertyId),
+      ctx.db
+        .query("emergencyContacts")
+        .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+        .order("asc")
+        .collect(),
+      ctx.db
+        .query("manualSections")
+        .withIndex("by_property_sort", (q) => q.eq("propertyId", propertyId))
+        .order("asc")
+        .collect(),
+    ]);
+
+    if (!property) return null;
+
+    // Filter to sections visible in the task view (exclude manual-only)
+    const taskSections = allSections.filter(
+      (s) => (s.visibility ?? "both") !== "manual",
+    );
+
+    // Fetch instructions for task-visible sections in parallel
+    const instructionsPerSection = await Promise.all(
+      taskSections.map((section) =>
+        ctx.db
+          .query("instructions")
+          .withIndex("by_section_sort", (q) => q.eq("sectionId", section._id))
+          .order("asc")
+          .collect(),
+      ),
+    );
+
+    const recurringInstructions = instructionsPerSection.flat();
+
+    // Fetch location cards for recurring instructions
+    const instructionLocationCards = await Promise.all(
+      recurringInstructions.map((inst) =>
+        ctx.db
+          .query("locationCards")
+          .withIndex("by_parent", (q) =>
+            q.eq("parentId", inst._id).eq("parentType", "instruction"),
+          )
+          .first(),
+      ),
+    );
+
+    // Helper: resolve a raw location card record to URL-enriched data
+    async function resolveLocationCard(lc: (typeof instructionLocationCards)[number]) {
+      if (!lc) return undefined;
+      const photoUrl = lc.storageId
+        ? await ctx.storage.getUrl(lc.storageId)
+        : (lc.photoUrl ?? null);
+      const videoUrl = lc.videoStorageId
+        ? await ctx.storage.getUrl(lc.videoStorageId)
+        : (lc.videoUrl ?? null);
+      return {
+        photoUrl: photoUrl ?? undefined,
+        videoUrl: videoUrl ?? undefined,
+        caption: lc.caption,
+        roomTag: lc.roomTag,
+      };
+    }
+
+    // Enrich recurring instructions with their location card data
+    const enrichedRecurringInstructions = await Promise.all(
+      recurringInstructions.map(async (inst, i) => ({
+        ...inst,
+        locationCard: await resolveLocationCard(instructionLocationCards[i]),
+      })),
+    );
+
+    // Mock trip metadata — 7-day trip starting today
+    const [year, month, day] = today.split("-").map(Number);
+    const endObj = new Date(Date.UTC(year, month - 1, day + 6));
+    const endDate = endObj.toISOString().split("T")[0];
+
+    return {
+      trip: { startDate: today, endDate, status: "active" },
+      property,
+      sitters: [],
+      emergencyContacts,
+      recurringInstructions: enrichedRecurringInstructions,
+      todayOverlayItems: [],
+      completions: [],
     };
   },
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
@@ -15,23 +15,18 @@ import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
 import { TimePicker } from "@/components/ui/TimePicker";
 import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, TrashIcon, PlusIcon, PencilIcon, XIcon, CameraIcon } from "@/components/ui/icons";
+import { NotificationToast } from "@/components/ui/NotificationToast";
+import { isValidTimeRange } from "@/lib/todayViewHelpers";
 import { cn } from "@/lib/utils";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 
-const PREBUILT_SECTIONS: { title: string; icon: string }[] = [
-  { title: "Morning Routine", icon: "☀️" },
-  { title: "Afternoon Routine", icon: "⛅" },
-  { title: "Evening Routine", icon: "🌙" },
-  { title: "Access & Arrival", icon: "🗝️" },
-  { title: "Appliances", icon: "🔌" },
-  { title: "Kitchen", icon: "🍳" },
-  { title: "Trash & Mail", icon: "🗑️" },
-  { title: "Plants & Garden", icon: "🌿" },
-  { title: "Where Things Are", icon: "📍" },
-  { title: "House Rules", icon: "📋" },
-  { title: "Departure / Lockup", icon: "🚪" },
+type Visibility = "tasks" | "manual" | "both";
+
+const PREBUILT_SECTIONS: { title: string; icon: string; defaultVisibility: Visibility }[] = [
+  { title: "Daily Routine", icon: "📋", defaultVisibility: "both" },
+  { title: "Where Things Are", icon: "📍", defaultVisibility: "manual" },
 ];
 
 const ALL_SECTION_ICONS = [
@@ -44,6 +39,47 @@ const ALL_SECTION_ICONS = [
 
 type SectionDoc = Doc<"manualSections">;
 type InstructionDoc = Doc<"instructions">;
+
+// ── VisibilityPicker ──────────────────────────────────────────────────────────
+
+const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
+  { value: "tasks", label: "Tasks" },
+  { value: "manual", label: "Manual" },
+  { value: "both", label: "Both" },
+];
+
+function VisibilityPicker({
+  value,
+  onChange,
+}: {
+  value: Visibility;
+  onChange: (v: Visibility) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-body text-xs font-semibold text-text-secondary">
+        Appears in
+      </span>
+      <div className="flex items-center gap-1">
+        {VISIBILITY_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "rounded-pill px-3 py-1.5 font-body text-xs transition-colors duration-150",
+              value === opt.value
+                ? "bg-primary-subtle text-primary font-semibold"
+                : "text-text-muted hover:text-text-secondary",
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ── InstructionRow ─────────────────────────────────────────────────────────────
 
@@ -70,6 +106,24 @@ function InstructionRow({
   const [showUploader, setShowUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
   const [editingCardId, setEditingCardId] = useState<Id<"locationCards"> | null>(null);
+  const [showEndTimeError, setShowEndTimeError] = useState(false);
+  const lastValidEndTimeRef = useRef(instruction.specificTimeEnd || "");
+
+  // Keep the ref in sync when a valid end time is committed (e.g. from DB update)
+  useEffect(() => {
+    const endTime = instruction.specificTimeEnd || "";
+    if (!endTime || !instruction.specificTime || isValidTimeRange(instruction.specificTime, endTime)) {
+      lastValidEndTimeRef.current = endTime;
+    }
+  }, [instruction.specificTime, instruction.specificTimeEnd]);
+
+  const handleEndTimeClose = useCallback(() => {
+    const endTime = instruction.specificTimeEnd;
+    if (endTime && instruction.specificTime && !isValidTimeRange(instruction.specificTime, endTime)) {
+      void updateInstruction({ instructionId: instruction._id, specificTimeEnd: lastValidEndTimeRef.current });
+      setShowEndTimeError(true);
+    }
+  }, [instruction.specificTime, instruction.specificTimeEnd, instruction._id, updateInstruction]);
 
   const locationCards = useQuery(api.locationCards.listByParent, {
     parentId: instruction._id as string,
@@ -84,10 +138,24 @@ function InstructionRow({
 
   const handleTimeChange = (value: string) => {
     if (value) {
+      // If end time exists but is no longer valid with new start, clear it
+      const endTime = instruction.specificTimeEnd;
+      if (endTime) {
+        const [sh, sm] = value.split(":").map(Number);
+        const [eh, em] = endTime.split(":").map(Number);
+        if (eh * 60 + em <= sh * 60 + sm) {
+          void updateInstruction({ instructionId: instruction._id, specificTime: value, specificTimeEnd: "" });
+          return;
+        }
+      }
       void updateInstruction({ instructionId: instruction._id, specificTime: value });
     } else {
-      void updateInstruction({ instructionId: instruction._id, specificTime: "", timeSlot: "anytime" });
+      void updateInstruction({ instructionId: instruction._id, specificTime: "", specificTimeEnd: "", timeSlot: "anytime" });
     }
+  };
+
+  const handleEndTimeChange = (value: string) => {
+    void updateInstruction({ instructionId: instruction._id, specificTimeEnd: value || "" });
   };
 
   const handleProofToggle = () => {
@@ -98,6 +166,7 @@ function InstructionRow({
   const hasVideo = locationCards?.some(c => !!c.resolvedVideoUrl) ?? false;
 
   return (
+    <>
     <div className="rounded-lg border border-border-default bg-bg-raised">
       {/* Top row: reorder + text + delete */}
       <div className="flex items-start gap-2 p-3 pb-2">
@@ -143,6 +212,16 @@ function InstructionRow({
           placeholder="Time"
           compact
         />
+        {instruction.specificTime && (
+          <TimePicker
+            value={instruction.specificTimeEnd || ""}
+            onChange={handleEndTimeChange}
+            onClose={handleEndTimeClose}
+            minuteStep={5}
+            placeholder="End time"
+            compact
+          />
+        )}
         <button
           type="button"
           onClick={handleProofToggle}
@@ -246,6 +325,15 @@ function InstructionRow({
         />
       )}
     </div>
+    <NotificationToast
+      title="Invalid time range"
+      message="End time must be after start time."
+      variant="warning"
+      visible={showEndTimeError}
+      autoDismissMs={3000}
+      onDismiss={() => setShowEndTimeError(false)}
+    />
+    </>
   );
 }
 
@@ -416,6 +504,11 @@ function SectionEditPanel({
                 <p className="font-body text-sm font-semibold text-text-primary truncate flex-1 min-w-0">
                   {section.title}
                 </p>
+                {!isExpanded && (section.visibility ?? "both") !== "both" && (
+                  <span className="font-body text-[10px] text-text-muted bg-bg-sunken rounded-pill px-2 py-0.5 shrink-0">
+                    {(section.visibility ?? "both") === "manual" ? "Manual only" : "Tasks only"}
+                  </span>
+                )}
               </button>
               <div className="flex items-center gap-0.5 shrink-0">
                 <IconButton
@@ -485,6 +578,20 @@ function SectionEditPanel({
         </div>
       )}
 
+      {/* Visibility picker */}
+      {isExpanded && !isEditing && (
+        <div className="px-4 pt-3 flex flex-col gap-3">
+          <VisibilityPicker
+            value={(section.visibility ?? "both") as Visibility}
+            onChange={(vis) => {
+              updateSection({ sectionId: section._id, visibility: vis }).catch(() =>
+                setError("Failed to update visibility. Please try again."),
+              );
+            }}
+          />
+        </div>
+      )}
+
       {/* Instructions body */}
       {isExpanded && !isEditing && (
         <div className="p-4 flex flex-col gap-3">
@@ -532,7 +639,7 @@ function SectionEditPanel({
 // ── CustomSectionForm ──────────────────────────────────────────────────────────
 
 interface CustomSectionFormProps {
-  onAdd: (title: string, icon: string, sortOrder: number) => void;
+  onAdd: (title: string, icon: string, sortOrder: number, visibility: Visibility) => void;
   onCancel: () => void;
   nextSortOrder: number;
 }
@@ -540,6 +647,7 @@ interface CustomSectionFormProps {
 function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionFormProps) {
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState(ALL_SECTION_ICONS[8]); // 🏠
+  const [visibility, setVisibility] = useState<Visibility>("both");
 
   return (
     <div className="rounded-lg border border-border-default bg-bg-raised p-4 flex flex-col gap-4">
@@ -581,6 +689,11 @@ function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionForm
         </div>
       </div>
 
+      <VisibilityPicker
+        value={visibility}
+        onChange={setVisibility}
+      />
+
       <div className="flex items-center gap-2 justify-end">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           Cancel
@@ -591,7 +704,7 @@ function CustomSectionForm({ onAdd, onCancel, nextSortOrder }: CustomSectionForm
           disabled={!title.trim()}
           onClick={() => {
             if (title.trim()) {
-              onAdd(title.trim(), icon, nextSortOrder);
+              onAdd(title.trim(), icon, nextSortOrder, visibility);
             }
           }}
         >
@@ -671,7 +784,7 @@ export default function SectionsEditor() {
     (p) => !activeSectionTitles.has(p.title),
   );
 
-  const handleAddPrebuilt = (prebuilt: { title: string; icon: string }) => {
+  const handleAddPrebuilt = (prebuilt: { title: string; icon: string; defaultVisibility: Visibility }) => {
     if (!propertyId) return;
     setGeneralError(null);
     createSection({
@@ -679,14 +792,15 @@ export default function SectionsEditor() {
       title: prebuilt.title,
       icon: prebuilt.icon,
       sortOrder: maxSortOrder + 1,
+      visibility: prebuilt.defaultVisibility,
     }).catch(() => setGeneralError("Failed to add section. Please try again."));
   };
 
-  const handleAddCustomSection = (title: string, icon: string, sortOrder: number) => {
+  const handleAddCustomSection = (title: string, icon: string, sortOrder: number, visibility: Visibility) => {
     if (!propertyId) return;
     setShowCustomForm(false);
     setGeneralError(null);
-    createSection({ propertyId, title, icon, sortOrder }).catch(() =>
+    createSection({ propertyId, title, icon, sortOrder, visibility }).catch(() =>
       setGeneralError("Failed to add section. Please try again."),
     );
   };

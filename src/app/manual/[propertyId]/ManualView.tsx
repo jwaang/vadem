@@ -290,7 +290,7 @@ export default function ManualView({ propertyId }: ManualViewProps) {
   const convexResults = useQuery(
     api.search.searchManual,
     debouncedQuery.trim()
-      ? { propertyId: pid, query: debouncedQuery.trim() }
+      ? { propertyId: pid, query: debouncedQuery.trim(), context: "manual" as const }
       : "skip",
   );
 

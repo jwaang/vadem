@@ -6,7 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
-import { ChevronLeftIcon, ChevronRightIcon, HomeIcon, LockIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, HomeIcon, LockIcon, EyeIcon } from "@/components/ui/icons";
 
 // ── Hub card ──────────────────────────────────────────────────────────
 
@@ -166,6 +166,20 @@ export default function PropertyPageClient() {
         ) : (
           <>
             <PropertyHubInner propertyId={property._id} />
+            <Link
+              href="/dashboard/preview"
+              className="flex items-center gap-3 bg-bg-raised rounded-xl border border-border-default p-4 hover:border-border-strong transition-colors duration-150"
+              style={{ boxShadow: "var(--shadow-xs)" }}
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-subtle flex items-center justify-center">
+                <EyeIcon size={18} className="text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-body text-sm font-semibold text-text-primary">Preview as sitter</p>
+                <p className="font-body text-xs text-text-muted">See what your sitter will experience</p>
+              </div>
+              <ChevronRightIcon size={16} className="text-text-muted" />
+            </Link>
             <Link
               href="/setup/home"
               className="flex items-center gap-3 bg-bg-raised rounded-xl border border-border-default p-4 hover:border-border-strong transition-colors duration-150"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -11,6 +11,8 @@ import { TimePicker } from "@/components/ui/TimePicker";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
 import { PencilIcon } from "@/components/ui/icons";
+import { NotificationToast } from "@/components/ui/NotificationToast";
+import { formatTimeRange, isValidTimeRange } from "@/lib/todayViewHelpers";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -69,13 +71,6 @@ function CameraIcon() {
 
 // ── Saved item row ─────────────────────────────────────────────────────────────
 
-function formatTime12h(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
-}
-
 interface SavedItemRowProps {
   item: {
     _id: Id<"overlayItems">;
@@ -83,6 +78,7 @@ interface SavedItemRowProps {
     date?: string;
     timeSlot: TimeSlot;
     specificTime?: string;
+    specificTimeEnd?: string;
     proofRequired: boolean;
     locationCardId?: Id<"locationCards">;
   };
@@ -99,7 +95,19 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
   const [editText, setEditText] = useState(item.text);
   const [editDate, setEditDate] = useState(item.date ?? "");
   const [editSpecificTime, setEditSpecificTime] = useState(item.specificTime ?? "");
+  const [editSpecificTimeEnd, setEditSpecificTimeEnd] = useState(item.specificTimeEnd ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [showEndTimeError, setShowEndTimeError] = useState(false);
+  const lastValidEditEndTimeRef = useRef(item.specificTimeEnd ?? "");
+
+  const handleEditEndTimeClose = useCallback(() => {
+    if (editSpecificTimeEnd && editSpecificTime && !isValidTimeRange(editSpecificTime, editSpecificTimeEnd)) {
+      setEditSpecificTimeEnd(lastValidEditEndTimeRef.current);
+      setShowEndTimeError(true);
+    } else {
+      lastValidEditEndTimeRef.current = editSpecificTimeEnd;
+    }
+  }, [editSpecificTime, editSpecificTimeEnd]);
 
   // Live query — drives attached state reactively after upload/reload
   const existingCards = useQuery(api.locationCards.listByParent, {
@@ -147,13 +155,33 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                 hint="Leave empty for all days"
               />
               <TimePicker
-                label="Time"
+                label="Start time"
                 id={`edit-time-${item._id}`}
                 value={editSpecificTime}
-                onChange={setEditSpecificTime}
+                onChange={(v) => {
+                  setEditSpecificTime(v);
+                  if (!v) {
+                    setEditSpecificTimeEnd("");
+                  } else if (editSpecificTimeEnd && !isValidTimeRange(v, editSpecificTimeEnd)) {
+                    setEditSpecificTimeEnd("");
+                  }
+                }}
                 minuteStep={5}
                 hint="Leave empty for anytime"
               />
+              {editSpecificTime && (
+                <TimePicker
+                  label="End time"
+                  id={`edit-end-time-${item._id}`}
+                  value={editSpecificTimeEnd}
+                  onChange={(v) => {
+                    setEditSpecificTimeEnd(v);
+                  }}
+                  onClose={handleEditEndTimeClose}
+                  minuteStep={5}
+                  hint="Optional"
+                />
+              )}
             </div>
             {/* Attach photo/video buttons — only in edit mode */}
             {!photoAttached && (
@@ -182,6 +210,7 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                   setEditText(item.text);
                   setEditDate(item.date ?? "");
                   setEditSpecificTime(item.specificTime ?? "");
+                  setEditSpecificTimeEnd(item.specificTimeEnd ?? "");
                   setIsEditing(false);
                 }}
               >
@@ -199,6 +228,7 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                       text: editText.trim(),
                       date: editDate || undefined,
                       specificTime: editSpecificTime || undefined,
+                      specificTimeEnd: editSpecificTimeEnd || undefined,
                     });
                     setIsEditing(false);
                   } finally {
@@ -242,7 +272,7 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
               </span>
               {item.specificTime && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-bg-sunken text-text-secondary">
-                  {formatTime12h(item.specificTime)}
+                  {formatTimeRange(item.specificTime, item.specificTimeEnd)}
                 </span>
               )}
               {item.date && (
@@ -321,6 +351,14 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
           onClose={() => setShowVideoUploader(false)}
         />
       )}
+      <NotificationToast
+        title="Invalid time range"
+        message="End time must be after start time."
+        variant="warning"
+        visible={showEndTimeError}
+        autoDismissMs={3000}
+        onDismiss={() => setShowEndTimeError(false)}
+      />
     </>
   );
 }
@@ -340,8 +378,20 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
   const [text, setText] = useState("");
   const [date, setDate] = useState("");
   const [specificTime, setSpecificTime] = useState("");
+  const [specificTimeEnd, setSpecificTimeEnd] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
+  const [showEndTimeError, setShowEndTimeError] = useState(false);
+  const lastValidAddEndTimeRef = useRef("");
+
+  const handleAddEndTimeClose = useCallback(() => {
+    if (specificTimeEnd && specificTime && !isValidTimeRange(specificTime, specificTimeEnd)) {
+      setSpecificTimeEnd(lastValidAddEndTimeRef.current);
+      setShowEndTimeError(true);
+    } else {
+      lastValidAddEndTimeRef.current = specificTimeEnd;
+    }
+  }, [specificTime, specificTimeEnd]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -358,12 +408,14 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
         date: date || undefined,
         timeSlot: "anytime" as TimeSlot,
         specificTime: specificTime || undefined,
+        specificTimeEnd: specificTimeEnd || undefined,
         proofRequired: false,
       });
       // Reset form
       setText("");
       setDate("");
       setSpecificTime("");
+      setSpecificTimeEnd("");
       onAdded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add item.");
@@ -424,13 +476,33 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
           />
 
           <TimePicker
-            label="Time"
+            label="Start time"
             id="overlay-time"
             value={specificTime}
-            onChange={setSpecificTime}
+            onChange={(v) => {
+              setSpecificTime(v);
+              if (!v) {
+                setSpecificTimeEnd("");
+              } else if (specificTimeEnd && !isValidTimeRange(v, specificTimeEnd)) {
+                setSpecificTimeEnd("");
+              }
+            }}
             minuteStep={5}
             hint="Leave empty for anytime"
           />
+          {specificTime && (
+            <TimePicker
+              label="End time"
+              id="overlay-end-time"
+              value={specificTimeEnd}
+              onChange={(v) => {
+                setSpecificTimeEnd(v);
+              }}
+              onClose={handleAddEndTimeClose}
+              minuteStep={5}
+              hint="Optional"
+            />
+          )}
         </div>
 
         {error && (
@@ -450,6 +522,14 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
           {isAdding ? "Adding…" : "Add item"}
         </Button>
       </form>
+    <NotificationToast
+      title="Invalid time range"
+      message="End time must be after start time."
+      variant="warning"
+      visible={showEndTimeError}
+      autoDismissMs={3000}
+      onDismiss={() => setShowEndTimeError(false)}
+    />
     </div>
   );
 }

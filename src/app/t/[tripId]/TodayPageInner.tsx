@@ -20,7 +20,19 @@ import { Button } from "@/components/ui/Button";
 import { VaultTab } from "./VaultTab";
 import { trackSitterLinkOpened, trackSitterTabSwitched, trackSitterTaskChecked, trackSitterProofUploaded } from "@/lib/analytics";
 import { ManualTab } from "./ManualTab";
-import { formatPhone } from "@/lib/phone";
+import { ContactsTab } from "@/components/ui/ContactsTab";
+import {
+  type SlotKey,
+  type TodayTask,
+  type LocationCardData,
+  SLOT_ORDER,
+  formatTimeRange,
+  buildTaskList,
+  groupBySlot,
+  getTripDay,
+  getTripLength,
+  AnytimeDivider,
+} from "@/lib/todayViewHelpers";
 import {
   saveTripData,
   loadTripData,
@@ -47,27 +59,6 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────
 
-type SlotKey = "morning" | "afternoon" | "evening" | "anytime";
-
-interface LocationCardData {
-  photoUrl?: string;
-  videoUrl?: string;
-  caption?: string;
-  roomTag?: string;
-}
-
-interface TodayTask {
-  id: string;
-  text: string;
-  timeSlot: SlotKey;
-  specificTime?: string;
-  isOverlay: boolean;
-  proofRequired: boolean;
-  taskRef: string;
-  taskType: "recurring" | "overlay";
-  locationCard?: LocationCardData;
-}
-
 interface CompletionInfo {
   /** Undefined for offline-queued completions that haven't synced yet. */
   id?: Id<"taskCompletions">;
@@ -76,88 +67,12 @@ interface CompletionInfo {
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
-const SLOT_ORDER: SlotKey[] = ["morning", "afternoon", "evening", "anytime"];
-
-/** Format "HH:mm" as "7:00 AM" style. */
-function formatTime12h(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
-}
-
 function toContactRole(role: string): ContactRole {
   const r = role.toLowerCase();
   if (r === "owner" || r.includes("owner") || r.includes("partner")) return "owner";
   if (r === "vet" || r.includes("vet")) return "vet";
   if (r === "neighbor" || r.includes("neighbor")) return "neighbor";
   return "emergency";
-}
-
-function buildTaskList(
-  recurringInstructions: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>,
-  overlayItems: Array<{ _id: string; text: string; timeSlot: string; specificTime?: string; proofRequired: boolean; locationCard?: LocationCardData }>,
-  today: string,
-): TodayTask[] {
-  const recurring: TodayTask[] = recurringInstructions.map((inst) => ({
-    id: inst._id,
-    text: inst.text,
-    timeSlot: inst.timeSlot as SlotKey,
-    specificTime: inst.specificTime,
-    isOverlay: false,
-    proofRequired: inst.proofRequired,
-    // Date-scoped ref so recurring tasks reset daily
-    taskRef: `recurring:${inst._id}:${today}`,
-    taskType: "recurring" as const,
-    locationCard: inst.locationCard,
-  }));
-
-  const overlay: TodayTask[] = overlayItems.map((item) => ({
-    id: item._id,
-    text: item.text,
-    timeSlot: item.timeSlot as SlotKey,
-    specificTime: item.specificTime,
-    isOverlay: true,
-    proofRequired: item.proofRequired,
-    taskRef: `overlay:${item._id}`,
-    taskType: "overlay" as const,
-    locationCard: item.locationCard,
-  }));
-
-  return [...recurring, ...overlay];
-}
-
-function groupBySlot(tasks: TodayTask[]): Record<SlotKey, TodayTask[]> {
-  const groups: Record<SlotKey, TodayTask[]> = {
-    morning: [],
-    afternoon: [],
-    evening: [],
-    anytime: [],
-  };
-  for (const task of tasks) {
-    groups[task.timeSlot].push(task);
-  }
-  return groups;
-}
-
-function getTripDay(startDate: string, today: string): number {
-  const start = Date.UTC(
-    ...startDate.split("-").map(Number) as [number, number, number],
-  );
-  const curr = Date.UTC(
-    ...today.split("-").map(Number) as [number, number, number],
-  );
-  return Math.max(1, Math.floor((curr - start) / 86_400_000) + 1);
-}
-
-function getTripLength(startDate: string, endDate: string): number {
-  const start = Date.UTC(
-    ...startDate.split("-").map(Number) as [number, number, number],
-  );
-  const end = Date.UTC(
-    ...endDate.split("-").map(Number) as [number, number, number],
-  );
-  return Math.max(1, Math.floor((end - start) / 86_400_000) + 1);
 }
 
 function getSitterName(): string {
@@ -169,25 +84,6 @@ function setSitterName(name: string): void {
   if (typeof window !== "undefined") {
     sessionStorage.setItem("vadem_sitter_name", name);
   }
-}
-
-// ── Anytime divider (not in TimeSlotDivider component) ────────────────
-
-function AnytimeDivider() {
-  return (
-    <div className="flex items-center gap-3" role="separator" aria-label="Anytime tasks">
-      <span
-        className="flex items-center justify-center w-8 h-8 rounded-round bg-bg-sunken text-base leading-none shrink-0"
-        aria-hidden="true"
-      >
-        ✦
-      </span>
-      <span className="font-body text-sm font-bold tracking-[0.05em] leading-none text-text-primary shrink-0">
-        ANYTIME
-      </span>
-      <span className="flex-1 h-px bg-border-default min-w-5" aria-hidden="true" />
-    </div>
-  );
 }
 
 // ── Uncheck confirmation sheet ────────────────────────────────────────
@@ -337,7 +233,7 @@ function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, o
                 text={task.text}
                 completed={isCompleted || isUploading}
                 overlay={task.isOverlay}
-                time={task.specificTime ? formatTime12h(task.specificTime) : undefined}
+                time={task.specificTime ? formatTimeRange(task.specificTime, task.specificTimeEnd) : undefined}
                 showProof={task.proofRequired && !isCompleted && !isUploading}
                 proofPhotoUrl={completion?.proofPhotoUrl}
                 onPhotoClick={completion?.proofPhotoUrl ? () => onPhotoClick(completion.proofPhotoUrl!) : undefined}
@@ -495,122 +391,6 @@ function LoadingSkeleton() {
         <div className="h-16 bg-bg-raised rounded-lg" />
         <div className="h-10 bg-bg-raised rounded-lg" />
         <div className="h-10 bg-bg-raised rounded-lg" />
-      </div>
-    </div>
-  );
-}
-
-// ── Contacts tab ──────────────────────────────────────────────────────
-
-const roleCardBg: Record<ContactRole, string> = {
-  owner: "bg-primary-light",
-  vet: "bg-secondary-light",
-  neighbor: "bg-accent-light",
-  emergency: "bg-danger-light",
-};
-
-const roleCardText: Record<ContactRole, string> = {
-  owner: "text-primary",
-  vet: "text-secondary",
-  neighbor: "text-accent",
-  emergency: "text-danger",
-};
-
-/** Fuzzy role → color mapping for display purposes */
-function getRoleForColor(role: string): ContactRole {
-  const r = role.toLowerCase();
-  if (r.includes("owner") || r.includes("partner")) return "owner";
-  if (r.includes("vet")) return "vet";
-  if (r.includes("neighbor")) return "neighbor";
-  return "emergency";
-}
-
-interface ContactTabEntry {
-  name: string;
-  role: string;
-  phone: string;
-  notes?: string;
-  isLocked: boolean;
-}
-
-function ContactsTab({ contacts }: { contacts: ContactTabEntry[] }) {
-  const visible = contacts.filter((c) => c.name && c.phone);
-
-  if (visible.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <span className="text-3xl" aria-hidden="true">📞</span>
-        <p className="font-body text-sm font-semibold text-text-primary">No contacts yet</p>
-        <p className="font-body text-xs text-text-muted max-w-[220px]">
-          The owner hasn&rsquo;t added any emergency contacts.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <h2 className="font-display text-xl text-text-primary">Emergency Contacts</h2>
-      <div className="flex flex-col gap-3">
-        {visible.map((contact, i) => {
-          const colorRole = getRoleForColor(contact.role);
-          return (
-            <div
-              key={`${contact.name}-${i}`}
-              className="bg-bg-raised rounded-lg border border-border-default shadow-xs p-4 flex flex-col gap-3"
-            >
-              {/* Header: avatar + name + role badge */}
-              <div className="flex items-center gap-3">
-                <span
-                  className={`flex items-center justify-center w-10 h-10 rounded-round shrink-0 font-body text-sm font-bold ${roleCardBg[colorRole]} ${roleCardText[colorRole]}`}
-                  aria-hidden="true"
-                >
-                  {contact.name.charAt(0).toUpperCase()}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-body text-sm font-semibold text-text-primary leading-tight">
-                    {contact.name}
-                  </p>
-                  <span
-                    className={`inline-block font-body text-xs font-medium rounded-pill px-2 py-0.5 mt-0.5 ${roleCardBg[colorRole]} ${roleCardText[colorRole]}`}
-                  >
-                    {contact.role}
-                  </span>
-                </div>
-              </div>
-
-              {/* Phone — tappable tel: link */}
-              <a
-                href={`tel:${contact.phone}`}
-                className="flex items-center gap-3 font-body text-sm font-medium text-secondary no-underline"
-                aria-label={`Call ${contact.name} at ${contact.phone}`}
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="-1 -1 26 26"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="shrink-0"
-                  aria-hidden="true"
-                >
-                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.61 19.79 19.79 0 01.07 1a2 2 0 012-2H6a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
-                </svg>
-                {formatPhone(contact.phone)}
-              </a>
-
-              {/* Notes (optional) */}
-              {contact.notes && (
-                <p className="font-body text-xs text-text-muted leading-relaxed border-t border-border-default pt-3">
-                  {contact.notes}
-                </p>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );

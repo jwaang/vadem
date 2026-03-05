@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Badge } from "@/components/ui/Badge";
 import { NotificationToast } from "@/components/ui/NotificationToast";
-import { CalendarIcon, PlusIcon, CopyIcon, ShareNetworkIcon, CheckIcon, RefreshIcon, HomeIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { CalendarIcon, PlusIcon, CopyIcon, ShareNetworkIcon, CheckIcon, RefreshIcon, HomeIcon, ChevronRightIcon, TrashIcon, PencilIcon } from "@/components/ui/icons";
+import { IconButton } from "@/components/ui/IconButton";
 import { trackTripCreated } from "@/lib/analytics";
 
 // ── Date formatting ────────────────────────────────────────────────────
@@ -32,18 +33,15 @@ interface ShareLinkPanelProps {
   tripId: string;
   initialSlug?: string;
   initialHasPassword?: boolean;
+  showResharePrompt?: boolean;
 }
 
-function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: ShareLinkPanelProps) {
+function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false, showResharePrompt = false }: ShareLinkPanelProps) {
   const [shareSlug, setShareSlug] = useState<string | null>(initialSlug ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
-
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const [showResharePrompt, setShowResharePrompt] = useState(false);
 
   const [hasPassword, setHasPassword] = useState(initialHasPassword);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -52,7 +50,6 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const generateShareLink = useAction(api.shareActions.generateShareLink);
-  const regenerateShareLink = useAction(api.shareActions.regenerateShareLink);
   const setLinkPassword = useAction(api.shareActions.setLinkPassword);
 
   useEffect(() => {
@@ -71,21 +68,6 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
       // stay enabled
     } finally {
       setIsGenerating(false);
-    }
-  }
-
-  async function handleReset() {
-    setIsResetting(true);
-    try {
-      const slug = await regenerateShareLink({ tripId: tripId as Parameters<typeof regenerateShareLink>[0]["tripId"] });
-      setShareSlug(slug);
-      setShowResetConfirm(false);
-      setShowResharePrompt(true);
-      setCopied(false);
-    } catch {
-      // stay enabled so user can retry
-    } finally {
-      setIsResetting(false);
     }
   }
 
@@ -188,48 +170,6 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
                 </Button>
               )}
             </div>
-
-            {!showResetConfirm ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowResetConfirm(true);
-                  setShowResharePrompt(false);
-                }}
-                className="btn btn-no-shadow font-body text-sm text-danger flex items-center gap-1.5 self-start px-0 py-1 hover:text-[#b04444] transition-colors duration-150"
-              >
-                <RefreshIcon size={14} />
-                Reset link
-              </button>
-            ) : (
-              <div className="bg-warning-light text-warning rounded-lg p-4 flex flex-col gap-3">
-                <p className="font-body text-sm font-semibold">
-                  This will revoke access for anyone with the current link
-                </p>
-                <p className="font-body text-xs">
-                  A new unique URL will be generated. The old link will stop working immediately.
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleReset}
-                    disabled={isResetting}
-                    className="flex-1"
-                  >
-                    {isResetting ? "Resetting…" : "Confirm reset"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowResetConfirm(false)}
-                    disabled={isResetting}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <Button variant="soft" size="sm" onClick={handleGenerate} disabled={isGenerating}>
@@ -238,7 +178,7 @@ function ShareLinkPanel({ tripId, initialSlug, initialHasPassword = false }: Sha
         )}
 
         {shareSlug && (
-          <div className="flex flex-col gap-2 pt-1 border-t border-border-default">
+          <div className="flex flex-col gap-2 pt-1">
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col gap-0.5">
                 <p className="font-body text-xs font-semibold text-text-primary">
@@ -416,6 +356,73 @@ function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
   const [dateError, setDateError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const deleteTrip = useMutation(api.trips.remove);
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [showResharePrompt, setShowResharePrompt] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const regenerateShareLink = useAction(api.shareActions.regenerateShareLink);
+
+  // ── Date editing state ───────────────────────────────────────────────
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [editDateError, setEditDateError] = useState("");
+  const [isSavingDates, setIsSavingDates] = useState(false);
+  const updateTripDates = useMutation(api.trips.updateTripDates);
+
+  const outOfRangeItems = useQuery(
+    api.overlayItems.listOutOfRangeByTrip,
+    isEditingDates && editStartDate && editEndDate && editEndDate > editStartDate && existingTrip
+      ? { tripId: existingTrip._id, startDate: editStartDate, endDate: editEndDate }
+      : "skip",
+  );
+
+  function handleStartEditDates() {
+    if (!existingTrip) return;
+    setEditStartDate(existingTrip.startDate);
+    setEditEndDate(existingTrip.endDate);
+    setEditDateError("");
+    setIsEditingDates(true);
+  }
+
+  function handleCancelEditDates() {
+    setIsEditingDates(false);
+    setEditStartDate("");
+    setEditEndDate("");
+    setEditDateError("");
+  }
+
+  async function handleSaveDates() {
+    if (!existingTrip) return;
+    if (!editStartDate || !editEndDate) {
+      setEditDateError("Please select both dates.");
+      return;
+    }
+    if (editEndDate <= editStartDate) {
+      setEditDateError("End date must be after start date.");
+      return;
+    }
+    setIsSavingDates(true);
+    setEditDateError("");
+    try {
+      await updateTripDates({
+        tripId: existingTrip._id,
+        startDate: editStartDate,
+        endDate: editEndDate,
+      });
+      setIsEditingDates(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update dates.";
+      setEditDateError(msg);
+    } finally {
+      setIsSavingDates(false);
+    }
+  }
 
   function validateDates(): boolean {
     if (!startDate || !endDate) {
@@ -462,45 +469,133 @@ function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
 
   if (existingTrip) {
     const isActive = existingTrip.status === "active";
+    // Determine if the trip hasn't started yet (start date is in the future)
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const isUpcoming = isActive && existingTrip.startDate > todayStr;
     return (
       <div
         className="bg-bg-raised rounded-xl border border-border-default flex flex-col"
         style={{ boxShadow: "var(--shadow-sm)" }}
       >
         {/* Card header */}
-        <div className="p-5 flex items-center gap-3">
+        <div className="p-5 flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-accent-subtle flex items-center justify-center shrink-0">
             <CalendarIcon size={22} className="text-accent" />
           </div>
           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-body text-sm font-semibold text-text-primary">
-                {isActive ? "Your trip" : "Trip in progress"}
-              </p>
-              <Badge variant={isActive ? "success" : "overlay"}>
-                {existingTrip.status.charAt(0).toUpperCase() + existingTrip.status.slice(1)}
+              <Badge variant={isUpcoming ? "overlay" : isActive ? "success" : "overlay"}>
+                {isUpcoming ? "Upcoming" : existingTrip.status.charAt(0).toUpperCase() + existingTrip.status.slice(1)}
               </Badge>
+              {isActive && (
+                <Link
+                  href={`/trip/${existingTrip._id}/share`}
+                  className="ml-auto font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 shrink-0"
+                >
+                  Manage →
+                </Link>
+              )}
             </div>
-            <p className="font-body text-xs text-text-secondary">
-              {formatTripDate(existingTrip.startDate)} – {formatTripDate(existingTrip.endDate)}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-body text-xs text-text-secondary">
+                {formatTripDate(existingTrip.startDate)} – {formatTripDate(existingTrip.endDate)}
+              </p>
+              {(existingTrip.status === "draft" || existingTrip.status === "active") && !isEditingDates && (
+                <IconButton
+                  icon={<PencilIcon size={12} />}
+                  variant="default"
+                  size="sm"
+                  aria-label="Edit trip dates"
+                  onClick={handleStartEditDates}
+                />
+              )}
+            </div>
           </div>
-          {isActive && (
-            <Link
-              href={`/trip/${existingTrip._id}/share`}
-              className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150 shrink-0"
-            >
-              Manage →
-            </Link>
-          )}
         </div>
 
+        {isEditingDates && (
+          <div className="border-t border-border-default px-5 py-4 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <DatePicker
+                label="Start date"
+                id="edit-start-date"
+                value={editStartDate}
+                min={isUpcoming || !isActive ? todayStr : undefined}
+                onChange={(v) => {
+                  setEditStartDate(v);
+                  setEditDateError("");
+                }}
+                required
+              />
+              <DatePicker
+                label="End date"
+                id="edit-end-date"
+                value={editEndDate}
+                min={editStartDate || todayStr}
+                onChange={(v) => {
+                  setEditEndDate(v);
+                  setEditDateError("");
+                }}
+                required
+              />
+            </div>
+
+            {outOfRangeItems && outOfRangeItems.length > 0 && (
+              <div className="bg-warning-light rounded-lg px-4 py-3 flex flex-col gap-1">
+                <p className="font-body text-xs font-semibold text-warning">
+                  {outOfRangeItems.length} task{outOfRangeItems.length > 1 ? "s" : ""} outside new date range
+                </p>
+                <ul className="font-body text-xs text-warning list-disc list-inside">
+                  {outOfRangeItems.slice(0, 5).map((item) => (
+                    <li key={item._id}>
+                      {item.text}{item.date ? ` (${formatTripDate(item.date)})` : ""}
+                    </li>
+                  ))}
+                  {outOfRangeItems.length > 5 && (
+                    <li>…and {outOfRangeItems.length - 5} more</li>
+                  )}
+                </ul>
+                <p className="font-body text-xs text-warning">
+                  These tasks won&apos;t appear for your sitter. You can edit them after saving.
+                </p>
+              </div>
+            )}
+
+            {editDateError && (
+              <p className="font-body text-xs text-danger" role="alert">
+                {editDateError}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveDates}
+                disabled={isSavingDates}
+              >
+                {isSavingDates ? "Saving…" : "Save dates"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelEditDates}
+                disabled={isSavingDates}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
         {isActive && (
-          <div className="border-t border-border-default px-5 pb-5 pt-4">
+          <div className="border-t border-border-default px-5 pb-4 pt-4">
             <ShareLinkPanel
               tripId={existingTrip._id}
               initialSlug={existingTrip.shareLink}
               initialHasPassword={!!existingTrip.linkPassword}
+              showResharePrompt={showResharePrompt}
             />
           </div>
         )}
@@ -518,6 +613,135 @@ function NewTripFormInner({ onCancel }: { onCancel: () => void }) {
             </Button>
           </div>
         )}
+
+        {/* Footer: destructive actions */}
+        <div className="border-t border-border-default px-5 py-3">
+          {showResetConfirm ? (
+            <div className="bg-warning-light text-warning rounded-lg p-4 flex flex-col gap-3">
+              <p className="font-body text-sm font-semibold">
+                This will revoke access for anyone with the current link
+              </p>
+              <p className="font-body text-xs">
+                A new unique URL will be generated. The old link will stop working immediately.
+              </p>
+              {resetError && (
+                <div role="alert" className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm">
+                  {resetError}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={async () => {
+                    setIsResetting(true);
+                    setResetError("");
+                    try {
+                      await regenerateShareLink({ tripId: existingTrip._id as Parameters<typeof regenerateShareLink>[0]["tripId"] });
+                      setShowResetConfirm(false);
+                      setShowResharePrompt(true);
+                    } catch (err) {
+                      const msg = err instanceof Error ? err.message : "Failed to reset link. Please try again.";
+                      setResetError(msg);
+                    } finally {
+                      setIsResetting(false);
+                    }
+                  }}
+                  disabled={isResetting}
+                  className="flex-1"
+                >
+                  {isResetting ? "Resetting…" : "Confirm reset"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowResetConfirm(false);
+                    setResetError("");
+                  }}
+                  disabled={isResetting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : showDeleteConfirm ? (
+            <div className="bg-danger-light rounded-lg p-4 flex flex-col gap-3">
+              <div>
+                <p className="font-body text-sm font-semibold text-text-primary">Permanently delete this trip?</p>
+                <p className="font-body text-xs text-text-secondary mt-1">
+                  This will permanently delete the trip, all task completions, proof photos, activity history, and revoke sitter access. This cannot be undone.
+                </p>
+              </div>
+              {deleteError && (
+                <div role="alert" className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm">
+                  {deleteError}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    if (!user?.token) return;
+                    setIsDeleting(true);
+                    setDeleteError("");
+                    try {
+                      await deleteTrip({ tripId: existingTrip._id, token: user.token });
+                    } catch (err) {
+                      const msg = err instanceof Error ? err.message : "Failed to delete trip. Please try again.";
+                      setDeleteError(msg);
+                      setIsDeleting(false);
+                    }
+                  }}
+                >
+                  {isDeleting ? "Deleting…" : "Delete permanently"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteError("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              {isActive && existingTrip.shareLink && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<RefreshIcon size={14} />}
+                  onClick={() => {
+                    setShowResetConfirm(true);
+                    setShowDeleteConfirm(false);
+                    setShowResharePrompt(false);
+                  }}
+                >
+                  Reset link
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<TrashIcon size={14} />}
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                  setShowResetConfirm(false);
+                }}
+                className="text-danger hover:text-danger-hover"
+              >
+                Delete trip
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

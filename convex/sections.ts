@@ -9,6 +9,7 @@ export const create = mutation({
     title: v.string(),
     icon: v.string(),
     sortOrder: v.number(),
+    visibility: v.optional(v.union(v.literal("tasks"), v.literal("manual"), v.literal("both"))),
   },
   returns: v.id("manualSections"),
   handler: async (ctx, args) => {
@@ -17,6 +18,7 @@ export const create = mutation({
       title: args.title,
       icon: args.icon,
       sortOrder: args.sortOrder,
+      visibility: args.visibility ?? "both",
     });
     await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
       propertyId: args.propertyId,
@@ -35,6 +37,7 @@ export const listByProperty = query({
       title: v.string(),
       icon: v.string(),
       sortOrder: v.number(),
+      visibility: v.optional(v.union(v.literal("tasks"), v.literal("manual"), v.literal("both"))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -52,6 +55,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     icon: v.optional(v.string()),
     sortOrder: v.optional(v.number()),
+    visibility: v.optional(v.union(v.literal("tasks"), v.literal("manual"), v.literal("both"))),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -61,6 +65,12 @@ export const update = mutation({
     );
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(sectionId, updates);
+      const section = await ctx.db.get(sectionId);
+      if (section) {
+        await ctx.scheduler.runAfter(0, internal.properties.bumpManualVersion, {
+          propertyId: section.propertyId,
+        });
+      }
     }
     return null;
   },

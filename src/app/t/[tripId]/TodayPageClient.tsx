@@ -13,6 +13,10 @@ const PasswordGate = dynamic(
   () => import("./PasswordGate").then((m) => ({ default: m.PasswordGate })),
   { ssr: false },
 );
+const PreTripView = dynamic(
+  () => import("./PreTripView").then((m) => ({ default: m.PreTripView })),
+  { ssr: false },
+);
 
 // ── Cookie helpers ─────────────────────────────────────────────────────
 
@@ -208,9 +212,26 @@ interface NotStartedStateProps {
   startDate: string;
   propertyName: string;
   petNames: string[];
+  tripId?: Id<"trips">;
+  propertyId?: Id<"properties">;
+  endDate?: string;
 }
 
-function NotStartedState({ startDate, propertyName, petNames }: NotStartedStateProps) {
+function NotStartedState({ startDate, propertyName, petNames, propertyId, endDate }: NotStartedStateProps) {
+  // Rich pre-trip view when we have propertyId and endDate
+  if (propertyId && endDate) {
+    return (
+      <PreTripView
+        propertyId={propertyId}
+        propertyName={propertyName}
+        startDate={startDate}
+        endDate={endDate}
+        petNames={petNames}
+      />
+    );
+  }
+
+  // Fallback minimal card (old cached data without propertyId)
   return (
     <div className="min-h-dvh bg-bg flex items-center justify-center p-6">
       <div
@@ -297,6 +318,9 @@ function PostAuthTripView({ tripId, shareLink }: { tripId: Id<"trips">; shareLin
         startDate={state.startDate}
         propertyName={state.propertyName}
         petNames={state.petNames}
+        tripId={state.tripId}
+        propertyId={state.propertyId}
+        endDate={state.endDate}
       />
     );
   }
@@ -367,8 +391,10 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
         status: state.status as "ACTIVE" | "PASSWORD_REQUIRED" | "NOT_STARTED" | "EXPIRED",
         passwordRequired: state.status === "PASSWORD_REQUIRED",
         startDate: "startDate" in state ? state.startDate : undefined,
+        endDate: "endDate" in state ? state.endDate : undefined,
         propertyName: "propertyName" in state ? state.propertyName : undefined,
         petNames: "petNames" in state ? state.petNames : undefined,
+        propertyId: "propertyId" in state ? state.propertyId : undefined,
       });
     }
   }, [state, shareLink]);
@@ -402,6 +428,8 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
               startDate={cached.startDate}
               propertyName={cached.propertyName}
               petNames={cached.petNames ?? []}
+              propertyId={cached.propertyId as Id<"properties"> | undefined}
+              endDate={cached.endDate}
             />
           );
         }
@@ -469,6 +497,9 @@ function TodayPageResolver({ shareLink }: { shareLink: string }) {
         startDate={state.startDate}
         propertyName={state.propertyName}
         petNames={state.petNames}
+        tripId={state.tripId}
+        propertyId={state.propertyId}
+        endDate={state.endDate}
       />
     );
   }

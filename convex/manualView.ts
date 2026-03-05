@@ -32,9 +32,14 @@ export const getFullManual = query({
         .collect(),
     ]);
 
-    // Fetch instructions for all sections in parallel
+    // Filter to sections visible in the manual view (exclude tasks-only)
+    const manualSections = sections.filter(
+      (s) => (s.visibility ?? "both") !== "tasks",
+    );
+
+    // Fetch instructions for manual-visible sections in parallel
     const instructionsPerSection = await Promise.all(
-      sections.map((section) =>
+      manualSections.map((section) =>
         ctx.db
           .query("instructions")
           .withIndex("by_section_sort", (q) => q.eq("sectionId", section._id))
@@ -105,7 +110,7 @@ export const getFullManual = query({
     );
 
     // Assemble sections with nested instructions + their location cards
-    const sectionsWithData = sections.map((section, si) => ({
+    const sectionsWithData = manualSections.map((section, si) => ({
       ...section,
       instructions: instructionsPerSection[si].map((instruction) => ({
         ...instruction,

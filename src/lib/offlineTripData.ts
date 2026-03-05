@@ -25,8 +25,10 @@ interface TripMeta {
   status: "ACTIVE" | "PASSWORD_REQUIRED" | "NOT_STARTED" | "EXPIRED";
   passwordRequired: boolean;
   startDate?: string;
+  endDate?: string;
   propertyName?: string;
   petNames?: string[];
+  propertyId?: string;
   savedAt: number;
 }
 

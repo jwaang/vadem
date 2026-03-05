@@ -25,6 +25,7 @@ const activityLogEntryValidator = v.object({
   vaultItemLabel: v.optional(v.string()),
   proofPhotoUrl: v.optional(v.string()),
   taskTitle: v.optional(v.string()),
+  sectionName: v.optional(v.string()),
   createdAt: v.number(),
 });
 
@@ -45,6 +46,7 @@ export const logEvent = internalMutation({
     vaultItemLabel: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
     taskTitle: v.optional(v.string()),
+    sectionName: v.optional(v.string()),
   },
   returns: v.id("activityLog"),
   handler: async (ctx, args) => {
@@ -59,6 +61,7 @@ export const logEvent = internalMutation({
       vaultItemLabel: args.vaultItemLabel,
       proofPhotoUrl: args.proofPhotoUrl,
       taskTitle: args.taskTitle,
+      sectionName: args.sectionName,
       createdAt: Date.now(),
     });
   },
@@ -87,20 +90,26 @@ export const getActivityForTrip = query({
   handler: async (ctx, args) => {
     const numItems = args.paginationOpts?.numItems ?? 20;
 
-    const q = ctx.db
+    let q = ctx.db
       .query("activityLog")
       .withIndex("by_trip_time", (idx) => idx.eq("tripId", args.tripId))
       .order("desc");
 
-    const page = await q.paginate({ numItems, cursor: args.paginationOpts?.cursor ?? null });
+    // Apply eventType filter at query level so pagination works correctly
+    if (args.eventType) {
+      const eventType = args.eventType;
+      q = q.filter((qb) => qb.eq(qb.field("eventType"), eventType));
+    } else {
+      // Filter out legacy docs missing eventType
+      q = q.filter((qb) => qb.neq(qb.field("eventType"), undefined));
+    }
 
-    // Filter out legacy docs missing eventType before applying optional filter
-    const validPage = page.page.filter((e) => e.eventType !== undefined);
-    const items = (
-      args.eventType
-        ? validPage.filter((e) => e.eventType === args.eventType)
-        : validPage
-    ).map((e) => ({
+    const page = await q.paginate({
+      numItems,
+      cursor: args.paginationOpts?.cursor ?? null,
+    });
+
+    const items = page.page.map((e) => ({
       _id: e._id,
       _creationTime: e._creationTime,
       tripId: e.tripId,
@@ -113,6 +122,7 @@ export const getActivityForTrip = query({
       vaultItemLabel: e.vaultItemLabel,
       proofPhotoUrl: e.proofPhotoUrl,
       taskTitle: e.taskTitle,
+      sectionName: e.sectionName,
       createdAt: e.createdAt,
     }));
 
@@ -133,25 +143,28 @@ export const getActivityFeed = query({
   args: {
     propertyId: v.id("properties"),
     limit: v.optional(v.number()),
-    eventType: v.optional(v.string()),
+    eventType: v.optional(eventTypeValidator),
   },
   returns: v.array(activityLogEntryValidator),
   handler: async (ctx, args) => {
-    // Fetch more to account for client-side eventType filtering
-    const fetchLimit = args.eventType ? (args.limit ?? 20) * 5 : args.limit ?? 20;
-    const events = await ctx.db
+    const limit = args.limit ?? 20;
+    let q = ctx.db
       .query("activityLog")
-      .withIndex("by_property", (q) => q.eq("propertyId", args.propertyId))
-      .order("desc")
-      .take(Math.min(fetchLimit, 200));
+      .withIndex("by_property", (qb) => qb.eq("propertyId", args.propertyId))
+      .order("desc");
 
-    // Filter out legacy docs missing eventType before applying optional filter
-    const validEvents = events.filter((e) => e.eventType !== undefined);
-    const filtered = args.eventType
-      ? validEvents.filter((e) => e.eventType === args.eventType)
-      : validEvents;
+    // Apply eventType filter at query level so .take() returns correct results
+    if (args.eventType) {
+      const eventType = args.eventType;
+      q = q.filter((qb) => qb.eq(qb.field("eventType"), eventType));
+    } else {
+      // Filter out legacy docs missing eventType
+      q = q.filter((qb) => qb.neq(qb.field("eventType"), undefined));
+    }
 
-    return filtered.slice(0, args.limit ?? 20).map((e) => ({
+    const events = await q.take(limit);
+
+    return events.map((e) => ({
       _id: e._id,
       _creationTime: e._creationTime,
       tripId: e.tripId,
@@ -164,6 +177,7 @@ export const getActivityFeed = query({
       vaultItemLabel: e.vaultItemLabel,
       proofPhotoUrl: e.proofPhotoUrl,
       taskTitle: e.taskTitle,
+      sectionName: e.sectionName,
       createdAt: e.createdAt,
     }));
   },

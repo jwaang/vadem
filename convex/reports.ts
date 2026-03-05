@@ -44,6 +44,7 @@ const activityLogEntryValidator = v.object({
   vaultItemLabel: v.optional(v.string()),
   proofPhotoUrl: v.optional(v.string()),
   taskTitle: v.optional(v.string()),
+  sectionName: v.optional(v.string()),
   createdAt: v.number(),
 });
 
@@ -253,6 +254,7 @@ async function buildTripReport(ctx: QueryCtx, trip: Doc<"trips">) {
       vaultItemLabel: e.vaultItemLabel,
       proofPhotoUrl: e.proofPhotoUrl,
       taskTitle: e.taskTitle,
+      sectionName: e.sectionName,
       createdAt: e.createdAt,
     }));
 

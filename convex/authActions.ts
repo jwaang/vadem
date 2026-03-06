@@ -78,7 +78,7 @@ export const signUp = action({
 // Sign in: validate credentials and return a session token
 export const signIn = action({
   args: { email: v.string(), password: v.string() },
-  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean }> => {
+  handler: async (ctx, args): Promise<{ token: string; email: string; emailVerified: boolean; firstName?: string; lastName?: string }> => {
     const user = await ctx.runQuery(internal.auth._getUserByEmail, {
       email: args.email,
     });
@@ -97,7 +97,7 @@ export const signIn = action({
       expiresAt: Date.now() + SESSION_TTL_MS,
     });
 
-    return { token, email: user.email, emailVerified: user.emailVerified ?? false };
+    return { token, email: user.email, emailVerified: user.emailVerified ?? false, firstName: user.firstName, lastName: user.lastName };
   },
 });
 

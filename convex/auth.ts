@@ -222,6 +222,21 @@ export const signOut = mutation({
   },
 });
 
+// Public: get user profile (name fields)
+export const getProfile = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return null;
+    const user = await ctx.db.get(session.userId);
+    if (!user) return null;
+    return { firstName: user.firstName ?? "", lastName: user.lastName ?? "" };
+  },
+});
+
 // Public: update user profile (firstName / lastName)
 export const updateProfile = mutation({
   args: {

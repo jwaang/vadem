@@ -774,6 +774,13 @@ function DashboardPageInner() {
     setMounted(true);
   }, []);
 
+  // Redirect to onboarding if not completed
+  useEffect(() => {
+    if (dashboardSessionData && !dashboardSessionData.hasCompletedOnboarding) {
+      router.replace("/welcome");
+    }
+  }, [dashboardSessionData, router]);
+
   // Sync browser timezone to user profile for localized notifications
   useEffect(() => {
     if (!mounted || isLoading || !user) return;

@@ -225,11 +225,10 @@ function WelcomeClientInner() {
                 key={index}
                 type="button"
                 onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-round transition-all duration-250 ${
-                  index === currentSlide
-                    ? "bg-primary w-5"
-                    : "bg-border-strong hover:bg-text-muted"
-                }`}
+                className={`w-2 h-2 rounded-round transition-all duration-250 ${index === currentSlide
+                  ? "bg-primary w-5"
+                  : "bg-border-strong hover:bg-text-muted"
+                  }`}
                 aria-label={`Go to slide ${index + 1}`}
                 aria-current={index === currentSlide ? "true" : undefined}
               />

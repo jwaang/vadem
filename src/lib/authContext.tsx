@@ -9,6 +9,7 @@ interface AuthUser {
   email: string;
   emailVerified: boolean;
   firstName?: string;
+  lastName?: string;
 }
 
 interface AuthContextValue {

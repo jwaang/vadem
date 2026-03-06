@@ -15,9 +15,6 @@ export function LoginForm() {
   const router = useRouter();
   const { user, setUser } = useAuth();
 
-  useEffect(() => {
-    if (user) router.replace("/dashboard");
-  }, [user, router]);
   const doSignIn = useAction(api.authActions.signIn);
   const { trigger } = useWebHaptics();
 
@@ -25,6 +22,10 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

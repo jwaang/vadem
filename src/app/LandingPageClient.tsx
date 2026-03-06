@@ -1010,8 +1010,6 @@ export function LandingPageClient() {
     if (user) router.replace("/dashboard");
   }, [user, router]);
 
-  if (user) return null;
-
   return (
     <div className="min-h-dvh bg-bg">
       <ScrollProgress />

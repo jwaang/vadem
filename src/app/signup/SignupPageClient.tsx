@@ -15,7 +15,5 @@ export function SignupPageClient({ originTripId }: { originTripId?: string | nul
     if (user) router.replace("/dashboard");
   }, [user, router]);
 
-  if (user) return null;
-
   return <SignupForm originTripId={originTripId} />;
 }

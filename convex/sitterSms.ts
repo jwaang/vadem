@@ -110,22 +110,19 @@ export const sendReminder = internalAction({
       (t) => t.specificTime >= args.reminderTime,
     );
 
-    const appUrl = process.env.APP_URL ?? "https://vadem.app";
-    const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
-
     let body: string;
     if (overdueTasks.length > 0 && upcomingTasks.length > 0) {
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
       const upcomingWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}. ${link}\nReply STOP to unsubscribe`;
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}.`;
     } else if (overdueTasks.length > 0) {
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention. ${link}\nReply STOP to unsubscribe`;
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention.`;
     } else {
       const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}. ${link}\nReply STOP to unsubscribe`;
+      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}.`;
     }
 
     // Send via Twilio
@@ -209,9 +206,7 @@ export const sendTripStartSms = internalAction({
     });
     if (!trip) return null;
 
-    const appUrl = process.env.APP_URL ?? "https://vadem.app";
-    const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
-    const body = `Vadem: Your trip starts today! View your tasks and info here: ${link}\nReply STOP to unsubscribe`;
+    const body = `Vadem: Your trip starts today! Open the Vadem app to view your tasks.`;
 
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
     if (
@@ -292,9 +287,7 @@ export const sendTripEndingSms = internalAction({
     });
     if (!trip) return null;
 
-    const appUrl = process.env.APP_URL ?? "https://vadem.app";
-    const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
-    const body = `Vadem: Your trip ends tomorrow. Make sure everything is wrapped up! ${link}\nReply STOP to unsubscribe`;
+    const body = `Vadem: Your trip ends tomorrow. Make sure everything is wrapped up!`;
 
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
     if (

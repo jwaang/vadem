@@ -87,15 +87,27 @@ export const sendReminder = internalAction({
     );
     const completedRefs = new Set(completions.map((c) => c.taskRef));
 
-    // Include tasks that are:
-    // 1. Upcoming (start time >= reminder time), OR
-    // 2. Past start time but still incomplete
+    // Get anytime tasks and count incomplete ones
+    const anytimeTasks = await ctx.runQuery(
+      internal.sitterSmsQueries.getAnytimeTasksForDate,
+      { tripId: args.tripId, date: args.date },
+    );
+    const incompleteAnytimeCount = anytimeTasks.filter(
+      (t) => !completedRefs.has(t.taskRef),
+    ).length;
+
+    // Include timed tasks that are:
+    // 1. Upcoming (end time >= reminder time), OR
+    // 2. Past end time but still incomplete (overdue)
     const relevantTasks = allTasks.filter((t) => {
-      if (t.specificTime >= args.reminderTime) return true;
+      const endTime = t.specificTimeEnd ?? t.specificTime;
+      if (endTime >= args.reminderTime) return true;
       if (!completedRefs.has(t.taskRef)) return true;
       return false;
     });
-    if (relevantTasks.length === 0) return null;
+
+    // If no relevant timed tasks AND no incomplete anytime tasks, skip SMS
+    if (relevantTasks.length === 0 && incompleteAnytimeCount === 0) return null;
 
     // Build SMS body
     const trip = await ctx.runQuery(internal.trips._getById, {
@@ -103,26 +115,39 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
+    // A task is overdue when its end time (or start time if no range) has passed
     const overdueTasks = relevantTasks.filter(
-      (t) => t.specificTime < args.reminderTime && !completedRefs.has(t.taskRef),
+      (t) =>
+        (t.specificTimeEnd ?? t.specificTime) < args.reminderTime &&
+        !completedRefs.has(t.taskRef),
     );
+    // A task is upcoming if its end time hasn't passed yet
     const upcomingTasks = relevantTasks.filter(
-      (t) => t.specificTime >= args.reminderTime,
+      (t) => (t.specificTimeEnd ?? t.specificTime) >= args.reminderTime,
     );
+
+    const anytimeSuffix =
+      incompleteAnytimeCount > 0
+        ? ` You also have ${incompleteAnytimeCount} other ${incompleteAnytimeCount === 1 ? "task" : "tasks"} to complete.`
+        : "";
 
     let body: string;
     if (overdueTasks.length > 0 && upcomingTasks.length > 0) {
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
       const upcomingWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}.`;
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}.${anytimeSuffix}`;
     } else if (overdueTasks.length > 0) {
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention.`;
-    } else {
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention.${anytimeSuffix}`;
+    } else if (upcomingTasks.length > 0) {
       const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}.`;
+      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}.${anytimeSuffix}`;
+    } else {
+      // Only anytime tasks remain
+      const taskWord = incompleteAnytimeCount === 1 ? "task" : "tasks";
+      body = `Vadem: You still have ${incompleteAnytimeCount} ${taskWord} to complete today.`;
     }
 
     // Send via Twilio

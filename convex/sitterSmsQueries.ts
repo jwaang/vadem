@@ -354,6 +354,77 @@ export const getTimedTasksForDate = internalQuery({
 });
 
 /**
+ * Get anytime tasks for a trip on a given date (no specific time).
+ * Used by sendReminder to mention incomplete anytime tasks in SMS.
+ */
+export const getAnytimeTasksForDate = internalQuery({
+  args: {
+    tripId: v.id("trips"),
+    date: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const trip = await ctx.db.get(args.tripId);
+    if (!trip) return [];
+
+    const sections = await ctx.db
+      .query("manualSections")
+      .withIndex("by_property_sort", (q) =>
+        q.eq("propertyId", trip.propertyId),
+      )
+      .collect();
+
+    const taskSections = sections.filter(
+      (s) => (s.visibility ?? "both") !== "manual",
+    );
+
+    const instructionsPerSection = await Promise.all(
+      taskSections.map((section) =>
+        ctx.db
+          .query("instructions")
+          .withIndex("by_section_sort", (q) =>
+            q.eq("sectionId", section._id),
+          )
+          .order("asc")
+          .collect(),
+      ),
+    );
+
+    const allInstructions = instructionsPerSection.flat();
+
+    const overlayItems = await ctx.db
+      .query("overlayItems")
+      .withIndex("by_trip_date", (q) => q.eq("tripId", args.tripId))
+      .collect();
+
+    const todayOverlays = overlayItems.filter(
+      (item) => item.date === args.date || item.date === undefined,
+    );
+
+    type AnytimeTask = { text: string; taskRef: string };
+    const tasks: AnytimeTask[] = [];
+
+    for (const inst of allInstructions) {
+      if (inst.timeSlot === "anytime" || !inst.specificTime) {
+        tasks.push({
+          text: inst.text,
+          taskRef: `recurring:${inst._id}:${args.date}`,
+        });
+      }
+    }
+    for (const item of todayOverlays) {
+      if (item.timeSlot === "anytime" || !item.specificTime) {
+        tasks.push({
+          text: item.text,
+          taskRef: `overlay:${item._id}`,
+        });
+      }
+    }
+
+    return tasks;
+  },
+});
+
+/**
  * Get today's task completions for a trip (used by sendReminder to skip done tasks).
  */
 export const getCompletionsForDate = internalQuery({

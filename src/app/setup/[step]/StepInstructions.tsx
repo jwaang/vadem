@@ -358,6 +358,7 @@ interface SectionPanelProps {
 function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const updateSection = useMutation(api.sections.update);
   const createInstruction = useMutation(api.instructions.create);
@@ -418,9 +419,9 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
   const instructionCount = instructions?.length ?? 0;
 
   return (
-    <div className="rounded-lg border border-border-default bg-bg-raised">
+    <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Section header */}
-      <div className={`flex items-center gap-3 px-4 py-3 bg-bg-sunken ${isExpanded ? "border-b border-border-default rounded-t-lg" : "rounded-lg"}`}>
+      <div className={`flex items-center gap-3 px-4 py-3 bg-bg-sunken ${isExpanded ? "border-b border-border-default" : ""}`}>
         <span className="text-xl leading-none" aria-hidden="true">
           {section.icon}
         </span>
@@ -441,7 +442,7 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
           {!isPrebuilt && (
             <button
               type="button"
-              onClick={onRemoveSection}
+              onClick={() => setShowDeleteConfirm(true)}
               className="p-1.5 text-text-muted hover:text-danger rounded transition-colors duration-150"
               aria-label={`Remove ${section.title} section`}
             >
@@ -460,6 +461,21 @@ function SectionPanel({ section, isPrebuilt, onRemoveSection }: SectionPanelProp
           </button>
         </div>
       </div>
+
+      {/* Inline delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="bg-danger-light px-4 py-3 flex items-center gap-3 border-b border-border-default">
+          <p className="font-body text-sm text-danger flex-1 min-w-0">
+            Delete &ldquo;{section.title}&rdquo; and all {instructionCount} instruction{instructionCount !== 1 ? "s" : ""}?
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)} className="shrink-0">
+            Cancel
+          </Button>
+          <Button variant="danger" size="sm" onClick={() => { onRemoveSection(); setShowDeleteConfirm(false); }} className="shrink-0">
+            Delete
+          </Button>
+        </div>
+      )}
 
       {/* Visibility & time block pickers */}
       {isExpanded && (
@@ -641,7 +657,6 @@ export default function Step5Sections() {
 
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
-  const [confirmRemoveId, setConfirmRemoveId] = useState<Id<"manualSections"> | null>(null);
 
   const isLoading = sections === undefined;
 
@@ -660,10 +675,12 @@ export default function Step5Sections() {
     setGeneralError(null);
 
     if (activeSectionTitles.has(prebuilt.title)) {
-      // Uncheck: find the section and confirm removal
+      // Uncheck: find the section and remove it
       const section = sections?.find((s) => s.title === prebuilt.title);
       if (section) {
-        setConfirmRemoveId(section._id);
+        removeSection({ sectionId: section._id }).catch(() => {
+          setGeneralError("Failed to remove section. Please try again.");
+        });
       }
     } else {
       // Check: create the section
@@ -679,14 +696,6 @@ export default function Step5Sections() {
     }
   };
 
-  const handleConfirmRemove = () => {
-    if (!confirmRemoveId) return;
-    removeSection({ sectionId: confirmRemoveId }).catch(() => {
-      setGeneralError("Failed to remove section. Please try again.");
-    });
-    setConfirmRemoveId(null);
-  };
-
   const handleAddCustomSection = (title: string, icon: string, sortOrder: number, visibility: Visibility) => {
     if (!propertyId) return;
     setShowCustomForm(false);
@@ -698,7 +707,9 @@ export default function Step5Sections() {
 
   const handleRemoveSection = (sectionId: Id<"manualSections">) => {
     setGeneralError(null);
-    setConfirmRemoveId(sectionId);
+    removeSection({ sectionId }).catch(() => {
+      setGeneralError("Failed to remove section. Please try again.");
+    });
   };
 
   return (
@@ -736,26 +747,6 @@ export default function Step5Sections() {
           className="bg-danger-light text-danger rounded-lg px-4 py-3 font-body text-sm"
         >
           {generalError}
-        </div>
-      )}
-
-      {/* Remove confirmation */}
-      {confirmRemoveId && (
-        <div className="bg-warning-light rounded-lg p-4 flex flex-col gap-3 border border-warning">
-          <p className="font-body text-sm font-semibold text-text-primary">
-            Remove this section?
-          </p>
-          <p className="font-body text-xs text-text-secondary">
-            Any instructions you&apos;ve added to this section will be deleted.
-          </p>
-          <div className="flex items-center gap-2 justify-end">
-            <Button variant="ghost" size="sm" onClick={() => setConfirmRemoveId(null)}>
-              Cancel
-            </Button>
-            <Button variant="danger" size="sm" onClick={handleConfirmRemove}>
-              Yes, remove
-            </Button>
-          </div>
         </div>
       )}
 

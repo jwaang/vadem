@@ -63,28 +63,6 @@ export function PreviewVaultTab({ propertyId }: PreviewVaultTabProps) {
         </p>
       </div>
 
-      {/* Verified header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-round bg-secondary text-text-on-primary shrink-0">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
-        </div>
-        <p className="font-body text-sm font-semibold text-secondary">
-          Identity verified — vault unlocked
-        </p>
-      </div>
-
       {/* Revealed vault items */}
       <div className="flex flex-col gap-2">
         {items.map((item) => (

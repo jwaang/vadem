@@ -442,7 +442,7 @@ function SectionEditPanel({
   const instructionCount = instructions?.length ?? 0;
 
   return (
-    <div className="rounded-lg border border-border-default bg-bg-raised">
+    <div className="rounded-lg border border-border-default bg-bg-raised overflow-hidden">
       {/* Section header */}
       <div className={isExpanded ? "border-b border-border-default" : ""}>
         {isEditing ? (

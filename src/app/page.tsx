@@ -81,7 +81,7 @@ const faqSchema = {
       name: "Can I reuse my manual for multiple trips?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "You build the manual once and reuse it every time you travel. Each trip gets its own overlay for anything that's different that week.",
+        text: "You build the manual once and reuse it every time you travel. Each trip lets you add one-time tasks for anything that's different that week.",
       },
     },
     {

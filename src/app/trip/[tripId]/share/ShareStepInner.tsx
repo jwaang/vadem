@@ -15,7 +15,7 @@ import { trackShareLinkCopied } from "@/lib/analytics";
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 const STEPS = [
-  { label: "Overlay Items", active: false, href: "overlay" },
+  { label: "One-Time Tasks", active: false, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: false, href: "proof" },
   { label: "Share", active: true, href: "share" },

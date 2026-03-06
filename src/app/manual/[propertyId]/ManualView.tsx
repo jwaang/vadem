@@ -542,7 +542,7 @@ export default function ManualView({ propertyId }: ManualViewProps) {
                                   : "border-border-default",
                               )}
                             >
-                              <p className="font-body text-base text-text-primary leading-relaxed">
+                              <p className="font-body text-base text-text-primary leading-relaxed whitespace-pre-line">
                                 {instruction.text}
                               </p>
                               {instruction.timeSlot &&

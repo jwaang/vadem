@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 const STEPS = [
-  { label: "Overlay Items", active: false, href: "overlay" },
+  { label: "One-Time Tasks", active: false, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: true, href: "proof" },
   { label: "Share", active: false, href: "share" },
@@ -84,7 +84,7 @@ function TaskRow({
       {/* Text + badges */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-body text-sm text-text-primary leading-snug">
+          <span className="font-body text-sm text-text-primary leading-snug whitespace-pre-line">
             {task.text}
           </span>
           {task.type === "overlay" && (
@@ -237,7 +237,7 @@ function ProofStep({ tripId }: { tripId: Id<"trips"> }) {
             <div className="bg-bg-raised rounded-lg border border-border-default px-4 py-6 text-center">
               <p className="font-body text-sm text-text-muted">
                 No recurring tasks yet. Add instructions to your manual or
-                overlay items to this trip.
+                one-time tasks to this trip.
               </p>
             </div>
           )}

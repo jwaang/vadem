@@ -34,6 +34,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@react-grab/mcp": "^0.1.23",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -43,6 +44,7 @@
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
+    "react-grab": "^0.1.23",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

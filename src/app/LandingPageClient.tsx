@@ -563,7 +563,7 @@ function FaqSection() {
     },
     {
       q: "Can I reuse my manual for multiple trips?",
-      a: "Absolutely. You build the manual once and reuse it every time you travel. Each trip gets its own overlay for anything that's different that week.",
+      a: "Absolutely. You build the manual once and reuse it every time you travel. Each trip lets you add one-time tasks for anything that's different that week.",
     },
     {
       q: "What if my sitter doesn't have cell service at my house?",

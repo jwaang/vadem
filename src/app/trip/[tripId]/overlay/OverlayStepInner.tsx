@@ -21,7 +21,7 @@ const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
 
 const STEPS = [
-  { label: "Overlay Items", active: true, href: "overlay" },
+  { label: "One-Time Tasks", active: true, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: false, href: "proof" },
   { label: "Share", active: false, href: "share" },
@@ -396,7 +396,7 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim()) {
-      setError("Please describe the trip-specific task.");
+      setError("Please describe the one-time task.");
       return;
     }
     setIsAdding(true);
@@ -428,7 +428,7 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
     <div className="bg-bg-raised rounded-xl border border-border-default p-5 flex flex-col gap-4">
       <div>
         <h3 className="font-body text-sm font-semibold text-text-primary">
-          Add a trip-specific task
+          Add a one-time task
         </h3>
       </div>
 
@@ -445,7 +445,7 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
             id="overlay-text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="e.g. Give Luna her ear drops twice daily"
+            placeholder="e.g. A package is arriving Wednesday — leave it in the garage"
             rows={2}
             className="w-full font-body text-sm text-text-primary bg-bg rounded-md px-3 py-2.5 resize-none outline-none transition-[border-color,box-shadow] duration-150"
             style={{
@@ -606,12 +606,12 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
           {/* Heading */}
           <div>
             <h2 className="font-display text-3xl text-text-primary leading-tight">
-              Anything different this trip?
+              One-time tasks
             </h2>
             <p className="font-body text-sm text-text-secondary mt-2">
-              Add trip-specific tasks that don&apos;t belong in your permanent
-              manual — one-time reminders, special instructions, or anything
-              different from your usual routine.
+              Add tasks that only apply to this trip — a package arriving
+              Thursday, medication your pet needs this week, or a neighbor
+              stopping by. These won&apos;t carry over to future trips.
             </p>
           </div>
 
@@ -619,7 +619,7 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
           {hasItems && (
             <div className="flex flex-col gap-3">
               <h3 className="font-body text-xs font-semibold text-text-muted uppercase tracking-wide">
-                Added items ({items.length})
+                One-time tasks ({items.length})
               </h3>
               {items.map((item) => (
                 <SavedItemRow

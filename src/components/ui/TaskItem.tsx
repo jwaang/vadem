@@ -165,7 +165,7 @@ function TaskItem({
       <div className="flex flex-col gap-1 flex-1 min-w-0">
         <span
           className={cn(
-            "font-body text-sm font-medium leading-snug text-text-primary transition-[color,text-decoration-color] duration-150 ease-out",
+            "font-body text-sm font-medium leading-snug text-text-primary whitespace-pre-line transition-[color,text-decoration-color] duration-150 ease-out",
             completed && "line-through text-text-muted",
           )}
         >

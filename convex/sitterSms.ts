@@ -118,14 +118,14 @@ export const sendReminder = internalAction({
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
       const upcomingWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}. ${link}`;
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}. ${link}\nReply STOP to unsubscribe`;
     } else if (overdueTasks.length > 0) {
       const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention. ${link}`;
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention. ${link}\nReply STOP to unsubscribe`;
     } else {
       const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
       const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}. ${link}`;
+      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}. ${link}\nReply STOP to unsubscribe`;
     }
 
     // Send via Twilio
@@ -211,7 +211,7 @@ export const sendTripStartSms = internalAction({
 
     const appUrl = process.env.APP_URL ?? "https://vadem.app";
     const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
-    const body = `Vadem: Your trip starts today! View your tasks and info here: ${link}`;
+    const body = `Vadem: Your trip starts today! View your tasks and info here: ${link}\nReply STOP to unsubscribe`;
 
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
     if (
@@ -294,7 +294,7 @@ export const sendTripEndingSms = internalAction({
 
     const appUrl = process.env.APP_URL ?? "https://vadem.app";
     const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
-    const body = `Vadem: Your trip ends tomorrow. Make sure everything is wrapped up! ${link}`;
+    const body = `Vadem: Your trip ends tomorrow. Make sure everything is wrapped up! ${link}\nReply STOP to unsubscribe`;
 
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
     if (

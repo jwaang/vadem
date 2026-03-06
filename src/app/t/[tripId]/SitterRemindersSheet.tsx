@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -72,12 +72,15 @@ function SitterRemindersSheet({ tripId, onClose }: SitterRemindersSheetProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Initialize from existing preferences
+  // Initialize from existing preferences (once only — prevent Convex re-evaluations from overwriting local edits)
+  const initializedRef = useRef(false);
   useEffect(() => {
+    if (initializedRef.current) return;
     if (!existingPrefs || existingPrefs.length === 0) return;
     const active = existingPrefs[0];
     if (!active) return;
 
+    initializedRef.current = true;
     setPrefsId(active._id);
     setPhone(active.phone);
     setTimezone(active.timezone);
@@ -189,7 +192,7 @@ function SitterRemindersSheet({ tripId, onClose }: SitterRemindersSheetProps) {
     // Pick a default that doesn't overlap existing — try 08:00, 12:00, 17:00
     const defaults = ["08:00", "12:00", "17:00"];
     const next = defaults.find((t) => !reminderTimes.includes(t)) ?? "08:00";
-    setReminderTimes((prev) => [...prev, next].sort());
+    setReminderTimes((prev) => [...prev, next]);
   }
 
   function useSuggested() {

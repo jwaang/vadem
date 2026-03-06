@@ -103,12 +103,30 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
-    const taskWord = relevantTasks.length === 1 ? "task" : "tasks";
-    const nextTime = formatTime12h(relevantTasks[0].specificTime);
+    const overdueTasks = relevantTasks.filter(
+      (t) => t.specificTime < args.reminderTime && !completedRefs.has(t.taskRef),
+    );
+    const upcomingTasks = relevantTasks.filter(
+      (t) => t.specificTime >= args.reminderTime,
+    );
+
     const appUrl = process.env.APP_URL ?? "https://vadem.app";
     const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
 
-    const body = `Vadem: You have ${relevantTasks.length} upcoming ${taskWord}, next at ${nextTime}. View them here: ${link}`;
+    let body: string;
+    if (overdueTasks.length > 0 && upcomingTasks.length > 0) {
+      const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
+      const upcomingWord = upcomingTasks.length === 1 ? "task" : "tasks";
+      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}. ${link}`;
+    } else if (overdueTasks.length > 0) {
+      const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
+      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention. ${link}`;
+    } else {
+      const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
+      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
+      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}. ${link}`;
+    }
 
     // Send via Twilio
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;

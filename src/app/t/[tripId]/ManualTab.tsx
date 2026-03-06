@@ -594,8 +594,9 @@ export function ManualTab({ propertyId, isOnline }: ManualTabProps) {
         <>
           {/* Section navigation — sticky so pills stay visible while scrolling */}
           {navSections.length > 0 && (
-            <div className="sticky top-0 z-10 bg-bg pt-1 pb-2 -mx-4 px-4 md:-mx-6 md:px-6 mt-5">
+            <div className="sticky top-0 z-10 bg-bg -mx-4 md:-mx-6 mt-5 border-b border-border-default">
               <SectionNav
+                className="px-4 md:px-6"
                 sections={navSections}
                 onSectionChange={handleSectionScroll}
               />

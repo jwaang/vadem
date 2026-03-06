@@ -557,7 +557,11 @@ export const _getById = internalQuery({
 // Public state-machine query for the sitter view router.
 // Returns the appropriate state without ever exposing sensitive fields like linkPassword.
 export const getTripByShareLink = query({
-  args: { shareLink: v.string() },
+  args: {
+    shareLink: v.string(),
+    localDate: v.string(), // "YYYY-MM-DD" in the client's local timezone
+    localTime: v.string(), // "HH:mm" in the client's local timezone
+  },
   returns: v.union(
     v.null(), // Not found / revoked
     v.object({ status: v.literal("EXPIRED"), tripId: v.optional(v.id("trips")) }),
@@ -567,6 +571,7 @@ export const getTripByShareLink = query({
       tripId: v.id("trips"),
       propertyId: v.id("properties"),
       startDate: v.string(),
+      startTime: v.optional(v.string()),
       endDate: v.string(),
       propertyName: v.string(),
       petNames: v.array(v.string()),
@@ -584,7 +589,8 @@ export const getTripByShareLink = query({
       .first();
     if (!trip) return null;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = args.localDate;
+    const nowTime = args.localTime;
 
     // Expired: explicit status, completed, past linkExpiry, or endDate passed
     if (
@@ -601,8 +607,12 @@ export const getTripByShareLink = query({
       return { status: "PASSWORD_REQUIRED" as const, tripId: trip._id };
     }
 
-    // Not yet started
-    if (trip.startDate > today) {
+    // Not yet started (includes same-day trips where startTime hasn't passed)
+    const notStartedYet =
+      trip.startDate > today ||
+      (trip.startDate === today && !!trip.startTime && trip.startTime > nowTime);
+
+    if (notStartedYet) {
       const property = await ctx.db.get(trip.propertyId);
       const pets = await ctx.db
         .query("pets")
@@ -613,6 +623,7 @@ export const getTripByShareLink = query({
         tripId: trip._id,
         propertyId: trip.propertyId,
         startDate: trip.startDate,
+        startTime: trip.startTime,
         endDate: trip.endDate,
         propertyName: property?.name ?? "Your stay",
         petNames: pets.map((p) => p.name),
@@ -630,7 +641,11 @@ export const getTripByShareLink = query({
 // Called after password / session verification to determine trip state.
 // Assumes the caller has already authenticated; never checks linkPassword.
 export const getSitterTripState = query({
-  args: { tripId: v.id("trips") },
+  args: {
+    tripId: v.id("trips"),
+    localDate: v.string(), // "YYYY-MM-DD" in the client's local timezone
+    localTime: v.string(), // "HH:mm" in the client's local timezone
+  },
   returns: v.union(
     v.null(),
     v.object({ status: v.literal("EXPIRED") }),
@@ -639,6 +654,7 @@ export const getSitterTripState = query({
       tripId: v.id("trips"),
       propertyId: v.id("properties"),
       startDate: v.string(),
+      startTime: v.optional(v.string()),
       endDate: v.string(),
       propertyName: v.string(),
       petNames: v.array(v.string()),
@@ -653,7 +669,8 @@ export const getSitterTripState = query({
     const trip = await ctx.db.get(args.tripId);
     if (!trip) return null;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = args.localDate;
+    const nowTime = args.localTime;
 
     if (
       trip.status === "expired" ||
@@ -664,7 +681,12 @@ export const getSitterTripState = query({
       return { status: "EXPIRED" as const };
     }
 
-    if (trip.startDate > today) {
+    // Not yet started (includes same-day trips where startTime hasn't passed)
+    const notStartedYet =
+      trip.startDate > today ||
+      (trip.startDate === today && !!trip.startTime && trip.startTime > nowTime);
+
+    if (notStartedYet) {
       const property = await ctx.db.get(trip.propertyId);
       const pets = await ctx.db
         .query("pets")
@@ -675,6 +697,7 @@ export const getSitterTripState = query({
         tripId: trip._id,
         propertyId: trip.propertyId,
         startDate: trip.startDate,
+        startTime: trip.startTime,
         endDate: trip.endDate,
         propertyName: property?.name ?? "Your stay",
         petNames: pets.map((p) => p.name),

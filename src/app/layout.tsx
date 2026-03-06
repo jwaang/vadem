@@ -39,6 +39,14 @@ export const metadata: Metadata = {
   },
   description:
     "Create a care manual for your pet and house sitter. Share one link with daily task checklists, location photos, secure codes, and real-time updates. No app download needed.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -83,6 +91,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${bricolageGrotesque.variable} ${caveat.variable}`}>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Vadem",
+              alternateName: "vadem.app",
+              url: "https://vadem.app/",
+            }),
+          }}
+        />
         {process.env.NODE_ENV === "development" && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"

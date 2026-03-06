@@ -39,13 +39,13 @@ function SectionNav({
   return (
     <nav
       className={cn(
-        "w-full overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] scroll-smooth",
+        "w-full overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth",
         className,
       )}
       aria-label="Manual sections"
       {...props}
     >
-      <div className="flex gap-2 min-w-max pb-2" role="tablist">
+      <div className="flex gap-2 min-w-max py-2" role="tablist">
         {sections.map((section) => {
           const isActive = section.id === currentId;
 

@@ -1209,8 +1209,8 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
 
           {/* Emergency contact bar */}
           {visibleContacts.length > 0 && (
-            <div className="mt-4">
-              <EmergencyContactBar contacts={visibleContacts} />
+            <div className="mt-4 -mx-4 md:-mx-6">
+              <EmergencyContactBar contacts={visibleContacts} className="px-4 md:px-6" />
             </div>
           )}
 

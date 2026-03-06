@@ -18,6 +18,19 @@ const PreTripView = dynamic(
   { ssr: false },
 );
 
+// ── Local time helpers ─────────────────────────────────────────────────
+
+/** Returns "YYYY-MM-DD" in the user's local timezone */
+function getLocalDate(): string {
+  return new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD"
+}
+
+/** Returns "HH:mm" in the user's local timezone */
+function getLocalTime(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
 // ── Cookie helpers ─────────────────────────────────────────────────────
 
 function getCookie(name: string): string | null {
@@ -293,7 +306,7 @@ function NotStartedState({ startDate, propertyName, petNames, propertyId, endDat
 // Determines NOT_STARTED vs ACTIVE without checking password again.
 
 function PostAuthTripView({ tripId, shareLink }: { tripId: Id<"trips">; shareLink: string }) {
-  const state = useQuery(api.trips.getSitterTripState, { tripId });
+  const state = useQuery(api.trips.getSitterTripState, { tripId, localDate: getLocalDate(), localTime: getLocalTime() });
   const isOffline = useIsOffline();
 
   if (state === undefined) {
@@ -380,7 +393,7 @@ function PasswordProtectedResolver({ tripId, shareLink }: PasswordProtectedResol
 // ── ShareLink resolver — state machine routing ─────────────────────────
 
 function TodayPageResolver({ shareLink }: { shareLink: string }) {
-  const state = useQuery(api.trips.getTripByShareLink, { shareLink });
+  const state = useQuery(api.trips.getTripByShareLink, { shareLink, localDate: getLocalDate(), localTime: getLocalTime() });
   const isOffline = useIsOffline();
 
   // Cache trip metadata whenever we get a successful response

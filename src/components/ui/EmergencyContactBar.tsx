@@ -57,8 +57,8 @@ function EmergencyContactBar({
   ...props
 }: EmergencyContactBarProps) {
   return (
-    <div className={cn("w-full", className)} {...props}>
-      <div className="flex gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-2 [scrollbar-width:thin]">
+    <div className={cn("w-full overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)} {...props}>
+      <div className="flex gap-3 min-w-max">
         {contacts.map((contact) => (
           <div
             key={`${contact.name}-${contact.phone}`}

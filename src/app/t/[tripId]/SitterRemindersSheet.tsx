@@ -254,7 +254,7 @@ function SitterRemindersSheet({ tripId, onClose }: SitterRemindersSheetProps) {
             /* ── Opt-in form ──────────────────────────────────────────── */
             <>
               <p className="font-body text-sm text-text-secondary">
-                Get text message reminders before your scheduled tasks. Enter the phone number the homeowner has on file for you.
+                Set up to 3 daily text reminders for upcoming task blocks. Enter the phone number the homeowner has on file for you.
               </p>
 
               <Input

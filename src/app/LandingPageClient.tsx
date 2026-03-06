@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/authContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckIcon,
@@ -300,7 +302,7 @@ function SolutionSection() {
         </div>
 
         {/* Feature: Updates */}
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
           <SlideIn
             direction="left"
             className="order-2 md:order-1 flex justify-center"
@@ -323,6 +325,30 @@ function SolutionSection() {
               in real time. Optional photo proof for the tasks that matter most.
               Finally, peace of mind on vacation.
             </p>
+          </SlideIn>
+        </div>
+
+        {/* Feature: SMS Reminders */}
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <SlideIn direction="left">
+            <div className="inline-flex items-center gap-2 bg-secondary-light text-secondary font-body text-xs font-semibold px-3 py-1.5 rounded-pill mb-4">
+              <PhoneIcon size={14} /> SMS reminders
+            </div>
+            <h3 className="font-display text-3xl text-text-primary mb-4">
+              Gentle nudges, right on time
+            </h3>
+            <p className="font-body text-base text-text-secondary leading-relaxed">
+              Your sitter opts into up to 3 daily text messages &mdash; timed to
+              arrive before each task block. Smart suggestions pick the best
+              times automatically. No app-checking needed.
+            </p>
+          </SlideIn>
+          <SlideIn direction="right" className="flex justify-center">
+            <Parallax speed={-0.08}>
+              <FloatingMock tiltDeg={1.2}>
+                <SmsReminderMock />
+              </FloatingMock>
+            </Parallax>
           </SlideIn>
         </div>
       </div>
@@ -438,17 +464,17 @@ function PetSection() {
           </p>
         </FadeUp>
         <StaggerContainer
-          className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-left"
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-left"
           staggerDelay={0.06}
         >
           {items.map((item) => (
             <StaggerItem key={item.label}>
-              <div className="bg-bg-raised border border-border-default rounded-lg p-4 shadow-xs h-full hover:shadow-sm hover:-translate-y-0.5 transition-[box-shadow,translate] duration-200">
-                <div className="mb-2">{item.icon}</div>
-                <div className="font-body text-sm font-semibold text-text-primary">
+              <div className="bg-bg-raised border border-border-default rounded-lg p-3 md:p-4 shadow-xs h-full hover:shadow-sm hover:-translate-y-0.5 transition-[box-shadow,translate] duration-200">
+                <div className="mb-1.5 md:mb-2">{item.icon}</div>
+                <div className="font-body text-[13px] md:text-sm font-semibold text-text-primary leading-snug">
                   {item.label}
                 </div>
-                <div className="font-body text-xs text-text-muted mt-0.5">
+                <div className="font-body text-xs text-text-muted mt-0.5 hidden sm:block">
                   {item.detail}
                 </div>
               </div>
@@ -919,10 +945,73 @@ function UpdatesMock() {
 }
 
 /* ──────────────────────────────────────────────
+   Mock: SMS Reminder
+   ────────────────────────────────────────────── */
+
+function SmsReminderMock() {
+  const messages = [
+    {
+      text: "Vadem: Your trip starts today! View your tasks and info here: vadem.app/t/s\u2060a\u2060r\u2060a\u2060h",
+      date: "Mon, Mar 9",
+      time: "8:00 AM",
+    },
+    {
+      text: "Vadem: You have 3 upcoming tasks, next at 7:45 AM. View them here: vadem.app/t/s\u2060a\u2060r\u2060a\u2060h",
+      date: "Tue, Mar 10",
+      time: "7:15 AM",
+    },
+    {
+      text: "Vadem: You have 2 upcoming tasks, next at 2:00 PM. View them here: vadem.app/t/s\u2060a\u2060r\u2060a\u2060h",
+      date: "Tue, Mar 10",
+      time: "1:30 PM",
+    },
+  ];
+
+  return (
+    <div className="bg-bg-raised rounded-2xl shadow-md border border-border-default w-72 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border-default">
+        <div className="flex items-center gap-2">
+          <PhoneIcon size={16} className="text-text-primary" />
+          <span className="font-body text-sm font-semibold text-text-primary">
+            Text Messages
+          </span>
+        </div>
+      </div>
+      <div className="p-3 flex flex-col gap-2.5">
+        {messages.map((msg, i) => (
+          <div key={i} className="flex flex-col gap-1.5">
+            <div className="bg-secondary-subtle border border-[rgba(94,139,106,0.15)] rounded-lg rounded-tl-sm px-3.5 py-2.5 max-w-[95%]">
+              <p className="font-body text-[13px] leading-snug text-text-primary break-words">
+                {msg.text}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 px-1">
+              <ClockIcon size={10} className="text-text-muted" />
+              <span className="font-body text-[10px] text-text-muted">
+                Vadem &middot; {msg.date}, {msg.time}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────
    Page Export
    ────────────────────────────────────────────── */
 
 export function LandingPageClient() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
+
+  if (user) return null;
+
   return (
     <div className="min-h-dvh bg-bg">
       <ScrollProgress />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -13,7 +13,11 @@ import { useWebHaptics } from "web-haptics/react";
 
 export function LoginForm() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
+
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
   const doSignIn = useAction(api.authActions.signIn);
   const { trigger } = useWebHaptics();
 

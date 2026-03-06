@@ -14,6 +14,8 @@ import type { ContactRole } from "@/components/ui/EmergencyContactBar";
 import { TimeSlotDivider } from "@/components/ui/TimeSlotDivider";
 import type { TimeSlot } from "@/components/ui/TimeSlotDivider";
 import { TaskItem } from "@/components/ui/TaskItem";
+import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/utils";
 import { LocationCard } from "@/components/ui/LocationCard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -327,20 +329,7 @@ function TomorrowPreview({ recurringInstructions, overlayItems }: TomorrowPrevie
                   )}
                   <div className="flex flex-col gap-1.5">
                     {slotTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-start gap-3 py-2.5 px-3 rounded-md bg-bg-raised border border-border-default"
-                      >
-                        <div className="w-[18px] h-[18px] min-w-[18px] rounded-sm border border-border-strong bg-bg-raised mt-px" />
-                        <span className="font-body text-sm text-text-secondary leading-snug">
-                          {task.text}
-                        </span>
-                        {task.isOverlay && (
-                          <span className="ml-auto shrink-0 font-body text-xs font-semibold text-accent bg-accent-light rounded-pill px-2 py-0.5">
-                            ✦ Trip
-                          </span>
-                        )}
-                      </div>
+                      <TomorrowTaskRow key={task.id} task={task} />
                     ))}
                   </div>
                 </div>
@@ -348,6 +337,49 @@ function TomorrowPreview({ recurringInstructions, overlayItems }: TomorrowPrevie
             })
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+function TomorrowTaskRow({ task }: { task: TodayTask }) {
+  const timeText = task.specificTime
+    ? formatTimeRange(task.specificTime, task.specificTimeEnd)
+    : undefined;
+
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-4 py-4 px-5 rounded-lg border border-border-default bg-bg-raised",
+        task.isOverlay && "border-l-[3px] border-l-accent",
+      )}
+    >
+      {/* Empty checkbox (read-only) */}
+      <div className="w-[26px] h-[26px] min-w-[26px] rounded-sm border-[1.5px] border-border-strong bg-bg-raised shrink-0 mt-px" />
+
+      {/* Body */}
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <span className="font-body text-sm font-medium leading-snug text-text-primary whitespace-pre-line">
+          {task.text}
+        </span>
+
+        {(timeText || task.isOverlay || task.proofRequired) && (
+          <div className="flex flex-wrap gap-2 items-center">
+            {timeText && <Badge variant="time">{timeText}</Badge>}
+            {task.isOverlay && <Badge variant="overlay">This Trip Only</Badge>}
+          </div>
+        )}
+      </div>
+
+      {/* Static proof indicator (read-only) */}
+      {task.proofRequired && (
+        <span className="inline-flex items-center gap-1 font-body text-xs font-semibold text-text-muted py-1 px-2 border-[1.5px] border-dashed border-border-strong rounded-sm bg-transparent whitespace-nowrap shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          Proof
+        </span>
       )}
     </div>
   );

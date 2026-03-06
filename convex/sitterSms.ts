@@ -80,11 +80,22 @@ export const sendReminder = internalAction({
       { tripId: args.tripId, date: args.date },
     );
 
-    // Filter to tasks at or after the reminder time (upcoming tasks)
-    const upcomingTasks = allTasks.filter(
-      (t) => t.specificTime >= args.reminderTime,
+    // Get today's completions to filter out finished tasks
+    const completions = await ctx.runQuery(
+      internal.sitterSmsQueries.getCompletionsForDate,
+      { tripId: args.tripId, date: args.date },
     );
-    if (upcomingTasks.length === 0) return null;
+    const completedRefs = new Set(completions.map((c) => c.taskRef));
+
+    // Include tasks that are:
+    // 1. Upcoming (start time >= reminder time), OR
+    // 2. Past start time but still incomplete
+    const relevantTasks = allTasks.filter((t) => {
+      if (t.specificTime >= args.reminderTime) return true;
+      if (!completedRefs.has(t.taskRef)) return true;
+      return false;
+    });
+    if (relevantTasks.length === 0) return null;
 
     // Build SMS body
     const trip = await ctx.runQuery(internal.trips._getById, {
@@ -92,12 +103,12 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
-    const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
-    const nextTime = formatTime12h(upcomingTasks[0].specificTime);
+    const taskWord = relevantTasks.length === 1 ? "task" : "tasks";
+    const nextTime = formatTime12h(relevantTasks[0].specificTime);
     const appUrl = process.env.APP_URL ?? "https://vadem.app";
     const link = `${appUrl}/t/${trip.shareLink ?? ""}`;
 
-    const body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}. View them here: ${link}`;
+    const body = `Vadem: You have ${relevantTasks.length} upcoming ${taskWord}, next at ${nextTime}. View them here: ${link}`;
 
     // Send via Twilio
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
@@ -112,7 +123,7 @@ export const sendReminder = internalAction({
         sitterId: args.sitterId,
         reminderTime: args.reminderTime,
         date: args.date,
-        taskCount: upcomingTasks.length,
+        taskCount: relevantTasks.length,
       });
       return null;
     }
@@ -141,7 +152,7 @@ export const sendReminder = internalAction({
       sitterId: args.sitterId,
       reminderTime: args.reminderTime,
       date: args.date,
-      taskCount: upcomingTasks.length,
+      taskCount: relevantTasks.length,
     });
 
     return null;

@@ -137,7 +137,7 @@ function SitterRemindersSheet({ tripId, onClose }: SitterRemindersSheetProps) {
     try {
       await updatePrefs({
         prefsId,
-        reminderTimes,
+        reminderTimes: [...reminderTimes].sort(),
         timezone,
       });
       onClose();
@@ -176,7 +176,7 @@ function SitterRemindersSheet({ tripId, onClose }: SitterRemindersSheetProps) {
     setReminderTimes((prev) => {
       const next = [...prev];
       next[index] = newTime;
-      return next.sort();
+      return next;
     });
   }
 

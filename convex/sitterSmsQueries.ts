@@ -318,23 +318,56 @@ export const getTimedTasksForDate = internalQuery({
       (item) => item.date === args.date || item.date === undefined,
     );
 
-    type TaskInfo = { text: string; specificTime: string };
+    type TaskInfo = {
+      text: string;
+      specificTime: string;
+      specificTimeEnd?: string;
+      taskRef: string;
+    };
     const tasks: TaskInfo[] = [];
 
     for (const inst of allInstructions) {
       if (inst.specificTime && inst.timeSlot !== "anytime") {
-        tasks.push({ text: inst.text, specificTime: inst.specificTime });
+        tasks.push({
+          text: inst.text,
+          specificTime: inst.specificTime,
+          specificTimeEnd: inst.specificTimeEnd,
+          taskRef: `recurring:${inst._id}:${args.date}`,
+        });
       }
     }
     for (const item of todayOverlays) {
       if (item.specificTime && item.timeSlot !== "anytime") {
-        tasks.push({ text: item.text, specificTime: item.specificTime });
+        tasks.push({
+          text: item.text,
+          specificTime: item.specificTime,
+          specificTimeEnd: item.specificTimeEnd,
+          taskRef: `overlay:${item._id}`,
+        });
       }
     }
 
     return tasks.sort((a, b) =>
       a.specificTime.localeCompare(b.specificTime),
     );
+  },
+});
+
+/**
+ * Get today's task completions for a trip (used by sendReminder to skip done tasks).
+ */
+export const getCompletionsForDate = internalQuery({
+  args: {
+    tripId: v.id("trips"),
+    date: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("taskCompletions")
+      .withIndex("by_trip_date", (q) =>
+        q.eq("tripId", args.tripId).eq("date", args.date),
+      )
+      .collect();
   },
 });
 

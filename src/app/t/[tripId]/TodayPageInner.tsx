@@ -216,8 +216,21 @@ interface SlotSectionProps {
   onPhotoClick: (url: string) => void;
 }
 
+function getCurrentHHMM(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+function isTaskOverdue(task: TodayTask, nowHHMM: string): boolean {
+  if (!task.specificTime) return false;
+  // Task end time (if set) or start time determines the deadline
+  const deadline = task.specificTimeEnd ?? task.specificTime;
+  return deadline < nowHHMM;
+}
+
 function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, onProof, onPhotoClick }: SlotSectionProps) {
   if (tasks.length === 0) return null;
+  const nowHHMM = getCurrentHHMM();
 
   return (
     <div className="flex flex-col gap-3">
@@ -232,6 +245,7 @@ function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, o
           const isCompleted = completion !== undefined;
           const isUploading = uploadingTaskRef === task.taskRef;
           const lc = task.locationCard;
+          const overdue = !isCompleted && !isUploading && isTaskOverdue(task, nowHHMM);
           return (
             <div key={task.taskRef}>
               <TaskItem
@@ -245,6 +259,7 @@ function SlotSection({ slot, tasks, completionMap, uploadingTaskRef, onToggle, o
                 uploading={isUploading}
                 onToggle={() => onToggle(task, isCompleted, completion?.id)}
                 onProof={() => onProof(task)}
+                meta={overdue ? <Badge variant="warning">Overdue</Badge> : undefined}
               />
               {lc && (
                 <div className="mt-1.5">

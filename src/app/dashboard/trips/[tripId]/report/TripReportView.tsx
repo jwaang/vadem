@@ -9,6 +9,7 @@ import type { Id } from "../../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { ActivityFeedItem, type ActivityType } from "@/components/ui/ActivityFeedItem";
+import { useWebHaptics } from "web-haptics/react";
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -204,6 +205,7 @@ function ProofPhotoGrid({ photos }: { photos: ProofPhoto[] }) {
 function TripReportViewInner({ tripId }: { tripId: string }) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { trigger } = useWebHaptics();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -243,6 +245,7 @@ function TripReportViewInner({ tripId }: { tripId: string }) {
 
   async function handleCopyLink(shareUrl: string) {
     await navigator.clipboard.writeText(shareUrl);
+    trigger("success");
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   }

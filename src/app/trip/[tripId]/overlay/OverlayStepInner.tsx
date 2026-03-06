@@ -11,8 +11,9 @@ import { TimePicker } from "@/components/ui/TimePicker";
 import { LocationCardUploader } from "@/components/ui/LocationCardUploader";
 import { LocationCardVideoUploader } from "@/components/ui/LocationCardVideoUploader";
 import { PencilIcon } from "@/components/ui/icons";
+import { TripSetupHeader } from "@/components/ui/TripSetupHeader";
 import { NotificationToast } from "@/components/ui/NotificationToast";
-import { formatTimeRange, isValidTimeRange } from "@/lib/todayViewHelpers";
+import { formatTimeRange, formatTime12h, isValidTimeRange } from "@/lib/todayViewHelpers";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 type TimeSlot = "morning" | "afternoon" | "evening" | "anytime";
 
 const STEPS = [
+  { label: "Details", active: false, href: "details" },
   { label: "One-Time Tasks", active: true, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: false, href: "proof" },
@@ -85,9 +87,11 @@ interface SavedItemRowProps {
   onDelete: (id: Id<"overlayItems">) => void;
   minDate?: string;
   maxDate?: string;
+  tripStartTime?: string;
+  tripEndTime?: string;
 }
 
-function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
+function SavedItemRow({ item, onDelete, minDate, maxDate, tripStartTime, tripEndTime }: SavedItemRowProps) {
   const updateItem = useMutation(api.overlayItems.update);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
@@ -97,6 +101,7 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
   const [editSpecificTime, setEditSpecificTime] = useState(item.specificTime ?? "");
   const [editSpecificTimeEnd, setEditSpecificTimeEnd] = useState(item.specificTimeEnd ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [editError, setEditError] = useState("");
   const [showEndTimeError, setShowEndTimeError] = useState(false);
   const lastValidEditEndTimeRef = useRef(item.specificTimeEnd ?? "");
 
@@ -202,6 +207,9 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                 </button>
               </div>
             )}
+            {editError && (
+              <p className="font-body text-xs text-danger" role="alert">{editError}</p>
+            )}
             <div className="flex items-center gap-2 justify-end">
               <Button
                 variant="ghost"
@@ -211,6 +219,7 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                   setEditDate(item.date ?? "");
                   setEditSpecificTime(item.specificTime ?? "");
                   setEditSpecificTimeEnd(item.specificTimeEnd ?? "");
+                  setEditError("");
                   setIsEditing(false);
                 }}
               >
@@ -221,7 +230,19 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                 size="sm"
                 disabled={isSaving || !editText.trim()}
                 onClick={async () => {
+                  // Client-side trip time boundary validation
+                  if (editDate && editSpecificTime) {
+                    if (editDate === minDate && tripStartTime && editSpecificTime < tripStartTime) {
+                      setEditError(`This time is before the trip starts at ${formatTime12h(tripStartTime)}`);
+                      return;
+                    }
+                    if (editDate === maxDate && tripEndTime && editSpecificTime > tripEndTime) {
+                      setEditError(`This time is after the trip ends at ${formatTime12h(tripEndTime)}`);
+                      return;
+                    }
+                  }
                   setIsSaving(true);
+                  setEditError("");
                   try {
                     await updateItem({
                       overlayItemId: item._id,
@@ -231,6 +252,8 @@ function SavedItemRow({ item, onDelete, minDate, maxDate }: SavedItemRowProps) {
                       specificTimeEnd: editSpecificTimeEnd || undefined,
                     });
                     setIsEditing(false);
+                  } catch (err) {
+                    setEditError(err instanceof Error ? err.message : "Failed to save.");
                   } finally {
                     setIsSaving(false);
                   }
@@ -370,9 +393,11 @@ interface AddItemFormProps {
   onAdded: () => void;
   minDate?: string;
   maxDate?: string;
+  tripStartTime?: string;
+  tripEndTime?: string;
 }
 
-function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
+function AddItemForm({ tripId, onAdded, minDate, maxDate, tripStartTime, tripEndTime }: AddItemFormProps) {
   const createItem = useMutation(api.overlayItems.create);
 
   const [text, setText] = useState("");
@@ -398,6 +423,17 @@ function AddItemForm({ tripId, onAdded, minDate, maxDate }: AddItemFormProps) {
     if (!text.trim()) {
       setError("Please describe the one-time task.");
       return;
+    }
+    // Client-side trip time boundary validation
+    if (date && specificTime) {
+      if (date === minDate && tripStartTime && specificTime < tripStartTime) {
+        setError(`This time is before the trip starts at ${formatTime12h(tripStartTime)}`);
+        return;
+      }
+      if (date === maxDate && tripEndTime && specificTime > tripEndTime) {
+        setError(`This time is after the trip ends at ${formatTime12h(tripEndTime)}`);
+        return;
+      }
     }
     setIsAdding(true);
     setError("");
@@ -562,18 +598,7 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
   return (
     <div className="min-h-dvh bg-bg flex flex-col">
       {/* Header */}
-      <header className="bg-bg-raised border-b border-border-default px-4 py-4 flex items-center gap-3">
-        <a
-          href="/dashboard/trips"
-          className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
-        >
-          ← Trips
-        </a>
-        <span className="text-border-strong">|</span>
-        <h1 className="font-body text-sm font-semibold text-text-primary">
-          Trip Setup
-        </h1>
-      </header>
+      <TripSetupHeader tripId={tripId} />
 
       {/* Step indicator */}
       <div className="bg-bg-raised border-b border-border-default px-4 py-3">
@@ -636,6 +661,8 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
                   onDelete={handleDelete}
                   minDate={trip?.startDate}
                   maxDate={trip?.endDate}
+                  tripStartTime={trip?.startTime}
+                  tripEndTime={trip?.endTime}
                 />
               ))}
               {deletingId && (
@@ -647,10 +674,13 @@ function OverlayStep({ tripId }: { tripId: Id<"trips"> }) {
           )}
 
           {/* Add item form */}
-          <AddItemForm tripId={tripId} onAdded={() => { }} minDate={trip?.startDate} maxDate={trip?.endDate} />
+          <AddItemForm tripId={tripId} onAdded={() => { }} minDate={trip?.startDate} maxDate={trip?.endDate} tripStartTime={trip?.startTime} tripEndTime={trip?.endTime} />
 
-          {/* Continue */}
-          <div className="flex items-center justify-end pt-2">
+          {/* Back / Continue */}
+          <div className="flex items-center justify-between pt-2">
+            <Button variant="ghost" onClick={() => router.push(`/trip/${tripId}/details`)}>
+              ← Back
+            </Button>
             <Button variant="primary" onClick={handleContinue}>
               Continue →
             </Button>

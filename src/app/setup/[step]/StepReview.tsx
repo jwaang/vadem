@@ -9,17 +9,17 @@ import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
 import type { SetupSlug } from "@/lib/setupSteps";
 import { trackOnboardingStepCompleted, trackPropertyPublished } from "@/lib/analytics";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ complete, label }: { complete: boolean; label: string }) {
   return (
     <span
-      className={`font-body text-xs font-semibold px-3 py-1 rounded-pill shrink-0 ${
-        complete
-          ? "bg-secondary-light text-secondary"
-          : "bg-warning-light text-warning"
-      }`}
+      className={`font-body text-xs font-semibold px-3 py-1 rounded-pill shrink-0 ${complete
+        ? "bg-secondary-light text-secondary"
+        : "bg-warning-light text-warning"
+        }`}
     >
       {label}
     </span>
@@ -71,6 +71,7 @@ export default function StepReview() {
   const { user } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const { trigger } = useWebHaptics();
 
   const sessionData = useQuery(
     api.auth.validateSession,
@@ -95,12 +96,25 @@ export default function StepReview() {
     setIsPublishing(true);
     setPublishError(null);
     publishManual({ propertyId })
-      .then(() => {
+      .then(async () => {
         trackOnboardingStepCompleted("review");
         trackPropertyPublished();
-        router.push("/dashboard?published=true");
+        trigger("heavy");
+        try {
+          const JSConfetti = (await import("js-confetti")).default;
+          const confetti = new JSConfetti();
+          await confetti.addConfetti({
+            emojis: ["🏠", "🐾", "🔑", "✨"],
+            emojiSize: 200,
+            confettiNumber: 20,
+          });
+        } catch {
+          // Non-critical — navigate anyway
+        }
+        setTimeout(() => router.push("/dashboard?published=true"), 250);
       })
       .catch(() => {
+        trigger("error");
         setIsPublishing(false);
         setPublishError("Failed to publish. Please try again.");
       });

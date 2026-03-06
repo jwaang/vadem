@@ -65,7 +65,10 @@ function PetProfileCard({
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full bg-primary-light" />
+          <div className="w-full h-full bg-primary-light flex flex-col items-center justify-center gap-2">
+            <span className="text-5xl" aria-hidden="true">🐾</span>
+            <p className="font-body text-sm text-primary font-medium">No photo yet</p>
+          </div>
         )}
       </div>
 

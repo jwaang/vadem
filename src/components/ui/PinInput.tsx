@@ -1,35 +1,55 @@
 "use client";
 
-import { useRef, type KeyboardEvent, type ClipboardEvent } from "react";
+import { useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useWebHaptics } from "web-haptics/react";
 
 interface PinInputProps {
   value: string; // up to 6 digit characters
   onChange: (value: string) => void;
+  /** Called when all 6 digits have been entered (auto-submit). */
+  onComplete?: (code: string) => void;
   disabled?: boolean;
   error?: boolean;
   autoFocus?: boolean;
 }
 
-function PinInput({ value, onChange, disabled, error, autoFocus }: PinInputProps) {
+function PinInput({ value, onChange, onComplete, disabled, error, autoFocus }: PinInputProps) {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const prevErrorRef = useRef(error);
   const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? "");
+  const { trigger } = useWebHaptics();
+
+  // Fire error haptic when error transitions to true
+  useEffect(() => {
+    if (error && !prevErrorRef.current) {
+      trigger("error");
+    }
+    prevErrorRef.current = error;
+  }, [error, trigger]);
 
   function handleChange(index: number, inputValue: string) {
     const allDigits = inputValue.replace(/\D/g, "");
     // Multi-char input (iOS SMS autofill or paste-like behavior)
     if (allDigits.length > 1) {
       const full = allDigits.slice(0, 6);
+      trigger("selection");
       onChange(full);
+      if (full.length === 6) onComplete?.(full);
       const focusIdx = Math.min(full.length, 5);
       inputRefs.current[focusIdx]?.focus();
       return;
     }
     // Single char — normal typing
     const digit = allDigits.slice(-1);
+    if (digit) {
+      trigger("selection");
+    }
     const next = [...digits];
     next[index] = digit;
-    onChange(next.join(""));
+    const joined = next.join("");
+    onChange(joined);
+    if (joined.length === 6) onComplete?.(joined);
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -59,6 +79,7 @@ function PinInput({ value, onChange, disabled, error, autoFocus }: PinInputProps
     e.preventDefault();
     const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     onChange(text);
+    if (text.length === 6) onComplete?.(text);
     // Focus the last filled box or the next empty one
     const focusIdx = Math.min(text.length, 5);
     inputRefs.current[focusIdx]?.focus();

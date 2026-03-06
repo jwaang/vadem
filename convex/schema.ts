@@ -31,6 +31,8 @@ export default defineSchema({
         // vaultAccess is always on; not user-configurable
       }),
     ), // Full notification preferences; defaults applied server-side when absent
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     emailVerified: v.optional(v.boolean()),
     hasCompletedOnboarding: v.optional(v.boolean()),
     timezone: v.optional(v.string()), // IANA timezone e.g. "America/Chicago"
@@ -191,8 +193,11 @@ export default defineSchema({
 
   trips: defineTable({
     propertyId: v.id("properties"),
+    name: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
+    startTime: v.optional(v.string()), // HH:mm format
+    endTime: v.optional(v.string()), // HH:mm format
     status: v.union(
       v.literal("draft"),
       v.literal("active"),
@@ -303,16 +308,44 @@ export default defineSchema({
     convertedAt: v.number(),
   }).index("by_user", ["sitterUserId"]),
 
+  // Sitter SMS reminder preferences — self-opted-in by sitter, separate from vault verification.
+  // Phone is self-provided and validated against sitters.phone for authorization.
+  // Up to 3 custom daily reminder times (HH:mm). Auto-suggested based on task clustering.
+  sitterSmsPreferences: defineTable({
+    sitterId: v.id("sitters"),
+    tripId: v.id("trips"),
+    phone: v.string(), // self-provided normalized 10-digit US number
+    smsConsent: v.boolean(),
+    smsConsentAt: v.number(), // TCPA compliance timestamp
+    timezone: v.string(), // IANA timezone e.g. "America/Chicago"
+    reminderTimes: v.array(v.string()), // up to 3 HH:mm strings, sorted ascending
+    optedOutAt: v.optional(v.number()), // set when sitter texts STOP or toggles off in-app
+    optOutSource: v.optional(v.union(v.literal("app"), v.literal("carrier"))), // how the opt-out happened
+  })
+    .index("by_trip", ["tripId"])
+    .index("by_sitter", ["sitterId"]),
+
+  // Sitter SMS send log — dedup + audit trail for reminder SMS.
+  // One entry per SMS sent; prevents duplicate sends for same date+time.
+  sitterSmsLog: defineTable({
+    tripId: v.id("trips"),
+    sitterId: v.id("sitters"),
+    reminderTime: v.string(), // HH:mm or "trip_start" / "trip_ending"
+    date: v.string(), // YYYY-MM-DD
+    sentAt: v.number(),
+    taskCount: v.number(),
+  }).index("by_trip_sitter_date", ["tripId", "sitterId", "date"]),
+
   // Vault SMS PIN verification — verified session records only.
-  // Created by verifyPin on successful Prelude OTP check; read by getDecryptedVaultItems.
+  // Created by verifyPin on successful Twilio Verify OTP check; read by getDecryptedVaultItems.
   // Legacy fields (hashedPin, salt, attemptCount) are optional for backward compat with
-  // pre-Prelude records; they will be absent on all new records.
+  // older records; they will be absent on all new records.
   vaultPins: defineTable({
     tripId: v.id("trips"),
     sitterPhone: v.string(), // normalized 10-digit US number (digits only)
     expiresAt: v.number(), // Unix ms: now+24h after successful verification
     verified: v.optional(v.boolean()), // true for verified sessions; absent on stale records
-    // Legacy Twilio fields — present on pre-Prelude records until TTL expiry
+    // Legacy fields — present on old records until TTL expiry
     hashedPin: v.optional(v.string()),
     salt: v.optional(v.string()),
     attemptCount: v.optional(v.number()),

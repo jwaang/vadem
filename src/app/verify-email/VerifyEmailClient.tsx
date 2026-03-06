@@ -32,7 +32,7 @@ export function VerifyEmailClient() {
           setState("success");
           // Patch localStorage so the banner disappears immediately
           if (user) setUser({ ...user, emailVerified: true });
-          setTimeout(() => router.push("/dashboard"), 2000);
+          setTimeout(() => router.push("/welcome"), 2000);
         } else {
           setState(error === "expired" ? "expired" : "invalid");
         }
@@ -73,7 +73,7 @@ export function VerifyEmailClient() {
           Email verified!
         </h2>
         <p className="font-body text-sm text-text-secondary">
-          Redirecting you to your dashboard…
+          Redirecting you to get started...
         </p>
       </div>
     );

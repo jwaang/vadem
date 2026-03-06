@@ -8,13 +8,17 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { NotificationToast } from "@/components/ui/NotificationToast";
+import { RefreshIcon } from "@/components/ui/icons";
+import { TripSetupHeader } from "@/components/ui/TripSetupHeader";
 import { trackShareLinkCopied } from "@/lib/analytics";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 const STEPS = [
+  { label: "Details", active: false, href: "details" },
   { label: "One-Time Tasks", active: false, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: false, href: "proof" },
@@ -96,6 +100,7 @@ function dateStringToEndOfDayMs(dateStr: string): number {
 
 function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   const router = useRouter();
+  const { trigger } = useWebHaptics();
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -109,11 +114,18 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   const [isResetting, setIsResetting] = useState(false);
   const [showResharePrompt, setShowResharePrompt] = useState(false);
 
+  const [hasPassword, setHasPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
   const trip = useQuery(api.trips.get, { tripId });
   const generateShareLink = useAction(api.shareActions.generateShareLink);
   const regenerateShareLink = useAction(api.shareActions.regenerateShareLink);
   const updateTrip = useMutation(api.trips.update);
   const setLinkExpiry = useMutation(api.trips.setLinkExpiry);
+  const setLinkPasswordAction = useAction(api.shareActions.setLinkPassword);
 
   useEffect(() => {
     setCanShare(typeof navigator !== "undefined" && "share" in navigator);
@@ -126,10 +138,11 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
     }
   }, [trip?.shareLink, shareSlug]);
 
-  // Sync expiry value from trip data
+  // Sync expiry value and password state from trip data
   useEffect(() => {
     if (!trip) return;
     setExpiryValue(trip.linkExpiry ? msToDateString(trip.linkExpiry) : trip.endDate);
+    setHasPassword(!!trip.linkPassword);
   }, [trip]);
 
   // Only generate a new share link if the trip loaded and has no existing link
@@ -175,6 +188,7 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   async function handleCopy() {
     if (!shareUrl) return;
     await navigator.clipboard.writeText(shareUrl);
+    trigger("success");
     trackShareLinkCopied();
     setCopied(true);
     setShowToast(true);
@@ -205,6 +219,41 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
     }
   }
 
+  async function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passwordInput.trim()) {
+      setPasswordError("Please enter a password.");
+      return;
+    }
+    setIsSavingPassword(true);
+    setPasswordError("");
+    try {
+      await setLinkPasswordAction({
+        tripId,
+        password: passwordInput,
+      });
+      setHasPassword(true);
+      setShowPasswordForm(false);
+      setPasswordInput("");
+    } catch {
+      setPasswordError("Failed to set password. Please try again.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
+  async function handleRemovePassword() {
+    setIsSavingPassword(true);
+    try {
+      await setLinkPasswordAction({ tripId });
+      setHasPassword(false);
+    } catch {
+      // ignore
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
   async function handleActivateAndCopy() {
     setIsActivating(true);
     try {
@@ -228,18 +277,7 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
   return (
     <div className="min-h-dvh bg-bg flex flex-col">
       {/* Header */}
-      <header className="bg-bg-raised border-b border-border-default px-4 py-4 flex items-center gap-3">
-        <a
-          href="/dashboard/trips"
-          className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
-        >
-          ← Trips
-        </a>
-        <span className="text-border-strong">|</span>
-        <h1 className="font-body text-sm font-semibold text-text-primary">
-          Trip Setup
-        </h1>
-      </header>
+      <TripSetupHeader tripId={tripId} />
 
       {/* Step indicator */}
       <div className="bg-bg-raised border-b border-border-default px-4 py-3">
@@ -312,49 +350,47 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
                   </p>
                 )}
 
-                {/* Copy / Share action buttons */}
+                {/* Copy / Share / Reset action buttons */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    icon={copied ? <CheckIcon /> : <CopyIcon />}
-                    onClick={handleCopy}
-                    className="flex-1 sm:flex-none"
-                  >
-                    {copied ? "Copied!" : "Copy link"}
-                  </Button>
-
-                  {canShare && (
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="soft"
                       size="sm"
-                      icon={<ShareIcon />}
-                      onClick={handleNativeShare}
-                      className="flex-1 sm:flex-none"
+                      icon={copied ? <CheckIcon /> : <CopyIcon />}
+                      onClick={handleCopy}
                     >
-                      Share
+                      {copied ? "Copied!" : "Copy link"}
+                    </Button>
+
+                    {canShare && (
+                      <Button
+                        variant="soft"
+                        size="sm"
+                        icon={<ShareIcon />}
+                        onClick={handleNativeShare}
+                      >
+                        Share
+                      </Button>
+                    )}
+                  </div>
+
+                  {!showResetConfirm && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={<RefreshIcon size={14} />}
+                      onClick={() => {
+                        setShowResetConfirm(true);
+                        setShowResharePrompt(false);
+                      }}
+                      className="ml-auto"
+                    >
+                      Reset link
                     </Button>
                   )}
                 </div>
 
-                {/* Reset link */}
-                {!showResetConfirm ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowResetConfirm(true);
-                      setShowResharePrompt(false);
-                    }}
-                    className="btn btn-no-shadow font-body text-sm text-danger flex items-center gap-1.5 self-start px-0 py-1 hover:text-[#b04444] transition-colors duration-150"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M23 4v6h-6" />
-                      <path d="M1 20v-6h6" />
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                    </svg>
-                    Reset link
-                  </button>
-                ) : (
+                {showResetConfirm && (
                   <div className="bg-warning-light text-warning rounded-lg p-4 flex flex-col gap-3">
                     <p className="font-body text-sm font-semibold">
                       This will revoke access for anyone with the current link
@@ -424,6 +460,102 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
             </div>
           )}
 
+          {/* Password protection */}
+          {shareSlug && (
+            <div
+              className="bg-bg-raised rounded-xl border border-border-default p-5 flex flex-col gap-4"
+              style={{ boxShadow: "var(--shadow-sm)" }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
+                  <p className="font-body text-sm font-semibold text-text-primary">
+                    Require password to view
+                  </p>
+                  <p className="font-body text-xs text-text-muted">
+                    Add an extra layer of security to your sitter link.
+                  </p>
+                  {hasPassword && (
+                    <p className="font-body text-xs text-success">Password set</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={hasPassword || showPasswordForm}
+                  disabled={isSavingPassword}
+                  onClick={() => {
+                    trigger("light");
+                    if (hasPassword) {
+                      handleRemovePassword();
+                    } else {
+                      setShowPasswordForm((v) => !v);
+                      setPasswordError("");
+                      setPasswordInput("");
+                    }
+                  }}
+                  className={[
+                    "relative w-11 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none disabled:opacity-40 shrink-0",
+                    hasPassword || showPasswordForm
+                      ? "bg-secondary"
+                      : "bg-border-strong",
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      "absolute top-0.5 left-0 w-5 h-5 rounded-round bg-white transition-[translate] duration-250 ease-spring",
+                      hasPassword || showPasswordForm ? "translate-x-[22px]" : "translate-x-[2px]",
+                    ].join(" ")}
+                    style={{ boxShadow: "var(--shadow-sm)" }}
+                  />
+                </button>
+              </div>
+
+              {showPasswordForm && !hasPassword && (
+                <form onSubmit={handleSetPassword} className="flex flex-col gap-2">
+                  <input
+                    type="password"
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      setPasswordError("");
+                    }}
+                    placeholder="Set a password for the link"
+                    autoComplete="new-password"
+                    className="font-body text-sm text-text-primary bg-bg-raised border-[1.5px] border-border-default rounded-md px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-text-muted focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-subtle)]"
+                  />
+                  {passwordError && (
+                    <p className="font-body text-xs text-danger" role="alert">
+                      {passwordError}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      disabled={isSavingPassword}
+                      className="flex-1"
+                    >
+                      {isSavingPassword ? "Saving..." : "Set password"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowPasswordForm(false);
+                        setPasswordInput("");
+                        setPasswordError("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
           {/* Back / Activate */}
           <div className="flex items-center justify-between">
             <Button variant="ghost" onClick={() => router.push(`/trip/${tripId}/proof`)}>
@@ -437,9 +569,6 @@ function ShareStep({ tripId }: { tripId: Id<"trips"> }) {
               {isActivating ? "Finishing…" : "Finish & copy link →"}
             </Button>
           </div>
-          <p className="font-body text-xs text-text-muted text-center -mt-3">
-            Copies the link and returns to your dashboard.
-          </p>
         </div>
       </main>
 

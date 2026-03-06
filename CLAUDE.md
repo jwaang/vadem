@@ -12,6 +12,8 @@ pnpm lint             # ESLint (next/core-web-vitals + typescript + prettier)
 pnpm typecheck        # tsc --noEmit
 pnpm format           # Prettier write
 pnpm format:check     # Prettier check
+pnpm nuke-db          # Wipe all Convex data (dev only)
+pnpm seed-demo        # Seed demo data into Convex
 ```
 
 No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate changes.
@@ -47,7 +49,27 @@ Two distinct user modes with separate route trees:
 Custom auth — NOT Convex Auth library. Sessions stored in the `sessions` table with a random token; the token is set as an HTTP-only cookie via Next.js server actions in `convex/authActions.ts`. OAuth (Google, Apple) goes through `/auth/callback`. Sitter access uses a separate `tripSessions` table with its own token, keyed to a share link + optional password.
 
 ### Vault Encryption
-Vault item values are encrypted **client-side** with AES-256-GCM before being stored. `encryptedValue` in the DB is a base64 JSON blob `{ iv, ciphertext }`. Convex never receives or transmits plaintext — only labels are sent to clients. Sitters must verify via SMS OTP (Prelude) to unlock; successful verifications create a `vaultPins` record valid 24h.
+Vault item values are encrypted **client-side** with AES-256-GCM before being stored. `encryptedValue` in the DB is a base64 JSON blob `{ iv, ciphertext }`. Convex never receives or transmits plaintext — only labels are sent to clients. Sitters must verify via SMS OTP (Twilio Verify) to unlock; successful verifications create a `vaultPins` record valid 24h.
+
+### Convex Function Patterns
+Convex files in `convex/` use three function types:
+- **`query`** / **`internalQuery`** — read-only, reactive, run in Convex's V8 runtime
+- **`mutation`** / **`internalMutation`** — read-write, run in Convex's V8 runtime
+- **`action`** — can call external APIs, must use `"use node"` directive at top of file. Actions call queries/mutations via `ctx.runQuery(internal.module.fn, args)` / `ctx.runMutation(...)`.
+
+**Auth pattern**: There is no auth middleware. Authenticated functions accept a `token: v.string()` arg, look up the session via `sessions.by_token` index, and validate expiry inline. Follow this pattern for any new authenticated endpoint.
+
+**Internal vs public**: Functions prefixed with `_` (e.g. `_createUser`, `_getSessionByToken`) are `internal*` variants — only callable from other Convex functions, not from the client.
+
+### Provider Hierarchy
+`layout.tsx` wraps the app: `ConvexProvider` → `AuthProvider` (React context in `src/lib/authContext.tsx`). Auth state is stored in `localStorage` under `vadem_session` and read synchronously on mount.
+
+### Environment Variables
+Two separate environments for secrets:
+- **`.env.local`** — Next.js vars (`NEXT_PUBLIC_*` for client, others for server-side Next.js)
+- **Convex dashboard** — Environment variables for Convex actions (`RESEND_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`, `TWILIO_PHONE_NUMBER`, `VAPID_*`, `APP_URL`). Convex actions cannot read `.env.local`.
+
+See `.env.example` for the full list and which belong where.
 
 ### Path Alias
 `@/*` maps to `./src/*` (configured in `tsconfig.json`)
@@ -117,6 +139,7 @@ The `@utility btn` in globals.css uses raw CSS `transform: translateY(-1px)` dir
 - `"use client"` directive on interactive components
 - Styling: prefer CSS classes in `globals.css` (BEM-like: `.btn-primary`, `.task-item-checkbox`) over inline Tailwind for complex components; use Tailwind utilities for layout (flex, grid, spacing)
 - `forwardRef` on components that need ref access
+- Use `cn()` from `@/lib/utils` (clsx + tailwind-merge) for conditional class merging
 
 ### Icons
 

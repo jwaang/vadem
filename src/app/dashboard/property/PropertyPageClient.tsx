@@ -6,7 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
-import { ChevronLeftIcon, ChevronRightIcon, HomeIcon, LockIcon, EyeIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, HomeIcon, LockIcon, EyeIcon, RefreshIcon } from "@/components/ui/icons";
 
 // ── Hub card ──────────────────────────────────────────────────────────
 
@@ -185,8 +185,8 @@ export default function PropertyPageClient() {
               className="flex items-center gap-3 bg-bg-raised rounded-xl border border-border-default p-4 hover:border-border-strong transition-colors duration-150"
               style={{ boxShadow: "var(--shadow-xs)" }}
             >
-              <div className="w-9 h-9 rounded-lg bg-accent-subtle flex items-center justify-center text-lg">
-                🔄
+              <div className="w-9 h-9 rounded-lg bg-accent-subtle flex items-center justify-center">
+                <RefreshIcon size={18} className="text-accent" />
               </div>
               <div className="flex-1">
                 <p className="font-body text-sm font-semibold text-text-primary">Re-run setup wizard</p>

@@ -8,6 +8,7 @@ interface AuthUser {
   token: string;
   email: string;
   emailVerified: boolean;
+  firstName?: string;
 }
 
 interface AuthContextValue {

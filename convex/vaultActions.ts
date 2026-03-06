@@ -34,7 +34,13 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
-import Prelude from "@prelude.so/sdk";
+import twilio from "twilio";
+
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID!;
+  const authToken = process.env.TWILIO_AUTH_TOKEN!;
+  return twilio(accountSid, authToken);
+}
 
 const ALGORITHM = "aes-256-gcm";
 const TAG_LENGTH = 16; // GCM auth tag is always 128 bits
@@ -156,6 +162,14 @@ export const updateVaultItemValue = action({
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — verified session validity
 
+/** Convert a phone number to E.164 format for Twilio (+1XXXXXXXXXX). */
+function toE164(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+
 /** Normalize a US phone number to 10 digits only (strip formatting and leading 1). */
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -215,21 +229,22 @@ export const sendSmsPin = action({
       return { success: false as const, error: "VAULT_ACCESS_DENIED" as const };
     }
 
-    // 3. Send OTP via Prelude
-    const apiToken = process.env.PRELUDE_API_KEY;
-    const toPhone = `+1${normalizedInput}`;
-    if (apiToken) {
+    // 3. Send OTP via Twilio Verify
+    const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
+    const toPhone = toE164(normalizedInput);
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && verifySid) {
       try {
-        const client = new Prelude({ apiToken });
-        await client.verification.create({
-          target: { type: "phone_number", value: toPhone },
+        const client = getTwilioClient();
+        await client.verify.v2.services(verifySid).verifications.create({
+          to: toPhone,
+          channel: "sms",
         });
       } catch (err) {
-        console.error("[Prelude] SMS send error:", err);
+        console.error("[Twilio] SMS send error:", err);
         // Don't expose send errors to the client — sitter can retry
       }
     } else {
-      console.log(`[DEV] PRELUDE_API_KEY not set — skipping SMS for ${toPhone}`);
+      console.log(`[DEV] Twilio env vars not set — skipping SMS for ${toPhone}`);
     }
 
     return { success: true as const };
@@ -237,9 +252,9 @@ export const sendSmsPin = action({
 });
 
 /**
- * Verify a Prelude OTP for vault access.
+ * Verify a Twilio Verify OTP for vault access.
  *
- * Delegates code validation to Prelude (attempt limiting, expiry, etc.).
+ * Delegates code validation to Twilio Verify (attempt limiting, expiry, etc.).
  * On success, writes a 24h verified session to vaultPins.
  */
 export const verifyPin = action({
@@ -265,25 +280,27 @@ export const verifyPin = action({
     | { success: false; error: "NOT_FOUND" | "EXPIRED" | "MAX_ATTEMPTS" | "INVALID_PIN" }
   > => {
     const normalizedPhone = normalizePhone(args.sitterPhone);
-    const toPhone = `+1${normalizedPhone}`;
+    const toPhone = toE164(normalizedPhone);
 
-    const apiToken = process.env.PRELUDE_API_KEY;
-    if (!apiToken) {
+    const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !verifySid) {
       return { success: false as const, error: "EXPIRED" as const };
     }
 
-    const client = new Prelude({ apiToken });
-    const check = await client.verification.check({
-      target: { type: "phone_number", value: toPhone },
-      code: args.pin,
-    });
-
-    if (check.status === "expired_or_not_found") {
+    const client = getTwilioClient();
+    let check;
+    try {
+      check = await client.verify.v2.services(verifySid).verificationChecks.create({
+        to: toPhone,
+        code: args.pin,
+      });
+    } catch {
+      // Twilio throws on expired/not-found verifications
       return { success: false as const, error: "EXPIRED" as const };
     }
 
-    if (check.status === "failure") {
-      // Log the failed verification attempt
+    if (check.status !== "approved") {
+      // "pending" or "canceled" — code was wrong
       await ctx.runMutation(internal.vaultAccessLog.logVaultAccess, {
         tripId: args.tripId,
         sitterPhone: normalizedPhone,

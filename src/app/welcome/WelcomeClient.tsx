@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { trackOnboardingCompleted } from "@/lib/analytics";
 
@@ -35,24 +36,38 @@ const SLIDES = [
     body: "Generate a private link for each trip. Your sitter gets a daily task view, and sensitive codes stay protected behind phone verification.",
   },
   {
-    emoji: "✨",
-    emojiBg: "bg-secondary-subtle",
-    heading: "Ready to set up your home?",
-    body: "It takes about 10 minutes. You can always come back and edit later.",
+    emoji: "👋",
+    emojiBg: "bg-primary-subtle",
+    heading: "What should we call you?",
+    body: "So we can make things a bit more personal.",
   },
 ] as const;
 
 function WelcomeClientInner() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const isLeavingRef = useRef(false);
-
   const sessionData = useQuery(
     api.auth.validateSession,
     user?.token ? { token: user.token } : "skip",
   );
   const markOnboarding = useMutation(api.auth.markOnboardingComplete);
+  const updateProfile = useMutation(api.auth.updateProfile);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const namePreFilledRef = useRef(false);
+
+  // Pre-fill name from session data (e.g. Google OAuth users) — one-time init
+  useEffect(() => {
+    if (namePreFilledRef.current || !sessionData) return;
+    namePreFilledRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time init from external query
+    if (sessionData.firstName) setFirstName(sessionData.firstName);
+    if (sessionData.lastName) setLastName(sessionData.lastName);
+  }, [sessionData]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -60,6 +75,13 @@ function WelcomeClientInner() {
       router.replace("/login");
     }
   }, [user, router]);
+
+  // Redirect unverified email users to check-email
+  useEffect(() => {
+    if (sessionData && !sessionData.emailVerified) {
+      router.replace("/check-email");
+    }
+  }, [sessionData, router]);
 
   // Redirect if already onboarded (but not if the user just clicked a CTA)
   useEffect(() => {
@@ -74,8 +96,6 @@ function WelcomeClientInner() {
   };
 
   const completeOnboarding = (destination: string) => {
-    // Mark that we're navigating away so the useEffect doesn't
-    // race us to /dashboard when the mutation updates sessionData.
     isLeavingRef.current = true;
     trackOnboardingCompleted();
     router.push(destination);
@@ -84,18 +104,35 @@ function WelcomeClientInner() {
     }
   };
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName.trim() || !user?.token) return;
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        token: user.token,
+        firstName: firstName.trim(),
+        lastName: lastName.trim() || undefined,
+      });
+      setUser({ ...user, firstName: firstName.trim() });
+      completeOnboarding("/setup/home");
+    } catch {
+      setIsSaving(false);
+    }
+  };
+
   if (!user || sessionData === undefined) {
     return (
       <main className="min-h-dvh bg-bg flex items-center justify-center">
-        <p className="font-body text-sm text-text-muted">Loading...</p>
+        <p className="font-body text-sm text-text-muted">Loading…</p>
       </main>
     );
   }
 
   if (sessionData?.hasCompletedOnboarding) return null;
 
-  const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === SLIDES.length - 1;
+  const slide = SLIDES[currentSlide];
 
   return (
     <main className="h-dvh bg-bg flex flex-col items-center px-6 overflow-hidden">
@@ -112,7 +149,7 @@ function WelcomeClientInner() {
               animation: "onboarding-slide-in 300ms ease-out",
             }}
           >
-            {/* Emoji illustration */}
+            {/* Emoji illustration (all slides including last) */}
             {"emojiGrid" in slide && slide.emojiGrid ? (
               <div className="grid grid-cols-2 gap-3">
                 {slide.emojiGrid.map(({ emoji, bg }) => (
@@ -145,24 +182,36 @@ function WelcomeClientInner() {
               </p>
             </div>
 
-            {/* CTA on last slide */}
+            {/* Profile form on last slide */}
             {isLastSlide && (
-              <div className="flex flex-col items-center gap-3 w-full max-w-xs mt-2">
+              <form
+                onSubmit={handleProfileSubmit}
+                className="flex flex-col gap-4 w-full max-w-xs text-left"
+              >
+                <Input
+                  label="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  autoFocus
+                  autoComplete="given-name"
+                />
+                <Input
+                  label="Last name"
+                  hint="Optional"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  autoComplete="family-name"
+                />
                 <Button
+                  type="submit"
                   size="lg"
-                  className="w-full"
-                  onClick={() => completeOnboarding("/setup/home")}
+                  className="w-full mt-2"
+                  disabled={!firstName.trim() || isSaving}
                 >
-                  Let&rsquo;s get started
+                  {isSaving ? "Saving..." : "Let\u2019s get started"}
                 </Button>
-                <button
-                  type="button"
-                  onClick={() => completeOnboarding("/dashboard")}
-                  className="font-body text-sm text-text-muted hover:text-text-secondary transition-colors duration-150"
-                >
-                  I&rsquo;ll do this later
-                </button>
-              </div>
+              </form>
             )}
           </div>
         </div>
@@ -187,36 +236,27 @@ function WelcomeClientInner() {
             ))}
           </div>
 
-          {/* Navigation */}
+          {/* Navigation (not shown on last slide — form has its own CTA) */}
           {!isLastSlide && (
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-2">
-                {currentSlide > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => goToSlide(currentSlide - 1)}
-                  >
-                    <ChevronLeftIcon size={14} />
-                    Back
-                  </Button>
-                )}
+            <div className="flex items-center gap-2">
+              {currentSlide > 0 && (
                 <Button
-                  variant="primary"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => goToSlide(currentSlide + 1)}
+                  onClick={() => goToSlide(currentSlide - 1)}
                 >
-                  Next
-                  <ChevronRightIcon size={14} />
+                  <ChevronLeftIcon size={14} />
+                  Back
                 </Button>
-              </div>
-              <button
-                type="button"
-                onClick={() => completeOnboarding("/setup/home")}
-                className="font-body text-xs text-text-muted hover:text-text-secondary transition-colors duration-150"
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => goToSlide(currentSlide + 1)}
               >
-                Skip setup
-              </button>
+                Next
+                <ChevronRightIcon size={14} />
+              </Button>
             </div>
           )}
         </div>

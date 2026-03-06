@@ -18,6 +18,7 @@ import { LocationCard } from "@/components/ui/LocationCard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { VaultTab } from "./VaultTab";
+import { SitterRemindersSheet } from "./SitterRemindersSheet";
 import { trackSitterLinkOpened, trackSitterTabSwitched, trackSitterTaskChecked, trackSitterProofUploaded } from "@/lib/analytics";
 import { ManualTab } from "./ManualTab";
 import { ContactsTab } from "@/components/ui/ContactsTab";
@@ -28,9 +29,11 @@ import {
   SLOT_ORDER,
   formatTimeRange,
   buildTaskList,
+  filterTasksByTripTime,
   groupBySlot,
   getTripDay,
   getTripLength,
+  formatTime12h,
   AnytimeDivider,
 } from "@/lib/todayViewHelpers";
 import {
@@ -541,6 +544,15 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId]);
 
+  // SMS reminders sheet state
+  const [showRemindersSheet, setShowRemindersSheet] = useState(false);
+  const smsPrefs = useQuery(api.sitterSmsQueries.getPreferences, { tripId: tripId as Id<"trips"> });
+  const hasActiveReminders = smsPrefs && smsPrefs.length > 0;
+  const [reminderBannerDismissed, setReminderBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(`vadem_reminder_banner_${tripId}`) === "1";
+  });
+
   // Proof upload state
   const [pendingProofTask, setPendingProofTask] = useState<TodayTask | null>(null);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
@@ -991,7 +1003,7 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
 
   const { trip, property, sitters, emergencyContacts, recurringInstructions, todayOverlayItems, completions } =
     data as {
-      trip: { startDate: string; endDate: string };
+      trip: { startDate: string; endDate: string; startTime?: string; endTime?: string };
       property: { _id: Id<"properties">; name: string } | null;
       sitters: Array<{ name: string }>;
       emergencyContacts: Array<{ name: string; role: string; phone: string; notes?: string; isLocked: boolean }>;
@@ -1006,20 +1018,22 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
   const currentDay = getTripDay(trip.startDate, today);
   const totalDays = getTripLength(trip.startDate, trip.endDate);
 
-  // Build today's task list and group by slot
-  const todayTasks = buildTaskList(recurringInstructions, todayOverlayItems, today);
+  // Build today's task list, filter by trip times on first/last day, and group by slot
+  const todayTasksRaw = buildTaskList(recurringInstructions, todayOverlayItems, today);
+  const todayTasks = filterTasksByTripTime(todayTasksRaw, trip, today);
   const taskGroups = groupBySlot(todayTasks);
 
   // Build tomorrow's task list for preview — only if tomorrow is still within the trip window
   const tomorrowDate = (data as { tomorrow: string }).tomorrow;
   const showTomorrow = tomorrowDate <= trip.endDate;
-  const tomorrowTasks = showTomorrow
+  const tomorrowTasksRaw = showTomorrow
     ? buildTaskList(
         (data as { tomorrowRecurringInstructions: typeof recurringInstructions }).tomorrowRecurringInstructions,
         (data as { tomorrowOverlayItems: typeof todayOverlayItems }).tomorrowOverlayItems,
         tomorrowDate,
       )
     : [];
+  const tomorrowTasks = filterTasksByTripTime(tomorrowTasksRaw, trip, tomorrowDate);
   const tomorrowGroups = groupBySlot(tomorrowTasks);
 
   // Build a map of taskRef → completion info for O(1) lookup.
@@ -1112,6 +1126,14 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
         />
       )}
 
+      {/* ── SMS Reminders sheet ────────────────────────────────────── */}
+      {showRemindersSheet && (
+        <SitterRemindersSheet
+          tripId={tripId as Id<"trips">}
+          onClose={() => setShowRemindersSheet(false)}
+        />
+      )}
+
       {/* ── Name prompt modal ───────────────────────────────────────── */}
       {showNamePrompt && (
         <NamePrompt
@@ -1142,6 +1164,15 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
               tasksToday={tasksToday}
               completedTasks={completedTasks}
               proofNeeded={proofNeeded}
+              timeNote={
+                today === trip.startDate && trip.startTime
+                  ? `Starts at ${formatTime12h(trip.startTime)}`
+                  : today === trip.endDate && trip.endTime
+                    ? `Ends at ${formatTime12h(trip.endTime)}`
+                    : undefined
+              }
+              onGearClick={() => setShowRemindersSheet(true)}
+              showGearDot={!hasActiveReminders}
             />
           </div>
 
@@ -1180,6 +1211,36 @@ export default function TodayPageInner({ tripId, shareLink }: { tripId: string; 
           {visibleContacts.length > 0 && (
             <div className="mt-4">
               <EmergencyContactBar contacts={visibleContacts} />
+            </div>
+          )}
+
+          {/* SMS reminder opt-in nudge */}
+          {!hasActiveReminders && !reminderBannerDismissed && (
+            <div className="mt-3 flex items-center gap-3 rounded-lg bg-accent-light border border-accent/20 px-4 py-3">
+              <span className="font-body text-sm text-text-primary flex-1">
+                Get text reminders before your tasks.
+              </span>
+              <button
+                type="button"
+                className="font-body text-sm font-semibold text-primary whitespace-nowrap"
+                onClick={() => setShowRemindersSheet(true)}
+              >
+                Set up
+              </button>
+              <button
+                type="button"
+                className="w-6 h-6 flex items-center justify-center text-text-muted shrink-0"
+                onClick={() => {
+                  setReminderBannerDismissed(true);
+                  try { sessionStorage.setItem(`vadem_reminder_banner_${tripId}`, "1"); } catch {}
+                }}
+                aria-label="Dismiss"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
           )}
 

@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -71,13 +72,14 @@ interface ToggleProps {
 }
 
 function Toggle({ checked, onChange, disabled = false }: ToggleProps) {
+  const { trigger } = useWebHaptics();
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
+      onClick={() => { if (!disabled) trigger("light"); onChange(!checked); }}
       className={[
         "relative w-11 h-6 rounded-pill transition-colors duration-250 ease-spring focus:outline-none shrink-0",
         disabled

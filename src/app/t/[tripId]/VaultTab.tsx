@@ -8,8 +8,10 @@ import { VaultItem, LockIcon, type VaultItemLocationCard } from "@/components/ui
 import { PinInput } from "@/components/ui/PinInput";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { NotificationToast } from "@/components/ui/NotificationToast";
 import { validatePhone, formatPhoneInput } from "@/lib/phone";
 import { trackSitterVaultAccessed } from "@/lib/analytics";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -116,6 +118,7 @@ function AccessDeniedState({ reason }: { reason: AccessDeniedReason }) {
 export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   const sessionKey = `vault_verified_${tripId}`;
   const phoneKey = `vault_phone_${tripId}`;
+  const { trigger } = useWebHaptics();
 
   // Online/offline detection — vault is online-only for security.
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -151,6 +154,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   const [accessDeniedReason, setAccessDeniedReason] = useState<AccessDeniedReason | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [consented, setConsented] = useState(false);
+  const [showUnlockedToast, setShowUnlockedToast] = useState(false);
 
   // Upfront trip status check — if the trip is not active we show access denied
   // immediately without requiring the user to attempt verification.
@@ -180,6 +184,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
       if (cancelled) return;
       if (result.success) {
         setDecryptedItems(result.items);
+        setShowUnlockedToast(true);
         setPhase("revealed");
       } else {
         // Access denied — show typed empty state
@@ -249,20 +254,23 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
     }
   }
 
-  async function handleVerify() {
-    if (pin.length < 6) {
+  async function handleVerify(codeOverride?: string) {
+    const code = codeOverride ?? pin;
+    if (code.length < 6) {
       setError("Please enter all 6 digits.");
       return;
     }
     setError(null);
     setPhase("verifying");
     try {
-      const result = await verifyPinAction({ tripId, sitterPhone: phone.trim(), pin });
+      const result = await verifyPinAction({ tripId, sitterPhone: phone.trim(), pin: code });
       if (result.success) {
+        trigger("success");
         sessionStorage.setItem(sessionKey, "1");
         trackSitterVaultAccessed();
         setPhase("loading_items");
       } else if (result.error === "INVALID_PIN") {
+        trigger("error");
         const remaining = attemptsLeft - 1;
         setAttemptsLeft(remaining);
         setPin("");
@@ -316,6 +324,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
 
   function handleCopy(itemId: string, value: string) {
     void navigator.clipboard.writeText(value).then(() => {
+      trigger("success");
       setCopiedId(itemId);
       setTimeout(() => setCopiedId(null), 1500);
     });
@@ -386,26 +395,15 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
   if (phase === "revealed") {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-round bg-secondary text-text-on-primary shrink-0">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-          </div>
-          <p className="font-body text-sm font-semibold text-secondary">
-            Identity verified — vault unlocked
-          </p>
-        </div>
+        {showUnlockedToast && (
+          <NotificationToast
+            variant="vault"
+            title="Vault unlocked"
+            message="Identity verified — your secure items are listed here."
+            autoDismissMs={4000}
+            onDismiss={() => setShowUnlockedToast(false)}
+          />
+        )}
 
         {decryptedItems.length === 0 ? (
           <div className="bg-bg-raised rounded-xl border border-dashed border-border-strong p-8 flex flex-col items-center text-center gap-3">
@@ -608,6 +606,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               <PinInput
                 value={pin}
                 onChange={setPin}
+                onComplete={(code) => handleVerify(code)}
                 disabled={isVerifying}
                 error={!!error}
                 autoFocus
@@ -632,7 +631,7 @@ export function VaultTab({ tripId, propertyId, ownerName }: VaultTabProps) {
               variant="vault"
               size="lg"
               disabled={isVerifying || pin.length < 6}
-              onClick={handleVerify}
+              onClick={() => handleVerify()}
               className="w-full"
             >
               {isVerifying ? "Verifying…" : "Verify code"}

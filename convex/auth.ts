@@ -10,6 +10,8 @@ export const _createUser = internalMutation({
     googleId: v.optional(v.string()),
     appleId: v.optional(v.string()),
     emailVerified: v.optional(v.boolean()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("users", {
@@ -19,6 +21,8 @@ export const _createUser = internalMutation({
       googleId: args.googleId,
       appleId: args.appleId,
       emailVerified: args.emailVerified,
+      firstName: args.firstName,
+      lastName: args.lastName,
       createdAt: Date.now(),
       notificationPreferences: {
         taskCompletions: "proof-only",
@@ -186,6 +190,8 @@ export const validateSession = query({
       email: user.email,
       emailVerified: user.emailVerified ?? false,
       hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+      firstName: user.firstName,
+      lastName: user.lastName,
     };
   },
 });
@@ -213,5 +219,28 @@ export const signOut = mutation({
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
     if (session) await ctx.db.delete(session._id);
+  },
+});
+
+// Public: update user profile (firstName / lastName)
+export const updateProfile = mutation({
+  args: {
+    token: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (!args.token) return;
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!session || session.expiresAt < Date.now()) return;
+    const patch: Record<string, string> = {};
+    if (args.firstName !== undefined) patch.firstName = args.firstName;
+    if (args.lastName !== undefined) patch.lastName = args.lastName;
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(session.userId, patch);
+    }
   },
 });

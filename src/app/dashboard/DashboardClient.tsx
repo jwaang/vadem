@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -9,8 +10,8 @@ import { useAuth } from "@/lib/authContext";
 import { CreatorLayout } from "@/components/layouts/CreatorLayout";
 import { Button } from "@/components/ui/Button";
 import { ActivityFeedItem, type ActivityType } from "@/components/ui/ActivityFeedItem";
-import { VerificationBanner } from "@/components/ui/VerificationBanner";
-import { HomeIcon, CalendarIcon, ClockIcon, BellIcon, CheckIcon, XIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { HomeIcon, CalendarIcon, ClockIcon, BellIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { NotificationToast } from "@/components/ui/NotificationToast";
 
 // ── Trip Status ────────────────────────────────────────────────────────
 
@@ -278,15 +279,17 @@ function formatTripDate(iso: string): string {
 function DashboardOverview({ email, token }: DashboardOverviewProps) {
   const router = useRouter();
 
-  const firstName =
-    email.split("@")[0].replace(/[^a-zA-Z]/g, " ").split(" ")[0] ?? email;
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-
   const sessionData = useQuery(
     api.auth.validateSession,
     token ? { token } : "skip",
   );
   const userId = sessionData?.userId;
+
+  const displayName = (() => {
+    if (sessionData?.firstName) return sessionData.firstName;
+    const prefix = email.split("@")[0].replace(/[^a-zA-Z]/g, " ").split(" ")[0] ?? "there";
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  })();
 
   const properties = useQuery(
     api.properties.listByOwner,
@@ -298,6 +301,11 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
   const manualSummary = useQuery(
     api.properties.getManualSummary,
     propertyId ? { propertyId } : "skip",
+  );
+
+  const propertyPhotoUrl = useQuery(
+    api.storage.getUrl,
+    property?.photo ? { storageId: property.photo } : "skip",
   );
 
   const existingTrip = useQuery(
@@ -343,49 +351,91 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
     );
   } else {
     const summary = manualSummary;
+    const propName = summary?.propertyName ?? property.name ?? "My Property";
+    const hasPhoto = !!propertyPhotoUrl;
+
     propertyContent = (
       <div
-        className="bg-bg-raised rounded-xl border border-border-default p-5"
+        className="bg-bg-raised rounded-xl border border-border-default overflow-hidden"
         style={{ boxShadow: "var(--shadow-sm)" }}
       >
-        <div className="mb-3">
-          <p className="font-display italic text-lg text-text-primary leading-snug">
-            {summary?.propertyName ?? property.name ?? "My Property"}
-          </p>
-          {summary?.propertyAddress && (
-            <p className="font-body text-xs text-text-muted mt-0.5">
-              {summary.propertyAddress}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {[
-            { label: `${summary?.petCount ?? 0} Pets` },
-            { label: `${summary?.sectionCount ?? 0} Sections` },
-            { label: `${summary?.contactCount ?? 0} Contacts` },
-            { label: `${summary?.vaultItemCount ?? 0} Vault items` },
-          ].map(({ label }) => (
-            <span
-              key={label}
-              className="bg-bg-sunken rounded-pill px-2.5 py-1 font-body text-xs text-text-secondary"
+        {/* Hero image or fallback header */}
+        {hasPhoto ? (
+          <div className="relative h-36 sm:h-44 overflow-hidden">
+            <Image
+              src={propertyPhotoUrl}
+              alt={propName}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(42,31,26,0.7) 0%, rgba(42,31,26,0.15) 50%, transparent 100%)",
+              }}
+            />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <p className="font-display italic text-xl text-white leading-snug drop-shadow-sm">
+                {propName}
+              </p>
+              {summary?.propertyAddress && (
+                <p className="font-body text-xs text-white/80 mt-0.5 drop-shadow-sm">
+                  {summary.propertyAddress}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="p-5 pb-0 flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary-subtle flex items-center justify-center shrink-0">
+              <HomeIcon size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="font-display italic text-lg text-text-primary leading-snug">
+                {propName}
+              </p>
+              {summary?.propertyAddress && (
+                <p className="font-body text-xs text-text-muted mt-0.5">
+                  {summary.propertyAddress}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Stats + actions */}
+        <div className="p-5 pt-4 flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: `${summary?.petCount ?? 0} Pets` },
+              { label: `${summary?.sectionCount ?? 0} Sections` },
+              { label: `${summary?.contactCount ?? 0} Contacts` },
+              { label: `${summary?.vaultItemCount ?? 0} Vault items` },
+            ].map(({ label }) => (
+              <span
+                key={label}
+                className="bg-bg-sunken rounded-pill px-2.5 py-1 font-body text-xs text-text-secondary"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <div className="flex justify-end gap-4">
+            <Link
+              href="/dashboard/preview"
+              className="font-body text-xs text-text-muted hover:text-text-primary transition-colors duration-150"
             >
-              {label}
-            </span>
-          ))}
-        </div>
-        <div className="flex justify-end gap-4">
-          <Link
-            href="/dashboard/preview"
-            className="font-body text-xs text-text-muted hover:text-text-primary transition-colors duration-150"
-          >
-            Preview as sitter →
-          </Link>
-          <Link
-            href="/dashboard/property"
-            className="font-body text-xs text-text-muted hover:text-text-primary transition-colors duration-150"
-          >
-            Edit property →
-          </Link>
+              Preview as sitter →
+            </Link>
+            <Link
+              href="/dashboard/property"
+              className="font-body text-xs text-text-muted hover:text-text-primary transition-colors duration-150"
+            >
+              Edit property →
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -421,8 +471,10 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
       const endMs = new Date(existingTrip.endDate + "T12:00:00").getTime();
       const todayMs = new Date(today + "T12:00:00").getTime();
       const totalDays = Math.max(1, Math.round((endMs - startMs) / 86400000));
+      const isUpcoming = todayMs < startMs;
+      const daysUntilStart = Math.max(0, Math.round((startMs - todayMs) / 86400000));
       const daysLeft = Math.max(0, Math.round((endMs - todayMs) / 86400000));
-      const progressPct = isActive
+      const progressPct = isActive && !isUpcoming
         ? Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100))
         : 0;
 
@@ -451,9 +503,13 @@ function DashboardOverview({ email, token }: DashboardOverviewProps) {
                   {isActive ? (
                     <>
                       <span className="font-body text-xs text-text-muted tabular-nums">
-                        {daysLeft === 0
-                          ? "Last day"
-                          : `${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`}
+                        {isUpcoming
+                          ? daysUntilStart === 1
+                            ? "Starts tomorrow"
+                            : `Starts in ${daysUntilStart} days`
+                          : daysLeft === 0
+                            ? "Last day"
+                            : `${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`}
                       </span>
                       {taskSummary && (
                         <>
@@ -704,11 +760,15 @@ function DashboardPageInner() {
   const [mounted, setMounted] = useState(false);
   const [showPushBanner, setShowPushBanner] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
   const [showPublishedBanner, setShowPublishedBanner] = useState(false);
 
   const storePushSubscription = useMutation(api.users.storePushSubscription);
   const updateTimezone = useMutation(api.users.updateTimezone);
+
+  const dashboardSessionData = useQuery(
+    api.auth.validateSession,
+    user?.token ? { token: user.token } : "skip",
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -738,6 +798,13 @@ function DashboardPageInner() {
     }
   }, [mounted, user, isLoading, router]);
 
+  // Redirect unverified email users to check-email
+  useEffect(() => {
+    if (dashboardSessionData && !dashboardSessionData.emailVerified) {
+      router.replace("/check-email");
+    }
+  }, [dashboardSessionData, router]);
+
   // Push banner deferred — shown only after user has set up a property.
   // The DashboardOverview triggers it via sessionStorage when property exists.
   useEffect(() => {
@@ -759,18 +826,6 @@ function DashboardPageInner() {
       );
     }
   }, [mounted, isLoading, user]);
-
-  useEffect(() => {
-    if (!mounted || isLoading || !user) return;
-    if (user.emailVerified) return;
-    if (sessionStorage.getItem("email_banner_dismissed")) return;
-    setShowVerificationBanner(true);
-  }, [mounted, isLoading, user]);
-
-  function handleDismissVerification() {
-    sessionStorage.setItem("email_banner_dismissed", "1");
-    setShowVerificationBanner(false);
-  }
 
   async function handleEnablePush() {
     setIsSubscribing(true);
@@ -820,27 +875,14 @@ function DashboardPageInner() {
   return (
     <CreatorLayout>
       <div className="flex flex-col gap-6">
-        {showPublishedBanner && (
-          <div className="bg-secondary-light border border-secondary rounded-lg px-4 py-3 flex items-center gap-3">
-            <span className="shrink-0 text-secondary">
-              <CheckIcon size={18} />
-            </span>
-            <p className="font-body text-sm text-text-primary flex-1">
-              Your Vadem is published!
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowPublishedBanner(false)}
-              className="shrink-0 text-text-muted hover:text-text-secondary transition-colors duration-150"
-              aria-label="Dismiss"
-            >
-              <XIcon size={16} />
-            </button>
-          </div>
-        )}
-        {showVerificationBanner && (
-          <VerificationBanner onDismiss={handleDismissVerification} />
-        )}
+        <NotificationToast
+          variant="success"
+          title="Home setup complete!"
+          message="Your care manual is ready. Create a trip to share it with your sitter."
+          visible={showPublishedBanner}
+          autoDismissMs={6000}
+          onDismiss={() => setShowPublishedBanner(false)}
+        />
         {showPushBanner && (
           <PushNotificationBanner
             onEnable={handleEnablePush}

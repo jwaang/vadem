@@ -2,6 +2,7 @@
 
 import { useState, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useWebHaptics } from "web-haptics/react";
 
 interface Section {
   id: string;
@@ -25,10 +26,12 @@ function SectionNav({
   const [internalActive, setInternalActive] = useState(
     activeId ?? sections[0]?.id ?? "",
   );
+  const { trigger } = useWebHaptics();
 
   const currentId = activeId ?? internalActive;
 
   function handleClick(id: string) {
+    trigger("selection");
     if (!activeId) setInternalActive(id);
     onSectionChange?.(id);
   }

@@ -9,11 +9,13 @@ import { identifyUser } from "@/lib/analytics";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { OAuthButtons, hasOAuthProviders } from "@/components/ui/OAuthButtons";
+import { useWebHaptics } from "web-haptics/react";
 
 export function LoginForm() {
   const router = useRouter();
   const { setUser } = useAuth();
   const doSignIn = useAction(api.authActions.signIn);
+  const { trigger } = useWebHaptics();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,10 +29,12 @@ export function LoginForm() {
 
     try {
       const result = await doSignIn({ email: email.trim(), password });
+      trigger("success");
       setUser({ token: result.token, email: result.email, emailVerified: result.emailVerified });
       identifyUser(result.token, result.email);
       router.push("/dashboard");
     } catch (err) {
+      trigger("error");
       const raw = err instanceof Error ? err.message : "";
       // Convex wraps server errors: extract the actual message after "Uncaught Error: "
       const match = raw.match(/Uncaught Error: ([^\n]+?)(?:\s+at |\s+Called by|$)/);

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { XIcon } from "@/components/ui/icons";
+import { useWebHaptics } from "web-haptics/react";
 
 const toastVariants = cva(
   "flex items-start gap-3 max-w-[380px] w-full py-4 px-5 bg-bg-raised rounded-lg border border-border-default border-l-[3px] shadow-lg animate-toast-slide-in",
@@ -111,6 +112,13 @@ function NotificationToast({
   const [exiting, setExiting] = useState(false);
   const [mounted] = useState(() => typeof window !== "undefined");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { trigger } = useWebHaptics();
+
+  // Fire haptic on mount (component returns null when !visible, so mount = appearance)
+  useEffect(() => {
+    trigger(variant === "warning" ? "warning" : "success");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isControlled = controlledVisible !== undefined;
   const visible = isControlled ? controlledVisible : internalVisible;

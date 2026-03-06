@@ -11,4 +11,12 @@ crons.daily(
   internal.trips.expireTripsDaily,
 );
 
+// Poll at :00, :05, :10, … :55 every hour (clock-aligned 5-min intervals).
+// Uses sitterSmsLog for dedup — safe to run repeatedly, no pre-scheduling needed.
+crons.cron(
+  "check sitter reminders",
+  "*/5 * * * *",
+  internal.sitterSmsQueries.checkAndSendReminders,
+);
+
 export default crons;

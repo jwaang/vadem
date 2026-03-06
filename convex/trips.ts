@@ -14,8 +14,11 @@ const tripObject = v.object({
   _id: v.id("trips"),
   _creationTime: v.number(),
   propertyId: v.id("properties"),
+  name: v.optional(v.string()),
   startDate: v.string(),
   endDate: v.string(),
+  startTime: v.optional(v.string()),
+  endTime: v.optional(v.string()),
   status: tripStatusValidator,
   shareLink: v.optional(v.string()),
   linkPassword: v.optional(v.string()),
@@ -66,8 +69,11 @@ export const getExistingTrip = query({
 export const createTrip = mutation({
   args: {
     propertyId: v.id("properties"),
+    name: v.string(),
     startDate: v.string(),
     endDate: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
   },
   returns: v.id("trips"),
   handler: async (ctx, args) => {
@@ -89,20 +95,26 @@ export const createTrip = mutation({
         message: "A trip is already in progress for this property.",
       });
     }
-    // Auto-set linkExpiry to end of endDate day (23:59:59.999 UTC)
-    const linkExpiry = new Date(args.endDate + "T23:59:59.999Z").getTime();
+    // Auto-set linkExpiry: use endTime if set, otherwise end of day
+    const linkExpiry = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T23:59:59.999Z").getTime();
     const tripId = await ctx.db.insert("trips", {
       propertyId: args.propertyId,
+      name: args.name,
       startDate: args.startDate,
       endDate: args.endDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
       status: "draft",
       linkExpiry,
     });
 
-    // Schedule the "trip ending soon" notification 24 hours before the end date
-    const notifyAt =
-      new Date(args.endDate + "T00:00:00.000Z").getTime() -
-      24 * 60 * 60 * 1000;
+    // Schedule the "trip ending soon" notification 24 hours before the end
+    const endTimestamp = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T00:00:00.000Z").getTime();
+    const notifyAt = endTimestamp - 24 * 60 * 60 * 1000;
     if (notifyAt > Date.now()) {
       const scheduledId = await ctx.scheduler.runAt(
         notifyAt,
@@ -254,6 +266,8 @@ export const updateTripDates = mutation({
     tripId: v.id("trips"),
     startDate: v.string(),
     endDate: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -281,10 +295,11 @@ export const updateTripDates = mutation({
       await ctx.scheduler.cancel(trip.tripEndingScheduledId);
     }
 
-    // Schedule new notification 24h before the updated end date
-    const notifyAt =
-      new Date(args.endDate + "T00:00:00.000Z").getTime() -
-      24 * 60 * 60 * 1000;
+    // Schedule new notification 24h before the updated end
+    const endTimestamp = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T00:00:00.000Z").getTime();
+    const notifyAt = endTimestamp - 24 * 60 * 60 * 1000;
     let tripEndingScheduledId:
       | (typeof trip)["tripEndingScheduledId"]
       | undefined;
@@ -296,11 +311,86 @@ export const updateTripDates = mutation({
       );
     }
 
-    const linkExpiry = new Date(args.endDate + "T23:59:59.999Z").getTime();
+    const linkExpiry = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T23:59:59.999Z").getTime();
 
     await ctx.db.patch(args.tripId, {
       startDate: args.startDate,
       endDate: args.endDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      linkExpiry,
+      tripEndingScheduledId,
+    });
+
+    return null;
+  },
+});
+
+// Updates a trip's name, start/end dates, and optional times.
+// Same linkExpiry/notification logic as updateTripDates.
+export const updateTripDetails = mutation({
+  args: {
+    tripId: v.id("trips"),
+    name: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const trip = await ctx.db.get(args.tripId);
+    if (!trip) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Trip not found" });
+    }
+
+    if (trip.status !== "draft" && trip.status !== "active") {
+      throw new ConvexError({
+        code: "FORBIDDEN",
+        message: "Cannot update details on a completed or expired trip.",
+      });
+    }
+
+    if (args.endDate <= args.startDate) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "End date must be after start date.",
+      });
+    }
+
+    // Cancel existing scheduled notification if present
+    if (trip.tripEndingScheduledId) {
+      await ctx.scheduler.cancel(trip.tripEndingScheduledId);
+    }
+
+    // Schedule new notification 24h before the updated end
+    const endTimestamp = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T00:00:00.000Z").getTime();
+    const notifyAt = endTimestamp - 24 * 60 * 60 * 1000;
+    let tripEndingScheduledId:
+      | (typeof trip)["tripEndingScheduledId"]
+      | undefined;
+    if (notifyAt > Date.now()) {
+      tripEndingScheduledId = await ctx.scheduler.runAt(
+        notifyAt,
+        internal.notifications.sendTripEndingSoonNotification,
+        { tripId: args.tripId },
+      );
+    }
+
+    const linkExpiry = args.endTime
+      ? new Date(args.endDate + "T" + args.endTime + ":00.000Z").getTime()
+      : new Date(args.endDate + "T23:59:59.999Z").getTime();
+
+    await ctx.db.patch(args.tripId, {
+      name: args.name,
+      startDate: args.startDate,
+      endDate: args.endDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
       linkExpiry,
       tripEndingScheduledId,
     });

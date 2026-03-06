@@ -1,8 +1,9 @@
 "use client";
 
-import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef, useCallback } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { useWebHaptics } from "web-haptics/react";
 
 const iconButtonVariants = cva(
   "inline-flex items-center justify-center cursor-pointer border-none transition-colors duration-150 ease-out disabled:opacity-30 disabled:cursor-not-allowed",
@@ -47,16 +48,29 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  { icon, variant, size, className, disabled, ...props },
+  { icon, variant, size, className, disabled, onClick, ...rest },
   ref,
 ) {
+  const { trigger } = useWebHaptics();
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled) {
+        trigger("light");
+      }
+      onClick?.(e);
+    },
+    [disabled, onClick, trigger],
+  );
+
   return (
     <button
       ref={ref}
       type="button"
       disabled={disabled}
       className={cn(iconButtonVariants({ variant, size }), className)}
-      {...props}
+      {...rest}
+      onClick={handleClick}
     >
       {icon}
     </button>

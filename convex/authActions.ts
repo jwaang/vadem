@@ -148,7 +148,7 @@ export const exchangeOAuthCode = action({
       );
       if (!userRes.ok) throw new Error("Failed to fetch Google user info");
 
-      const userData = (await userRes.json()) as { sub: string; email: string };
+      const userData = (await userRes.json()) as { sub: string; email: string; given_name?: string; family_name?: string };
       email = userData.email;
       providerId = userData.sub;
 
@@ -175,6 +175,8 @@ export const exchangeOAuthCode = action({
           userId = (await ctx.runMutation(internal.auth._createUser, {
             email,
             googleId: providerId,
+            firstName: userData.given_name,
+            lastName: userData.family_name,
           })) as Id<"users">;
           isNewUser = true;
         }
@@ -250,7 +252,7 @@ export const exchangeOAuthCode = action({
       const idTokenParts = tokenData.id_token.split(".");
       const idTokenPayload = JSON.parse(
         Buffer.from(idTokenParts[1], "base64url").toString("utf-8"),
-      ) as { sub: string; email?: string };
+      ) as { sub: string; email?: string; given_name?: string; family_name?: string };
 
       providerId = idTokenPayload.sub;
       email = idTokenPayload.email ?? "";
@@ -277,6 +279,8 @@ export const exchangeOAuthCode = action({
           userId = (await ctx.runMutation(internal.auth._createUser, {
             email,
             appleId: providerId,
+            firstName: idTokenPayload.given_name,
+            lastName: idTokenPayload.family_name,
           })) as Id<"users">;
           isNewUser = true;
         }

@@ -1,8 +1,9 @@
 "use client";
 
-import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef, useCallback } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { useWebHaptics } from "web-haptics/react";
 
 const buttonVariants = cva(
   "btn relative inline-flex items-center justify-center gap-2 font-body font-semibold leading-none whitespace-nowrap cursor-pointer select-none border-none transition-[transform,box-shadow,background-color,border-color] duration-150 ease-spring shadow-xs",
@@ -49,10 +50,23 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     className,
     children,
     disabled,
-    ...props
+    onClick,
+    ...rest
   },
   ref,
 ) {
+  const { trigger } = useWebHaptics();
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled) {
+        trigger(variant === "ghost" || variant === "soft" ? "light" : "medium");
+      }
+      onClick?.(e);
+    },
+    [disabled, onClick, trigger, variant],
+  );
+
   return (
     <button
       ref={ref}
@@ -62,7 +76,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         disabled && "opacity-40 cursor-not-allowed pointer-events-none",
         className,
       )}
-      {...props}
+      {...rest}
+      onClick={handleClick}
     >
       {icon && <span className="inline-flex shrink-0">{icon}</span>}
       {children}

@@ -9,6 +9,7 @@ import { identifyUser, trackSignupCompleted } from "@/lib/analytics";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { OAuthButtons, hasOAuthProviders } from "@/components/ui/OAuthButtons";
+import { useWebHaptics } from "web-haptics/react";
 
 interface FormErrors {
   email?: string;
@@ -37,6 +38,7 @@ function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
   const router = useRouter();
   const signupAction = useAction(api.authActions.signUp);
   const { setUser } = useAuth();
+  const { trigger } = useWebHaptics();
 
   // Fetch owner's first name for context messaging when coming from a sitter link
   const ownerName = useQuery(
@@ -79,11 +81,13 @@ function SignupFormInner({ originTripId }: { originTripId?: string | null }) {
         password,
         ...(originTripId ? { originTripId } : {}),
       });
+      trigger("success");
       setUser({ token, email: userEmail, emailVerified: false });
       identifyUser(token, userEmail);
       trackSignupCompleted("email");
-      router.push("/welcome");
+      router.push("/check-email");
     } catch (err) {
+      trigger("error");
       if (err instanceof Error && err.message.includes("already exists")) {
         setErrors({ email: "An account with this email already exists" });
       } else {

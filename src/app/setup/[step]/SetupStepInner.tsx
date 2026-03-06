@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { WizardProgress } from "@/components/ui/WizardProgress";
 import { SETUP_STEPS, type SetupSlug } from "@/lib/setupSteps";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeftIcon } from "@/components/ui/icons";
+
+const REACHED_STEP_KEY = "vadem_max_reached_step";
 import StepHome from "./StepHome";
 import StepPets from "./StepPets";
 import StepAccess from "./StepAccess";
@@ -38,11 +40,9 @@ function ComingSoon() {
 
 function SetupLayout({
   step,
-  wide,
   children,
 }: {
   step: SetupSlug;
-  wide?: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -50,9 +50,19 @@ function SetupLayout({
   const stepIndex = getStepIndex(step);
   const prevSlug = stepIndex > 0 ? SETUP_STEPS[stepIndex - 1].slug : null;
 
+  // Track the highest step the user has reached so they can navigate back to it
+  const [maxReachedStep, setMaxReachedStep] = useState(stepIndex);
+  useEffect(() => {
+    const stored = parseInt(sessionStorage.getItem(REACHED_STEP_KEY) ?? "0", 10);
+    const newMax = Math.max(stored, stepIndex);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMaxReachedStep(newMax);
+    sessionStorage.setItem(REACHED_STEP_KEY, String(newMax));
+  }, [stepIndex]);
+
   return (
     <main className="min-h-dvh bg-bg flex flex-col items-center px-5 pt-8 pb-12">
-      <div className={`w-full flex flex-col gap-6 ${wide ? "max-w-lg lg:max-w-4xl" : "max-w-lg"}`}>
+      <div className="w-full max-w-lg flex flex-col gap-6">
         {/* Wordmark */}
         <div className="text-center">
           <button
@@ -85,7 +95,7 @@ function SetupLayout({
         )}
 
         {/* Progress indicator */}
-        <WizardProgress currentStep={stepIndex} />
+        <WizardProgress currentStep={stepIndex} maxReachedStep={maxReachedStep} />
 
         {/* Back button */}
         {prevSlug && (
@@ -130,7 +140,7 @@ export default function SetupStepInner({ step }: SetupStepInnerProps) {
   }
 
   return (
-    <SetupLayout step={step} wide={step === "pets"}>
+    <SetupLayout step={step}>
       {step === "home" ? (
         <StepHome />
       ) : step === "pets" ? (

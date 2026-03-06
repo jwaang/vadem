@@ -5,12 +5,15 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/Button";
+import { TripSetupHeader } from "@/components/ui/TripSetupHeader";
+import { useWebHaptics } from "web-haptics/react";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 const STEPS = [
+  { label: "Details", active: false, href: "details" },
   { label: "One-Time Tasks", active: false, href: "overlay" },
   { label: "Sitters", active: false, href: "sitters" },
   { label: "Proof Settings", active: true, href: "proof" },
@@ -46,12 +49,13 @@ function ProofToggle({
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const { trigger } = useWebHaptics();
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => { trigger("light"); onChange(!checked); }}
       className={[
         "relative inline-flex h-6 w-11 shrink-0 rounded-pill border-2 border-transparent transition-colors duration-250",
         checked ? "bg-secondary" : "bg-border-strong",
@@ -155,18 +159,7 @@ function ProofStep({ tripId }: { tripId: Id<"trips"> }) {
   return (
     <div className="min-h-dvh bg-bg flex flex-col">
       {/* Header */}
-      <header className="bg-bg-raised border-b border-border-default px-4 py-4 flex items-center gap-3">
-        <a
-          href="/dashboard/trips"
-          className="font-body text-sm font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
-        >
-          ← Trips
-        </a>
-        <span className="text-border-strong">|</span>
-        <h1 className="font-body text-sm font-semibold text-text-primary">
-          Trip Setup
-        </h1>
-      </header>
+      <TripSetupHeader tripId={tripId} />
 
       {/* Step indicator */}
       <div className="bg-bg-raised border-b border-border-default px-4 py-3">

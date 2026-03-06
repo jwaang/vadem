@@ -42,6 +42,25 @@ export const create = mutation({
   },
   returns: v.id("overlayItems"),
   handler: async (ctx, args) => {
+    // Validate specificTime falls within trip time boundaries
+    if (args.date && args.specificTime) {
+      const trip = await ctx.db.get(args.tripId);
+      if (trip) {
+        if (args.date === trip.startDate && trip.startTime && args.specificTime < trip.startTime) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: "Task time is before the trip start time",
+          });
+        }
+        if (args.date === trip.endDate && trip.endTime && args.specificTime > trip.endTime) {
+          throw new ConvexError({
+            code: "INVALID_ARGUMENT",
+            message: "Task time is after the trip end time",
+          });
+        }
+      }
+    }
+
     const timeSlot = args.specificTime ? timeToSlot(args.specificTime) : args.timeSlot;
     return await ctx.db.insert("overlayItems", {
       ...args,
@@ -108,6 +127,31 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { overlayItemId, ...fields } = args;
+
+    // Validate specificTime against trip time boundaries
+    const item = await ctx.db.get(overlayItemId);
+    if (item) {
+      const date = fields.date ?? item.date;
+      const specificTime = fields.specificTime ?? item.specificTime;
+      if (date && specificTime) {
+        const trip = await ctx.db.get(item.tripId);
+        if (trip) {
+          if (date === trip.startDate && trip.startTime && specificTime < trip.startTime) {
+            throw new ConvexError({
+              code: "INVALID_ARGUMENT",
+              message: "Task time is before the trip start time",
+            });
+          }
+          if (date === trip.endDate && trip.endTime && specificTime > trip.endTime) {
+            throw new ConvexError({
+              code: "INVALID_ARGUMENT",
+              message: "Task time is after the trip end time",
+            });
+          }
+        }
+      }
+    }
+
     if (fields.specificTime) {
       fields.timeSlot = timeToSlot(fields.specificTime);
     }

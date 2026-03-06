@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { TabId } from "@/components/ui/BottomNav";
 import { TodayViewHeader } from "@/components/ui/TodayViewHeader";
@@ -25,6 +25,7 @@ import { BottomNav } from "@/components/ui/BottomNav";
 import { ContactsTab } from "@/components/ui/ContactsTab";
 import { PreTripHeader } from "@/components/ui/PreTripHeader";
 import { PreTripInfoBanner } from "@/components/ui/PreTripInfoBanner";
+import { NotificationToast } from "@/components/ui/NotificationToast";
 import { PreviewBanner } from "./PreviewBanner";
 import { PreviewVaultTab } from "./PreviewVaultTab";
 
@@ -40,7 +41,7 @@ function toContactRole(role: string): ContactRole {
 
 // ── Slot section (read-only) ─────────────────────────────────────────
 
-function PreviewSlotSection({ slot, tasks }: { slot: SlotKey; tasks: TodayTask[] }) {
+function PreviewSlotSection({ slot, tasks, onToggle }: { slot: SlotKey; tasks: TodayTask[]; onToggle: () => void }) {
   if (tasks.length === 0) return null;
 
   return (
@@ -61,7 +62,7 @@ function PreviewSlotSection({ slot, tasks }: { slot: SlotKey; tasks: TodayTask[]
                 overlay={task.isOverlay}
                 time={task.specificTime ? formatTimeRange(task.specificTime, task.specificTimeEnd) : undefined}
                 showProof={false}
-                onToggle={() => {}}
+                onToggle={onToggle}
               />
               {lc && (
                 <div className="mt-1.5">
@@ -114,6 +115,11 @@ interface PreviewPageInnerProps {
 
 export function PreviewPageInner({ data, mode = "creator-preview", tripMeta }: PreviewPageInnerProps) {
   const [activeTab, setActiveTab] = useState<TabId>("today");
+  const [showPreTripToast, setShowPreTripToast] = useState(false);
+
+  const handlePreTripToggle = useCallback(() => {
+    setShowPreTripToast(true);
+  }, []);
 
   const { property, emergencyContacts, recurringInstructions } = data as {
     property: { _id: Id<"properties">; name: string } | null;
@@ -201,6 +207,7 @@ export function PreviewPageInner({ data, mode = "creator-preview", tripMeta }: P
                       key={slot}
                       slot={slot}
                       tasks={taskGroups[slot]}
+                      onToggle={mode === "pre-trip" ? handlePreTripToggle : () => {}}
                     />
                   ))
                 )}
@@ -215,9 +222,38 @@ export function PreviewPageInner({ data, mode = "creator-preview", tripMeta }: P
             <ManualTab propertyId={property._id} isOnline />
           )}
 
-          {/* ── Vault tab (read-only, locked items) ────────── */}
-          {activeTab === "vault" && property && (
-            <PreviewVaultTab propertyId={property._id} />
+          {/* ── Vault tab ────────────────────────────────────── */}
+          {activeTab === "vault" && (
+            mode === "pre-trip" ? (
+              <div className="bg-vault-subtle rounded-xl border border-vault-light p-8 flex flex-col items-center text-center gap-4">
+                <div className="flex items-center justify-center w-14 h-14 rounded-round bg-vault text-text-on-vault shadow-sm">
+                  <svg
+                    width={28}
+                    height={28}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <p className="font-body text-base font-semibold text-text-primary">
+                    Vault is locked until the trip starts
+                  </p>
+                  <p className="font-body text-sm text-text-muted max-w-[280px]">
+                    Once the trip begins, verify your phone number via SMS to access codes and passwords.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              property && <PreviewVaultTab propertyId={property._id} />
+            )
           )}
 
           {/* ── Contacts tab ────────────────────────────────── */}
@@ -228,6 +264,17 @@ export function PreviewPageInner({ data, mode = "creator-preview", tripMeta }: P
       </main>
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={previewTabs} variant="sticky" />
+
+      {showPreTripToast && (
+        <NotificationToast
+          variant="warning"
+          title="Trip hasn't started yet"
+          message="You'll be able to check off tasks once the trip begins."
+          autoDismissMs={2500}
+          visible={showPreTripToast}
+          onDismiss={() => setShowPreTripToast(false)}
+        />
+      )}
     </div>
   );
 }

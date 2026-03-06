@@ -105,6 +105,48 @@ export function sortWithinSlot(tasks: TodayTask[]): TodayTask[] {
   });
 }
 
+/** Filter tasks on first/last day based on trip start/end times. */
+export function filterTasksByTripTime(
+  tasks: TodayTask[],
+  trip: { startDate: string; endDate: string; startTime?: string; endTime?: string },
+  today: string,
+): TodayTask[] {
+  const isFirstDay = today === trip.startDate && !!trip.startTime;
+  const isLastDay = today === trip.endDate && !!trip.endTime;
+  if (!isFirstDay && !isLastDay) return tasks;
+
+  return tasks.filter((task) => {
+    // Always keep anytime tasks
+    if (task.timeSlot === "anytime") return true;
+
+    // First day: hide tasks before trip start
+    if (isFirstDay && trip.startTime) {
+      if (task.specificTime) {
+        if (task.specificTime < trip.startTime) return false;
+      } else {
+        // Slot-only: hide if entire slot ends before startTime
+        // morning ends at 12:00, afternoon ends at 17:00
+        if (task.timeSlot === "morning" && trip.startTime >= "12:00") return false;
+        if (task.timeSlot === "afternoon" && trip.startTime >= "17:00") return false;
+      }
+    }
+
+    // Last day: hide tasks after trip end
+    if (isLastDay && trip.endTime) {
+      if (task.specificTime) {
+        if (task.specificTime > trip.endTime) return false;
+      } else {
+        // Slot-only: hide if slot starts after endTime
+        // afternoon starts at 12:00, evening starts at 17:00
+        if (task.timeSlot === "afternoon" && trip.endTime < "12:00") return false;
+        if (task.timeSlot === "evening" && trip.endTime < "17:00") return false;
+      }
+    }
+
+    return true;
+  });
+}
+
 export function groupBySlot(tasks: TodayTask[]): Record<SlotKey, TodayTask[]> {
   const groups: Record<SlotKey, TodayTask[]> = {
     morning: [],

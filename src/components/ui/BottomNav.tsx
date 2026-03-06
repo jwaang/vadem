@@ -2,6 +2,7 @@
 
 import { useState, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useWebHaptics } from "web-haptics/react";
 
 type TabId = "today" | "manual" | "vault" | "contacts";
 
@@ -108,10 +109,12 @@ function BottomNav({
   const [internalActive, setInternalActive] = useState<TabId>(
     activeTab ?? "today",
   );
+  const { trigger } = useWebHaptics();
 
   const currentTab = activeTab ?? internalActive;
 
   function handleTap(tab: TabId) {
+    trigger("selection");
     if (!activeTab) setInternalActive(tab);
     onTabChange?.(tab);
   }

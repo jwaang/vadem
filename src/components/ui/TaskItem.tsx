@@ -3,6 +3,7 @@
 import { type HTMLAttributes, type ReactNode, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./Badge";
+import { useWebHaptics } from "web-haptics/react";
 
 interface TaskItemProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick" | "onToggle"> {
   /** Task description text */
@@ -109,16 +110,20 @@ function TaskItem({
   const [internalCompleted, setInternalCompleted] = useState(defaultCompleted);
   const isControlled = controlledCompleted !== undefined;
   const completed = isControlled ? controlledCompleted : internalCompleted;
+  const { trigger } = useWebHaptics();
 
   const handleToggle = useCallback(() => {
     // Don't allow toggling while uploading
     if (uploading) return;
     const next = !completed;
+    if (next) {
+      trigger("success");
+    }
     if (!isControlled) {
       setInternalCompleted(next);
     }
     onToggle?.(next);
-  }, [completed, isControlled, onToggle, uploading]);
+  }, [completed, isControlled, onToggle, uploading, trigger]);
 
   const handleProofClick = useCallback(
     (e: React.MouseEvent) => {

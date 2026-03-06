@@ -11,6 +11,8 @@ type StepStatus = "completed" | "active" | "upcoming";
 interface WizardProgressProps extends HTMLAttributes<HTMLElement> {
   currentStep: number;
   completedSteps?: number[];
+  /** The highest step index the user has reached — steps up to this are navigable */
+  maxReachedStep?: number;
 }
 
 function CheckIcon() {
@@ -79,6 +81,7 @@ function getStepStatus(
 function WizardProgress({
   currentStep,
   completedSteps,
+  maxReachedStep,
   className,
   ...props
 }: WizardProgressProps) {
@@ -95,27 +98,45 @@ function WizardProgress({
         {SETUP_STEPS.map((step, index) => {
           const status = getStepStatus(index, currentStep, completedSteps);
           const isLast = index === SETUP_STEPS.length - 1;
+          // Navigable if completed OR previously reached (but not the active step)
+          const isNavigable =
+            status === "completed" ||
+            (maxReachedStep !== undefined && index <= maxReachedStep && index !== currentStep);
+
+          const content = (
+            <>
+              <span className={dotVariants({ status })}>
+                {status === "completed" ? (
+                  <CheckIcon />
+                ) : (
+                  <span className="tabular-nums">{index + 1}</span>
+                )}
+              </span>
+              <span className={labelVariants({ status })}>{step.label}</span>
+            </>
+          );
 
           return (
             <li key={step.label} className="flex items-start">
-              <Link
-                href={`/setup/${step.slug}`}
-                className={cn(
-                  "flex flex-col items-center gap-2 min-w-[72px] cursor-pointer no-underline",
-                  status === "upcoming" && "hover:[&>span:first-child]:border-primary hover:[&>span:last-child]:text-primary",
-                  status === "completed" && "hover:[&>span:first-child]:opacity-80",
-                )}
-                aria-current={status === "active" ? "step" : undefined}
-              >
-                <span className={dotVariants({ status })}>
-                  {status === "completed" ? (
-                    <CheckIcon />
-                  ) : (
-                    <span className="tabular-nums">{index + 1}</span>
+              {isNavigable ? (
+                <Link
+                  href={`/setup/${step.slug}`}
+                  className={cn(
+                    "flex flex-col items-center gap-2 min-w-[72px] cursor-pointer no-underline",
+                    "hover:[&>span:first-child]:opacity-80",
                   )}
+                  aria-current={undefined}
+                >
+                  {content}
+                </Link>
+              ) : (
+                <span
+                  className="flex flex-col items-center gap-2 min-w-[72px]"
+                  aria-current={status === "active" ? "step" : undefined}
+                >
+                  {content}
                 </span>
-                <span className={labelVariants({ status })}>{step.label}</span>
-              </Link>
+              )}
 
               {!isLast && (
                 <span

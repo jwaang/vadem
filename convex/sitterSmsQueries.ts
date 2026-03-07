@@ -575,6 +575,15 @@ export const checkAndSendReminders = internalMutation({
             .collect();
           const alreadySent = logs.some((l) => l.reminderTime === time);
           if (!alreadySent) {
+            // Write log FIRST (transactional) to prevent race condition
+            await ctx.db.insert("sitterSmsLog", {
+              tripId: prefs.tripId,
+              sitterId: prefs.sitterId,
+              reminderTime: time,
+              date: sitterToday,
+              sentAt: Date.now(),
+              taskCount: 0,
+            });
             await ctx.scheduler.runAfter(0, internal.sitterSms.sendReminder, {
               sitterId: prefs.sitterId,
               tripId: prefs.tripId,
@@ -597,6 +606,14 @@ export const checkAndSendReminders = internalMutation({
           )
           .collect();
         if (!logs.some((l) => l.reminderTime === "trip_start")) {
+          await ctx.db.insert("sitterSmsLog", {
+            tripId: prefs.tripId,
+            sitterId: prefs.sitterId,
+            reminderTime: "trip_start",
+            date: sitterToday,
+            sentAt: Date.now(),
+            taskCount: 0,
+          });
           await ctx.scheduler.runAfter(0, internal.sitterSms.sendTripStartSms, {
             sitterId: prefs.sitterId,
             tripId: prefs.tripId,
@@ -621,6 +638,14 @@ export const checkAndSendReminders = internalMutation({
           )
           .collect();
         if (!logs.some((l) => l.reminderTime === "trip_ending")) {
+          await ctx.db.insert("sitterSmsLog", {
+            tripId: prefs.tripId,
+            sitterId: prefs.sitterId,
+            reminderTime: "trip_ending",
+            date: sitterToday,
+            sentAt: Date.now(),
+            taskCount: 0,
+          });
           await ctx.scheduler.runAfter(0, internal.sitterSms.sendTripEndingSms, {
             sitterId: prefs.sitterId,
             tripId: prefs.tripId,
@@ -653,26 +678,6 @@ function getTimeInTimezone(nowMs: number, timezone: string): string {
   });
   return formatter.format(new Date(nowMs));
 }
-
-export const logSmsSend = internalMutation({
-  args: {
-    tripId: v.id("trips"),
-    sitterId: v.id("sitters"),
-    reminderTime: v.string(),
-    date: v.string(),
-    taskCount: v.number(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("sitterSmsLog", {
-      tripId: args.tripId,
-      sitterId: args.sitterId,
-      reminderTime: args.reminderTime,
-      date: args.date,
-      sentAt: Date.now(),
-      taskCount: args.taskCount,
-    });
-  },
-});
 
 /**
  * Opt out by phone number — used by Twilio STOP webhook and 21610 error handling.

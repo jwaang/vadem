@@ -96,11 +96,15 @@ export const sendReminder = internalAction({
       (t) => !completedRefs.has(t.taskRef),
     ).length;
 
+    // Treat empty string same as undefined for specificTimeEnd
+    const getEndTime = (t: { specificTime: string; specificTimeEnd?: string }) =>
+      t.specificTimeEnd || t.specificTime;
+
     // Include timed tasks that are:
     // 1. Upcoming (end time >= reminder time), OR
     // 2. Past end time but still incomplete (overdue)
     const relevantTasks = allTasks.filter((t) => {
-      const endTime = t.specificTimeEnd ?? t.specificTime;
+      const endTime = getEndTime(t);
       if (endTime >= args.reminderTime) return true;
       if (!completedRefs.has(t.taskRef)) return true;
       return false;
@@ -118,13 +122,13 @@ export const sendReminder = internalAction({
     // A task is overdue when its end time (or start time if no range) has passed and it's incomplete
     const overdueTasks = relevantTasks.filter(
       (t) =>
-        (t.specificTimeEnd ?? t.specificTime) < args.reminderTime &&
+        getEndTime(t) < args.reminderTime &&
         !completedRefs.has(t.taskRef),
     );
     // A task is active if it has a time range and we're within it (start <= now <= end)
     const activeTasks = relevantTasks.filter(
       (t) =>
-        t.specificTimeEnd !== undefined &&
+        !!t.specificTimeEnd &&
         t.specificTime <= args.reminderTime &&
         t.specificTimeEnd >= args.reminderTime &&
         !completedRefs.has(t.taskRef),
@@ -181,13 +185,6 @@ export const sendReminder = internalAction({
       !fromNumber
     ) {
       console.log(`[DEV] Twilio not configured — skipping SMS reminder`);
-      await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        reminderTime: args.reminderTime,
-        date: args.date,
-        taskCount: relevantTasks.length,
-      });
       return null;
     }
 
@@ -209,14 +206,6 @@ export const sendReminder = internalAction({
       console.error("[Twilio] SMS reminder send error:", err);
       return null;
     }
-
-    await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-      tripId: args.tripId,
-      sitterId: args.sitterId,
-      reminderTime: args.reminderTime,
-      date: args.date,
-      taskCount: relevantTasks.length,
-    });
 
     return null;
   },
@@ -263,13 +252,6 @@ export const sendTripStartSms = internalAction({
       !fromNumber
     ) {
       console.log(`[DEV] Twilio not configured — skipping trip start SMS`);
-      await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        reminderTime: "trip_start",
-        date: args.date,
-        taskCount: 0,
-      });
       return null;
     }
 
@@ -290,14 +272,6 @@ export const sendTripStartSms = internalAction({
       console.error("[Twilio] Trip start SMS error:", err);
       return null;
     }
-
-    await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-      tripId: args.tripId,
-      sitterId: args.sitterId,
-      reminderTime: "trip_start",
-      date: args.date,
-      taskCount: 0,
-    });
 
     return null;
   },
@@ -344,13 +318,6 @@ export const sendTripEndingSms = internalAction({
       !fromNumber
     ) {
       console.log(`[DEV] Twilio not configured — skipping trip ending SMS`);
-      await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        reminderTime: "trip_ending",
-        date: args.date,
-        taskCount: 0,
-      });
       return null;
     }
 
@@ -371,14 +338,6 @@ export const sendTripEndingSms = internalAction({
       console.error("[Twilio] Trip ending SMS error:", err);
       return null;
     }
-
-    await ctx.runMutation(internal.sitterSmsQueries.logSmsSend, {
-      tripId: args.tripId,
-      sitterId: args.sitterId,
-      reminderTime: "trip_ending",
-      date: args.date,
-      taskCount: 0,
-    });
 
     return null;
   },

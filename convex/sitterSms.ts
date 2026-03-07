@@ -115,15 +115,23 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
-    // A task is overdue when its end time (or start time if no range) has passed
+    // A task is overdue when its end time (or start time if no range) has passed and it's incomplete
     const overdueTasks = relevantTasks.filter(
       (t) =>
         (t.specificTimeEnd ?? t.specificTime) < args.reminderTime &&
         !completedRefs.has(t.taskRef),
     );
-    // A task is upcoming if its end time hasn't passed yet
+    // A task is active if it has a time range and we're within it (start <= now <= end)
+    const activeTasks = relevantTasks.filter(
+      (t) =>
+        t.specificTimeEnd !== undefined &&
+        t.specificTime <= args.reminderTime &&
+        t.specificTimeEnd >= args.reminderTime &&
+        !completedRefs.has(t.taskRef),
+    );
+    // A task is upcoming if its start time hasn't been reached yet
     const upcomingTasks = relevantTasks.filter(
-      (t) => (t.specificTimeEnd ?? t.specificTime) >= args.reminderTime,
+      (t) => t.specificTime > args.reminderTime,
     );
 
     const anytimeSuffix =
@@ -131,19 +139,34 @@ export const sendReminder = internalAction({
         ? ` You also have ${incompleteAnytimeCount} other ${incompleteAnytimeCount === 1 ? "task" : "tasks"} to complete.`
         : "";
 
+    // Build parts list dynamically
+    const parts: string[] = [];
+    if (overdueTasks.length > 0) {
+      parts.push(
+        `${overdueTasks.length} overdue ${overdueTasks.length === 1 ? "task" : "tasks"}`,
+      );
+    }
+    if (activeTasks.length > 0) {
+      parts.push(
+        `${activeTasks.length} ${activeTasks.length === 1 ? "task" : "tasks"} in progress`,
+      );
+    }
+    if (upcomingTasks.length > 0) {
+      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
+      parts.push(
+        `${upcomingTasks.length} upcoming ${upcomingTasks.length === 1 ? "task" : "tasks"}, next at ${nextTime}`,
+      );
+    }
+
     let body: string;
-    if (overdueTasks.length > 0 && upcomingTasks.length > 0) {
-      const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
-      const upcomingWord = upcomingTasks.length === 1 ? "task" : "tasks";
-      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} and ${upcomingTasks.length} upcoming ${upcomingWord}, next at ${nextTime}.${anytimeSuffix}`;
-    } else if (overdueTasks.length > 0) {
-      const overdueWord = overdueTasks.length === 1 ? "task" : "tasks";
-      body = `Vadem: You have ${overdueTasks.length} overdue ${overdueWord} that still need attention.${anytimeSuffix}`;
-    } else if (upcomingTasks.length > 0) {
-      const taskWord = upcomingTasks.length === 1 ? "task" : "tasks";
-      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      body = `Vadem: You have ${upcomingTasks.length} upcoming ${taskWord}, next at ${nextTime}.${anytimeSuffix}`;
+    if (parts.length > 0) {
+      const joined =
+        parts.length === 1
+          ? parts[0]
+          : parts.length === 2
+            ? `${parts[0]} and ${parts[1]}`
+            : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+      body = `Vadem: You have ${joined}.${anytimeSuffix}`;
     } else {
       // Only anytime tasks remain
       const taskWord = incompleteAnytimeCount === 1 ? "task" : "tasks";

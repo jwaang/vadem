@@ -84,16 +84,12 @@ export const sendReminder = internalAction({
       (t) => !completedRefs.has(t.taskRef),
     ).length;
 
-    // Treat empty string same as undefined for specificTimeEnd
-    const getEndTime = (t: { specificTime: string; specificTimeEnd?: string }) =>
-      t.specificTimeEnd || t.specificTime;
-
     // Include timed tasks that are:
-    // 1. Upcoming (end time >= reminder time), OR
-    // 2. Past end time but still incomplete (overdue)
+    // 1. Upcoming (start time >= reminder time), OR
+    // 2. In progress range tasks (has end time, started, incomplete), OR
+    // 3. Past start time but still incomplete (overdue point-in-time tasks)
     const relevantTasks = allTasks.filter((t) => {
-      const endTime = getEndTime(t);
-      if (endTime >= args.reminderTime) return true;
+      if (t.specificTime >= args.reminderTime) return true;
       if (!completedRefs.has(t.taskRef)) return true;
       return false;
     });
@@ -107,21 +103,21 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
-    // A task is overdue when its end time (or start time if no range) has passed and it's incomplete
+    // Overdue: point-in-time tasks (no end time) whose time has passed and are incomplete
     const overdueTasks = relevantTasks.filter(
       (t) =>
-        getEndTime(t) < args.reminderTime &&
+        !t.specificTimeEnd &&
+        t.specificTime < args.reminderTime &&
         !completedRefs.has(t.taskRef),
     );
-    // A task is active if it has a time range and we're within it (start <= now <= end)
+    // In progress: range tasks whose start has passed and are incomplete
     const activeTasks = relevantTasks.filter(
       (t) =>
         !!t.specificTimeEnd &&
         t.specificTime <= args.reminderTime &&
-        t.specificTimeEnd >= args.reminderTime &&
         !completedRefs.has(t.taskRef),
     );
-    // A task is upcoming if its start time hasn't been reached yet
+    // Upcoming: tasks whose start time hasn't been reached yet
     const upcomingTasks = relevantTasks.filter(
       (t) => t.specificTime > args.reminderTime,
     );

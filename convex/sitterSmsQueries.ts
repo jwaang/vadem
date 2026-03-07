@@ -347,7 +347,21 @@ export const getTimedTasksForDate = internalQuery({
       }
     }
 
-    return tasks.sort((a, b) =>
+    // First-day / last-day filtering (matches UI's filterTasksByTripTime)
+    const isFirstDay = args.date === trip.startDate && !!trip.startTime;
+    const isLastDay = args.date === trip.endDate && !!trip.endTime;
+    const filtered =
+      isFirstDay || isLastDay
+        ? tasks.filter((t) => {
+            if (isFirstDay && trip.startTime && t.specificTime < trip.startTime)
+              return false;
+            if (isLastDay && trip.endTime && t.specificTime > trip.endTime)
+              return false;
+            return true;
+          })
+        : tasks;
+
+    return filtered.sort((a, b) =>
       a.specificTime.localeCompare(b.specificTime),
     );
   },

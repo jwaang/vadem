@@ -62,18 +62,6 @@ export const sendReminder = internalAction({
     // Check this reminder time is still configured
     if (!prefs.reminderTimes.includes(args.reminderTime)) return null;
 
-    // Dedup check
-    const alreadySent = await ctx.runQuery(
-      internal.sitterSmsQueries.wasReminderSent,
-      {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        date: args.date,
-        reminderTime: args.reminderTime,
-      },
-    );
-    if (alreadySent) return null;
-
     // Get all timed tasks for today
     const allTasks = await ctx.runQuery(
       internal.sitterSmsQueries.getTimedTasksForDate,
@@ -227,17 +215,6 @@ export const sendTripStartSms = internalAction({
     });
     if (!prefs || !prefs.smsConsent || prefs.optedOutAt) return null;
 
-    const alreadySent = await ctx.runQuery(
-      internal.sitterSmsQueries.wasReminderSent,
-      {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        date: args.date,
-        reminderTime: "trip_start",
-      },
-    );
-    if (alreadySent) return null;
-
     const trip = await ctx.runQuery(internal.trips._getById, {
       tripId: args.tripId,
     });
@@ -292,17 +269,6 @@ export const sendTripEndingSms = internalAction({
       sitterId: args.sitterId,
     });
     if (!prefs || !prefs.smsConsent || prefs.optedOutAt) return null;
-
-    const alreadySent = await ctx.runQuery(
-      internal.sitterSmsQueries.wasReminderSent,
-      {
-        tripId: args.tripId,
-        sitterId: args.sitterId,
-        date: args.date,
-        reminderTime: "trip_ending",
-      },
-    );
-    if (alreadySent) return null;
 
     const trip = await ctx.runQuery(internal.trips._getById, {
       tripId: args.tripId,

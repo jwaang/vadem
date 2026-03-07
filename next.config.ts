@@ -19,6 +19,18 @@ const nextConfig: NextConfig = {
       { source: "/wizard/6", destination: "/setup/review", permanent: true },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -41,7 +53,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPostHogConfig(nextConfig, {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const posthogWrapped: any = withPostHogConfig(nextConfig, {
   personalApiKey: process.env.POSTHOG_API_KEY!,
   projectId: process.env.POSTHOG_PROJECT_ID!,
   host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
@@ -50,3 +63,35 @@ export default withPostHogConfig(nextConfig, {
     deleteAfterUpload: true,
   },
 });
+
+// Wrap the PostHog-generated runAfterProductionCompile hook so source map
+// upload failures (e.g. duplicate hash collisions) don't break the build.
+// withPostHogConfig returns an async function at runtime despite the NextConfig type.
+const wrappedConfig = async (
+  phase: string,
+  ctx: { defaultConfig: NextConfig },
+): Promise<NextConfig> => {
+  const resolved = await posthogWrapped(phase, ctx);
+
+  const originalHook = resolved.compiler?.runAfterProductionCompile;
+  if (originalHook) {
+    resolved.compiler = {
+      ...resolved.compiler,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      runAfterProductionCompile: async (config: any) => {
+        try {
+          await originalHook(config);
+        } catch (err: unknown) {
+          console.warn(
+            "[@posthog/nextjs-config] Source map upload failed (non-fatal):",
+            err,
+          );
+        }
+      },
+    };
+  }
+
+  return resolved;
+};
+
+export default wrappedConfig;

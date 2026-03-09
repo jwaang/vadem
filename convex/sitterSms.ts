@@ -16,6 +16,11 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import twilio from "twilio";
+import {
+  filterRelevantTasks,
+  bucketTasks,
+  buildReminderBody,
+} from "./smsReminderLogic";
 
 function getTwilioClient() {
   const accountSid = process.env.TWILIO_ACCOUNT_SID!;
@@ -30,12 +35,6 @@ function toE164(phone: string): string {
   return `+${digits}`;
 }
 
-function formatTime12h(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
-}
 
 /**
  * Send a single SMS reminder at a sitter's chosen time.
@@ -84,15 +83,11 @@ export const sendReminder = internalAction({
       (t) => !completedRefs.has(t.taskRef),
     ).length;
 
-    // Include timed tasks that are:
-    // 1. Upcoming (start time >= reminder time), OR
-    // 2. In progress range tasks (has end time, started, incomplete), OR
-    // 3. Past start time but still incomplete (overdue point-in-time tasks)
-    const relevantTasks = allTasks.filter((t) => {
-      if (t.specificTime >= args.reminderTime) return true;
-      if (!completedRefs.has(t.taskRef)) return true;
-      return false;
-    });
+    const relevantTasks = filterRelevantTasks(
+      allTasks,
+      completedRefs,
+      args.reminderTime,
+    );
 
     // If no relevant timed tasks AND no incomplete anytime tasks, skip SMS
     if (relevantTasks.length === 0 && incompleteAnytimeCount === 0) return null;
@@ -103,63 +98,18 @@ export const sendReminder = internalAction({
     });
     if (!trip || trip.status !== "active") return null;
 
-    // Overdue: point-in-time tasks (no end time) whose time has passed and are incomplete
-    const overdueTasks = relevantTasks.filter(
-      (t) =>
-        !t.specificTimeEnd &&
-        t.specificTime < args.reminderTime &&
-        !completedRefs.has(t.taskRef),
+    const { overdue, active, upcoming } = bucketTasks(
+      relevantTasks,
+      completedRefs,
+      args.reminderTime,
     );
-    // In progress: range tasks whose start has passed and are incomplete
-    const activeTasks = relevantTasks.filter(
-      (t) =>
-        !!t.specificTimeEnd &&
-        t.specificTime <= args.reminderTime &&
-        !completedRefs.has(t.taskRef),
+    const body = buildReminderBody(
+      overdue,
+      active,
+      upcoming,
+      incompleteAnytimeCount,
     );
-    // Upcoming: tasks whose start time hasn't been reached yet
-    const upcomingTasks = relevantTasks.filter(
-      (t) => t.specificTime > args.reminderTime,
-    );
-
-    const anytimeSuffix =
-      incompleteAnytimeCount > 0
-        ? ` You also have ${incompleteAnytimeCount} other ${incompleteAnytimeCount === 1 ? "task" : "tasks"} to complete.`
-        : "";
-
-    // Build parts list dynamically
-    const parts: string[] = [];
-    if (overdueTasks.length > 0) {
-      parts.push(
-        `${overdueTasks.length} overdue ${overdueTasks.length === 1 ? "task" : "tasks"}`,
-      );
-    }
-    if (activeTasks.length > 0) {
-      parts.push(
-        `${activeTasks.length} ${activeTasks.length === 1 ? "task" : "tasks"} in progress`,
-      );
-    }
-    if (upcomingTasks.length > 0) {
-      const nextTime = formatTime12h(upcomingTasks[0].specificTime);
-      parts.push(
-        `${upcomingTasks.length} upcoming ${upcomingTasks.length === 1 ? "task" : "tasks"}, next at ${nextTime}`,
-      );
-    }
-
-    let body: string;
-    if (parts.length > 0) {
-      const joined =
-        parts.length === 1
-          ? parts[0]
-          : parts.length === 2
-            ? `${parts[0]} and ${parts[1]}`
-            : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
-      body = `Vadem: You have ${joined}.${anytimeSuffix}`;
-    } else {
-      // Only anytime tasks remain
-      const taskWord = incompleteAnytimeCount === 1 ? "task" : "tasks";
-      body = `Vadem: You still have ${incompleteAnytimeCount} ${taskWord} to complete today.`;
-    }
+    if (!body) return null;
 
     // Send via Twilio
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;

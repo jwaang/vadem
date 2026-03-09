@@ -13,11 +13,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "nuke-db": "bash scripts/nuke-db.sh",
-    "seed-demo": "bash scripts/seed-demo.sh"
+    "seed-demo": "bash scripts/seed-demo.sh",
+    "test": "vitest run"
   },
   "dependencies": {
     "@posthog/nextjs-config": "^1.8.18",
-    "twilio": "^5.7.0",
     "@react-pdf/renderer": "^4.3.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -32,6 +32,7 @@
     "react-dom": "19.2.3",
     "resend": "^6.9.2",
     "tailwind-merge": "^3.4.1",
+    "twilio": "^5.7.0",
     "web-haptics": "^0.0.6",
     "web-push": "^3.6.7"
   },
@@ -48,6 +49,7 @@
     "prettier": "^3.8.1",
     "react-grab": "^0.1.23",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

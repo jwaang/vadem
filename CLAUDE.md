@@ -26,6 +26,10 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript** (strict)
 - **Tailwind CSS v4** via `@tailwindcss/postcss` — theme mapped to CSS custom properties in `globals.css`
 - **Convex** for backend (real-time sync, custom auth via session tokens)
+- **Framer Motion** for page transitions and complex animations
+- **PostHog** for analytics (proxied via `/ingest` rewrites)
+- **Twilio** for SMS (vault OTP verification + sitter reminders)
+- **Resend** for transactional email
 - **pnpm** package manager
 
 ### Layout
@@ -41,9 +45,17 @@ No test runner is configured yet. Run `pnpm lint && pnpm typecheck` to validate 
 
 ### Route Structure
 Two distinct user modes with separate route trees:
-- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property`, `/dashboard/settings`, `/welcome`, `/setup/[step]` (slugs: home, pets, access, contacts, instructions, review), `/manual/[propertyId]`, `/report`
-- **Sitter routes** (unauthenticated, link-based): `/t/[tripId]` — password-gated today view with tabs (tasks, vault, activity); `/trip/[tripId]` — owner's authenticated view of the same trip
-- **Auth routes**: `/login`, `/signup`, `/verify-email`, `/auth/callback`
+- **Creator routes** (authenticated): `/dashboard`, `/dashboard/trips`, `/dashboard/property` (sub-pages: `/sections`, `/pets`, `/contacts`, `/vault`), `/dashboard/settings` (sub-page: `/notifications`), `/dashboard/preview`, `/welcome`, `/setup/[step]` (slugs: home, pets, access, contacts, instructions, review), `/manual/[propertyId]`
+- **Trip management** (authenticated): `/trip/[tripId]` with sub-pages: `/details`, `/overlay`, `/sitters`, `/proof`, `/share`, `/activity`; `/dashboard/trips/[tripId]/report`
+- **Sitter routes** (unauthenticated, link-based): `/t/[tripId]` — password-gated today view with tabs (tasks, vault, activity)
+- **Public routes**: `/report/[reportShareLink]` (shared trip report), `/guides/*` (SEO content pages), `/terms`, `/privacy`
+- **Auth routes**: `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/check-email`, `/auth/callback`
+
+### Page Component Pattern
+Route pages follow a consistent three-layer pattern:
+- `page.tsx` — Server component, exports `metadata`, renders the `*PageClient` component
+- `*PageClient.tsx` — `"use client"` wrapper that handles auth checks, Convex queries, loading/error states
+- `*StepInner.tsx` or `*Editor.tsx` — Pure presentation/form component (used in trip setup steps and property editors)
 
 ### Auth Architecture
 Custom auth — NOT Convex Auth library. Sessions stored in the `sessions` table with a random token; the token is set as an HTTP-only cookie via Next.js server actions in `convex/authActions.ts`. OAuth (Google, Apple) goes through `/auth/callback`. Sitter access uses a separate `tripSessions` table with its own token, keyed to a share link + optional password.
@@ -60,6 +72,34 @@ Convex files in `convex/` use three function types:
 **Auth pattern**: There is no auth middleware. Authenticated functions accept a `token: v.string()` arg, look up the session via `sessions.by_token` index, and validate expiry inline. Follow this pattern for any new authenticated endpoint.
 
 **Internal vs public**: Functions prefixed with `_` (e.g. `_createUser`, `_getSessionByToken`) are `internal*` variants — only callable from other Convex functions, not from the client.
+
+### Cron Jobs & HTTP Routes
+Two scheduled jobs in `convex/crons.ts`:
+- **Daily trip expiration** (midnight UTC) — marks past-endDate trips as `expired`
+- **SMS reminder polling** (every 5 min) — checks sitter reminder preferences and sends due reminders via Twilio, with dedup via `sitterSmsLog`
+
+Convex HTTP router (`convex/http.ts`) exposes `/twilio/sms` webhook for inbound SMS (STOP/START opt-out/in handling).
+
+### SMS Reminder System
+Sitter SMS reminders are a significant subsystem spanning multiple files:
+- `convex/sitterSms.ts` — Twilio send logic (action, `"use node"`)
+- `convex/sitterSmsQueries.ts` — Reminder scheduling, dedup, opt-in/out mutations
+- `sitterSmsPreferences` table — Per-sitter consent, timezone, up to 3 daily reminder times
+- `sitterSmsLog` table — Dedup log preventing duplicate sends for same date+time
+- TCPA compliance: consent timestamps, carrier-level STOP/START handling
+
+### Offline / PWA
+Sitter-facing views support offline usage:
+- `public/sw.js` — Service worker for caching and offline support
+- `src/lib/offlineQueue.ts` — Queues task completions in localStorage when offline; drains on reconnect with original timestamps
+- `src/lib/photoUploadQueue.ts` — Queues proof photo blobs in IndexedDB (binary storage); retries on reconnect with max 3 attempts
+- `src/lib/offlineTripData.ts` — Caches trip data for offline sitter access
+
+### Analytics
+PostHog integration proxied through `/ingest` rewrites (avoids ad blockers):
+- `@posthog/nextjs-config` wraps `next.config.ts` for source map upload
+- `src/lib/analytics.ts` — Typed custom event helpers (signup, onboarding steps, task completions, vault access, etc.)
+- Auto-captures pageviews, clicks, session recordings
 
 ### Provider Hierarchy
 `layout.tsx` wraps the app: `ConvexProvider` → `AuthProvider` (React context in `src/lib/authContext.tsx`). Auth state is stored in `localStorage` under `vadem_session` and read synchronously on mount.
